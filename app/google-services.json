@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "624696561633",
+    "project_id": "tlucontract",
+    "storage_bucket": "tlucontract.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:624696561633:android:d174b1ac04f7e0ea67cca0",
+        "android_client_info": {
+          "package_name": "com.example.tlucontact"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDpvZoCFTHq1ysemKbnf0rkbVj3WEMJCqE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
