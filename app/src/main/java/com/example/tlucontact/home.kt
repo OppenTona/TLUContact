@@ -108,10 +108,13 @@ fun DirectoryScreen() {
             SearchBar()
             Spacer(Modifier.height(16.dp))
             when (selectedTab) {
-                "Sinh viên" -> StudentListFromDb(students)
+                "Sinh viên" -> StudentListFromDb(students) {
+                    students = dao.getAllStudents()
+                }
                 "Giảng viên" -> TeacherListFromDb(teachers)
                 "Đơn vị" -> DepartmentListFromDb(departments)
             }
+
         }
     }
 }
@@ -149,7 +152,10 @@ fun SearchBar() {
 
 // ==== Composables danh sách ====
 @Composable
-fun StudentListFromDb(initialStudents: List<Student>) {
+fun StudentListFromDb(
+    initialStudents: List<Student>,
+    onRefreshStudents: suspend () -> Unit
+) {
     val context = LocalContext.current
     val dao = remember { ContactDatabase.getDatabase(context).contactDao() }
     val scope = rememberCoroutineScope()
@@ -159,7 +165,10 @@ fun StudentListFromDb(initialStudents: List<Student>) {
     var showDialog by remember { mutableStateOf(false) }
     var newName by remember { mutableStateOf("") }
 
-    fun reload() = scope.launch { students = dao.getAllStudents() }
+    fun reload() = scope.launch {
+        onRefreshStudents()
+        students = dao.getAllStudents()
+    }
 
     LazyColumn {
         item {
