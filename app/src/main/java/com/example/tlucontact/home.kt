@@ -26,10 +26,45 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.lifecycleScope
+import androidx.room.Dao
+import androidx.room.Database
+import androidx.room.Entity
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.PrimaryKey
+import androidx.room.Query
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import kotlinx.coroutines.launch
 
 class home : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val dao = ContactDatabase.getDatabase(applicationContext).contactDao()
+
+        // Khởi tạo dữ liệu mẫu chỉ khi database còn trống
+        lifecycleScope.launch {
+            if (dao.getAllStudents().isEmpty()) {
+                studentList.values.flatten().forEach {
+                    dao.insertStudent(Student(name = it))
+                }
+            }
+
+            if (dao.getAllTeachers().isEmpty()) {
+                teacherList.values.flatten().forEach {
+                    dao.insertTeacher(Teacher(name = it))
+                }
+            }
+
+            if (dao.getAllUnits().isEmpty()) {
+                unitList.values.flatten().forEach {
+                    dao.insertUnit(Unit(name = it))
+                }
+            }
+        }
+
         setContent {
             DirectoryScreen()
         }
@@ -63,13 +98,24 @@ val teacherList = mapOf(
 @Composable
 fun DirectoryScreen() {
     val context = LocalContext.current
-    var selectedTab by remember { mutableStateOf("Sinh viên") } // Tab đang chọn
+    val dao = remember { ContactDatabase.getDatabase(context).contactDao() }
+
+    var selectedTab by remember { mutableStateOf("Sinh viên") }
+
+    var students by remember { mutableStateOf<List<Student>>(emptyList()) }
+    var teachers by remember { mutableStateOf<List<Teacher>>(emptyList()) }
+    var units by remember { mutableStateOf<List<Unit>>(emptyList()) }
+
+    // Lấy dữ liệu từ database khi Composable được tạo
+    LaunchedEffect(true) {
+        students = dao.getAllStudents()
+        teachers = dao.getAllTeachers()
+        units = dao.getAllUnits()
+    }
 
     Scaffold(
         bottomBar = {
-            BottomNavigationBar(selectedTab) { newTab ->
-                selectedTab = newTab
-            }
+            BottomNavigationBar(selectedTab) { newTab -> selectedTab = newTab }
         }
     ) { paddingValues ->
         Column(
@@ -84,13 +130,14 @@ fun DirectoryScreen() {
             Spacer(modifier = Modifier.height(16.dp))
 
             when (selectedTab) {
-                "Sinh viên" -> StudentList(studentList, context)
-                "Giảng viên" -> TeacherList(teacherList, context)
-                "Đơn vị" -> UnitList(unitList, context)
+                "Sinh viên" -> StudentListFromDb(students)
+                "Giảng viên" -> TeacherListFromDb(teachers)
+                "Đơn vị" -> UnitListFromDb(units)
             }
         }
     }
 }
+
 
 // Thanh tiêu đề trên cùng
 @Composable
@@ -149,8 +196,8 @@ fun StudentList(studentMap: Map<String, List<String>>, context: Context) {
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(vertical = 8.dp).clickable {
-                    val intent = Intent(context, EditProfileActivity::class.java)
-                    context.startActivity(intent)
+                    //val intent = Intent(context, EditProfileActivity::class.java)
+                    //context.startActivity(intent)
                 }
             )
             StudentItem("Ngô Bá Khá")
@@ -192,8 +239,8 @@ fun TeacherList(teacherMap: Map<String, List<String>>, context: Context) {
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(vertical = 8.dp).clickable {
-                        val intent = Intent(context, EditProfileActivity::class.java)
-                        context.startActivity(intent)
+                        //val intent = Intent(context, EditProfileActivity::class.java)
+                        //context.startActivity(intent)
                     }
                 )
             }
@@ -216,8 +263,8 @@ fun UnitList(unitMap: Map<String, List<String>>, context: Context) {
                 modifier = Modifier.padding(vertical = 8.dp)
             )
             UnitItem("Ngô Bá Khá")
-            val intent = Intent(context, EditProfileActivity::class.java)
-            context.startActivity(intent)
+            //val intent = Intent(context, EditProfileActivity::class.java)
+            //context.startActivity(intent)
         }
         unitMap.forEach { (letter, units) ->
             item {
@@ -226,8 +273,8 @@ fun UnitList(unitMap: Map<String, List<String>>, context: Context) {
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(vertical = 8.dp).clickable {
-                        val intent = Intent(context, EditProfileActivity::class.java)
-                        context.startActivity(intent)
+                        //val intent = Intent(context, EditProfileActivity::class.java)
+                        //context.startActivity(intent)
                     }
                 )
             }
@@ -300,7 +347,7 @@ fun UnitItem(name: String) {
 
 // Thanh điều hướng (Bottom Navigation)
 @Composable
-fun BottomNavigationBar(selectedTab: String, onTabSelected: (String) -> Unit) {
+fun BottomNavigationBar(selectedTab: String, onTabSelected: (String) -> kotlin.Unit) {
     BottomNavigation(
         backgroundColor = Color.White,
         contentColor = Color.Black
@@ -308,7 +355,7 @@ fun BottomNavigationBar(selectedTab: String, onTabSelected: (String) -> Unit) {
         BottomNavigationItem(
             icon = { Text("🏢") },
             label = { Text("Đơn vị") },
-            selected = false,
+            selected = selectedTab == "Đơn vị",
             onClick = { onTabSelected("Đơn vị") }
         )
         BottomNavigationItem(
@@ -331,3 +378,162 @@ fun BottomNavigationBar(selectedTab: String, onTabSelected: (String) -> Unit) {
 fun PreviewStudentDirectoryScreen() {
     DirectoryScreen()
 }
+
+
+@Entity(tableName = "students")
+data class Student(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val name: String
+)
+
+@Entity(tableName = "teachers")
+data class Teacher(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val name: String
+)
+
+@Entity(tableName = "units")
+data class Unit(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val name: String
+)
+
+
+@Dao
+interface ContactDao {
+    // Student
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertStudent(student: Student)
+
+    @Query("SELECT * FROM students ORDER BY name ASC")
+    suspend fun getAllStudents(): List<Student>
+
+    // Teacher
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTeacher(teacher: Teacher)
+
+    @Query("SELECT * FROM teachers ORDER BY name ASC")
+    suspend fun getAllTeachers(): List<Teacher>
+
+    // Unit
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertUnit(unit: Unit)
+
+    @Query("SELECT * FROM units ORDER BY name ASC")
+    suspend fun getAllUnits(): List<Unit>
+}
+
+
+@Database(entities = [Student::class, Teacher::class, Unit::class], version = 1)
+abstract class ContactDatabase : RoomDatabase() {
+    abstract fun contactDao(): ContactDao
+
+    companion object {
+        @Volatile
+        private var INSTANCE: ContactDatabase? = null
+
+        fun getDatabase(context: Context): ContactDatabase {
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    ContactDatabase::class.java,
+                    "contact_database"
+                ).build()
+                INSTANCE = instance
+                instance
+            }
+        }
+    }
+}
+
+
+@Composable
+fun StudentListFromDb(students: List<Student>) {
+    LazyColumn {
+        item {
+            Text(
+                text = "Hồ sơ của bạn",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+            StudentItem("Ngô Bá Khá") // Giả định hồ sơ bạn
+        }
+
+        students.groupBy { it.name.first().uppercaseChar() }.forEach { (initial, group) ->
+            item {
+                Text(
+                    text = initial.toString(),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
+            items(group) { student ->
+                StudentItem(student.name)
+            }
+        }
+    }
+}
+
+@Composable
+fun TeacherListFromDb(teachers: List<Teacher>) {
+    LazyColumn {
+        item {
+            Text(
+                text = "Hồ sơ của bạn",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+            TeacherItem("Ngô Bá Khá")
+        }
+
+        teachers.groupBy { it.name.first().uppercaseChar() }.forEach { (initial, group) ->
+            item {
+                Text(
+                    text = initial.toString(),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
+            items(group) { teacher ->
+                TeacherItem(teacher.name)
+            }
+        }
+    }
+}
+
+
+@Composable
+fun UnitListFromDb(units: List<Unit>) {
+    LazyColumn {
+        item {
+            Text(
+                text = "Hồ sơ của bạn",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+            UnitItem("Ngô Bá Khá")
+        }
+
+        units.groupBy { it.name.first().uppercaseChar() }.forEach { (initial, group) ->
+            item {
+                Text(
+                    text = initial.toString(),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
+            items(group) { unit ->
+                UnitItem(unit.name)
+            }
+        }
+    }
+}
+
+
+
