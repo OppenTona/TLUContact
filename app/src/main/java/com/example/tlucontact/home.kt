@@ -1,12 +1,13 @@
 package com.example.tlucontact
 
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,15 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.lifecycleScope
-import androidx.room.Dao
-import androidx.room.Database
-import androidx.room.Entity
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.PrimaryKey
-import androidx.room.Query
-import androidx.room.Room
-import androidx.room.RoomDatabase
+import androidx.room.*
 import kotlinx.coroutines.launch
 
 class home : ComponentActivity() {
@@ -44,24 +37,15 @@ class home : ComponentActivity() {
 
         val dao = ContactDatabase.getDatabase(applicationContext).contactDao()
 
-        // Khởi tạo dữ liệu mẫu chỉ khi database còn trống
         lifecycleScope.launch {
             if (dao.getAllStudents().isEmpty()) {
-                studentList.values.flatten().forEach {
-                    dao.insertStudent(Student(name = it))
-                }
+                studentList.values.flatten().forEach { dao.insertStudent(Student(name = it)) }
             }
-
             if (dao.getAllTeachers().isEmpty()) {
-                teacherList.values.flatten().forEach {
-                    dao.insertTeacher(Teacher(name = it))
-                }
+                teacherList.values.flatten().forEach { dao.insertTeacher(Teacher(name = it)) }
             }
-
-            if (dao.getAllUnits().isEmpty()) {
-                unitList.values.flatten().forEach {
-                    dao.insertUnit(Unit(name = it))
-                }
+            if (dao.getAllDepartments().isEmpty()) {
+                departmentList.values.flatten().forEach { dao.insertDepartment(Department(name = it)) }
             }
         }
 
@@ -71,232 +55,221 @@ class home : ComponentActivity() {
     }
 }
 
-val unitList = mapOf(
-    "K" to listOf("Khoa Cơ khí", "Khoa Công nghệ thông tin", "Khoa Công trình", "Khoa Điện - Điện tử"),
-    "P" to listOf("Phòng Chính trị và Công tác sinh viên", "Phòng Đào tạo", "Phòng Khảo thí và Đảm bảo chất lượng", "Phòng Tài chính - Kế toán"),
-    "T" to listOf("Trung tâm Đào tạo quốc tế", "Trung tâm Giáo dục Quốc phòng và An ninh", "Trung tâm Tin học", "Thư viện"),
-    "V" to listOf("Viện Kỹ thuật tài nguyên nước", "Viện Kỹ thuật công trình", "Viện Thủy lợi và Môi trường")
+// Dữ liệu mẫu
+val departmentList = mapOf(
+    "K" to listOf("Khoa Cơ khí", "Khoa CNTT", "Khoa Công trình", "Khoa Điện - Điện tử"),
+    "P" to listOf("Phòng CT&CTSV", "Phòng Đào tạo", "Phòng Khảo thí", "Phòng Tài chính"),
+    "T" to listOf("TT Quốc tế", "TT GDQP", "TT Tin học", "Thư viện"),
+    "V" to listOf("Viện TNN", "Viện Công trình", "Viện Thủy lợi")
 )
 
-// Dữ liệu danh bạ sinh viên nhóm theo ký tự đầu
 val studentList = mapOf(
-    "A" to listOf("Ngô Bá Khá", "Nguyễn Văn A", "Nguyễn Thị An", "Phạm Thị Anh"),
-    "B" to listOf("Nguyễn Văn Bình", "Nguyễn Thị Bình", "Phạm Thị Đức Bơ", "Phạm Văn Bờ"),
-    "C" to listOf("Nguyễn Chính", "Nguyễn Chiến", "Vũ Văn Chương", "Đỗ Hoài Chung"),
-    "D" to listOf("Nguyễn Văn Danh", "Nguyễn Thị Đoàn")
+    "A" to listOf("Ngô Bá Khá", "Nguyễn Văn A"),
+    "B" to listOf("Nguyễn Văn Bình", "Phạm Văn Bờ"),
+    "C" to listOf("Nguyễn Chính", "Đỗ Hoài Chung"),
+    "D" to listOf("Nguyễn Danh", "Nguyễn Thị Đoàn")
 )
 
-// Dữ liệu danh bạ giảng viên nhóm theo ký tự đầu
 val teacherList = mapOf(
-    "A" to listOf("Lò Văn A", "Nguyễn An", "Lê Thị A"),
-    "B" to listOf("Phạm Văn B", "Nguyễn Thị B", "Phạm Thị B", "Lê Văn B"),
-    "C" to listOf("Nguyễn Chung", "Lê Văn C", "Vũ Văn C", "Đỗ Hoài C"),
+    "A" to listOf("Lò Văn A", "Nguyễn An"),
+    "B" to listOf("Phạm Văn B", "Lê Văn B"),
+    "C" to listOf("Nguyễn Chung", "Đỗ Hoài C"),
     "D" to listOf("Nguyễn D", "Nguyễn Thị D")
 )
 
-// Màn hình chính: Hiển thị danh bạ sinh viên hoặc giảng viên
+// ========== UI ==========
 @Composable
 fun DirectoryScreen() {
     val context = LocalContext.current
     val dao = remember { ContactDatabase.getDatabase(context).contactDao() }
 
     var selectedTab by remember { mutableStateOf("Sinh viên") }
+    var students by remember { mutableStateOf(emptyList<Student>()) }
+    var teachers by remember { mutableStateOf(emptyList<Teacher>()) }
+    var departments by remember { mutableStateOf(emptyList<Department>()) }
 
-    var students by remember { mutableStateOf<List<Student>>(emptyList()) }
-    var teachers by remember { mutableStateOf<List<Teacher>>(emptyList()) }
-    var units by remember { mutableStateOf<List<Unit>>(emptyList()) }
-
-    // Lấy dữ liệu từ database khi Composable được tạo
     LaunchedEffect(true) {
         students = dao.getAllStudents()
         teachers = dao.getAllTeachers()
-        units = dao.getAllUnits()
+        departments = dao.getAllDepartments()
     }
 
     Scaffold(
-        bottomBar = {
-            BottomNavigationBar(selectedTab) { newTab -> selectedTab = newTab }
-        }
-    ) { paddingValues ->
+        bottomBar = { BottomNavigationBar(selectedTab) { selectedTab = it } }
+    ) { padding ->
         Column(
-            modifier = Modifier
+            Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(padding)
                 .padding(16.dp)
         ) {
-            TopBar(title = "Danh bạ $selectedTab")
-            Spacer(modifier = Modifier.height(16.dp))
+            TopBar("Danh bạ $selectedTab")
+            Spacer(Modifier.height(16.dp))
             SearchBar()
-            Spacer(modifier = Modifier.height(16.dp))
-
+            Spacer(Modifier.height(16.dp))
             when (selectedTab) {
                 "Sinh viên" -> StudentListFromDb(students)
                 "Giảng viên" -> TeacherListFromDb(teachers)
-                "Đơn vị" -> UnitListFromDb(units)
+                "Đơn vị" -> DepartmentListFromDb(departments)
             }
         }
     }
 }
 
-
-// Thanh tiêu đề trên cùng
 @Composable
 fun TopBar(title: String) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = title,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Icon(
-            imageVector = Icons.Default.AccountCircle,
-            contentDescription = "Profile",
-            modifier = Modifier.size(32.dp)
-        )
+        Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Icon(Icons.Default.AccountCircle, contentDescription = null, modifier = Modifier.size(32.dp))
     }
 }
 
-// Thanh tìm kiếm
 @Composable
 fun SearchBar() {
     var query by remember { mutableStateOf("") }
-
     Row(
-        modifier = Modifier
+        Modifier
             .fillMaxWidth()
-            .background(Color.LightGray, shape = CircleShape)
+            .background(Color.LightGray, CircleShape)
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(imageVector = Icons.Default.Search, contentDescription = "Search Icon")
-        Spacer(modifier = Modifier.width(8.dp))
-        BasicTextField(
-            value = query,
-            onValueChange = { query = it },
-            modifier = Modifier.weight(1f),
-            singleLine = true
-        )
-        IconButton(onClick = { /* Xử lý bộ lọc */ }) {
-            Icon(imageVector = Icons.Default.FilterList, contentDescription = "Filter Icon", tint = Color.Blue)
+        Icon(Icons.Default.Search, contentDescription = null)
+        Spacer(Modifier.width(8.dp))
+        BasicTextField(query, { query = it }, Modifier.weight(1f), singleLine = true)
+        IconButton(onClick = {}) {
+            Icon(Icons.Default.FilterList, contentDescription = null, tint = Color.Blue)
         }
     }
 }
 
-// Danh sách sinh viên
+// ==== Composables danh sách ====
 @Composable
-fun StudentList(studentMap: Map<String, List<String>>, context: Context) {
+fun StudentListFromDb(initialStudents: List<Student>) {
+    val context = LocalContext.current
+    val dao = remember { ContactDatabase.getDatabase(context).contactDao() }
+    val scope = rememberCoroutineScope()
+
+    var students by remember { mutableStateOf(initialStudents) }
+    var editing by remember { mutableStateOf<Student?>(null) }
+    var showDialog by remember { mutableStateOf(false) }
+    var newName by remember { mutableStateOf("") }
+
+    fun reload() = scope.launch { students = dao.getAllStudents() }
+
     LazyColumn {
         item {
-            Text(
-                text = "Hồ sơ của bạn",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(vertical = 8.dp).clickable {
-                    //val intent = Intent(context, EditProfileActivity::class.java)
-                    //context.startActivity(intent)
-                }
-            )
+            Text("Hồ sơ của bạn", fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.padding(vertical = 8.dp))
             StudentItem("Ngô Bá Khá")
         }
-        studentMap.forEach { (letter, students) ->
+        students.groupBy { it.name.first().uppercaseChar() }.forEach { (initial, group) ->
             item {
-                Text(
-                    text = letter,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-
+                Text(initial.toString(), fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp))
             }
-            items(students) { student ->
-                StudentItem(student)
+            items(group) { student ->
+                StudentItem(student.name) {
+                    editing = student
+                    newName = student.name
+                    showDialog = true
+                }
             }
         }
     }
+
+    if (showDialog && editing != null) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Chỉnh sửa sinh viên") },
+            text = {
+                OutlinedTextField(newName, onValueChange = { newName = it }, label = { Text("Tên mới") })
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    scope.launch {
+                        dao.updateStudent(editing!!.copy(name = newName))
+                        reload()
+                        showDialog = false
+                    }
+                }) {
+                    Text("Lưu")
+                }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(onClick = {
+                        scope.launch {
+                            dao.deleteStudent(editing!!)
+                            reload()
+                            showDialog = false
+                        }
+                    }) {
+                        Text("Xoá", color = Color.Red)
+                    }
+                    Spacer(Modifier.width(8.dp))
+                    TextButton(onClick = { showDialog = false }) { Text("Huỷ") }
+                }
+            }
+        )
+    }
 }
 
-// Danh sách giảng viên
 @Composable
-fun TeacherList(teacherMap: Map<String, List<String>>, context: Context) {
+fun TeacherListFromDb(teachers: List<Teacher>) {
     LazyColumn {
         item {
-            Text(
-                text = "Hồ sơ của bạn",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
+            Text("Hồ sơ của bạn", fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp))
             TeacherItem("Ngô Bá Khá")
         }
-        teacherMap.forEach { (letter, teachers) ->
+        teachers.groupBy { it.name.first().uppercaseChar() }.forEach { (initial, group) ->
             item {
-                Text(
-                    text = letter,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp).clickable {
-                        //val intent = Intent(context, EditProfileActivity::class.java)
-                        //context.startActivity(intent)
-                    }
-                )
+                Text(initial.toString(), fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp))
             }
-            items(teachers) { teacher ->
-                TeacherItem(teacher)
+            items(group) { teacher ->
+                TeacherItem(teacher.name)
             }
         }
     }
 }
 
-// Danh sách don vi
 @Composable
-fun UnitList(unitMap: Map<String, List<String>>, context: Context) {
+fun DepartmentListFromDb(departments: List<Department>) {
     LazyColumn {
         item {
-            Text(
-                text = "Hồ sơ của bạn",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-            UnitItem("Ngô Bá Khá")
-            //val intent = Intent(context, EditProfileActivity::class.java)
-            //context.startActivity(intent)
+            Text("Hồ sơ của bạn", fontWeight = FontWeight.Bold, fontSize = 16.sp, modifier = Modifier.padding(vertical = 8.dp))
+            DepartmentItem("Ngô Bá Khá")
         }
-        unitMap.forEach { (letter, units) ->
+        departments.groupBy { it.name.first().uppercaseChar() }.forEach { (initial, group) ->
             item {
-                Text(
-                    text = letter,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp).clickable {
-                        //val intent = Intent(context, EditProfileActivity::class.java)
-                        //context.startActivity(intent)
-                    }
-                )
+                Text(initial.toString(), fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp))
             }
-            items(units) { unit ->
-                TeacherItem(unit)
+            items(group) { dept ->
+                DepartmentItem(dept.name)
             }
         }
     }
 }
 
-// Item danh sách sinh viên
+// ==== Composable Items ====
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun StudentItem(name: String) {
+fun StudentItem(name: String, onLongClick: (() -> Unit)? = null) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 8.dp)
+            .combinedClickable(
+                onClick = {},
+                onLongClick = { onLongClick?.invoke() }
+            ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = Icons.Default.AccountCircle,
-            contentDescription = "Profile Icon",
+            contentDescription = null,
             tint = Color.LightGray,
             modifier = Modifier.size(32.dp)
         )
@@ -305,80 +278,41 @@ fun StudentItem(name: String) {
     }
 }
 
-// Item danh sách giảng viên
+
 @Composable
 fun TeacherItem(name: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Default.AccountCircle,
-            contentDescription = "Profile Icon",
-            tint = Color.LightGray,
-            modifier = Modifier.size(32.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(text = name, fontSize = 16.sp)
+    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(Icons.Default.AccountCircle, contentDescription = null, tint = Color.LightGray, modifier = Modifier.size(32.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(name, fontSize = 16.sp)
     }
 }
 
-
 @Composable
-fun UnitItem(name: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Default.AccountCircle,
-            contentDescription = "Profile Icon",
-            tint = Color.LightGray,
-            modifier = Modifier.size(32.dp)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(text = name, fontSize = 16.sp)
+fun DepartmentItem(name: String) {
+    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(Icons.Default.AccountCircle, contentDescription = null, tint = Color.LightGray, modifier = Modifier.size(32.dp))
+        Spacer(Modifier.width(8.dp))
+        Text(name, fontSize = 16.sp)
     }
 }
 
-// Thanh điều hướng (Bottom Navigation)
 @Composable
-fun BottomNavigationBar(selectedTab: String, onTabSelected: (String) -> kotlin.Unit) {
-    BottomNavigation(
-        backgroundColor = Color.White,
-        contentColor = Color.Black
-    ) {
-        BottomNavigationItem(
-            icon = { Text("🏢") },
-            label = { Text("Đơn vị") },
-            selected = selectedTab == "Đơn vị",
-            onClick = { onTabSelected("Đơn vị") }
-        )
-        BottomNavigationItem(
-            icon = { Text("👨‍🏫") },
-            label = { Text("Giảng viên") },
-            selected = selectedTab == "Giảng viên",
-            onClick = { onTabSelected("Giảng viên") }
-        )
-        BottomNavigationItem(
-            icon = { Text("🎓") },
-            label = { Text("Sinh viên") },
-            selected = selectedTab == "Sinh viên",
-            onClick = { onTabSelected("Sinh viên") }
-        )
+fun BottomNavigationBar(selectedTab: String, onTabSelected: (String) -> Unit) {
+    BottomNavigation(backgroundColor = Color.White, contentColor = Color.Black) {
+        BottomNavigationItem(icon = { Text("🏢") }, label = { Text("Đơn vị") }, selected = selectedTab == "Đơn vị", onClick = { onTabSelected("Đơn vị") })
+        BottomNavigationItem(icon = { Text("👨‍🏫") }, label = { Text("Giảng viên") }, selected = selectedTab == "Giảng viên", onClick = { onTabSelected("Giảng viên") })
+        BottomNavigationItem(icon = { Text("🎓") }, label = { Text("Sinh viên") }, selected = selectedTab == "Sinh viên", onClick = { onTabSelected("Sinh viên") })
     }
 }
 
-@Preview(showBackground = true)
+@Preview
 @Composable
-fun PreviewStudentDirectoryScreen() {
+fun PreviewScreen() {
     DirectoryScreen()
 }
 
+// ========== ROOM ENTITIES & DAO ==========
 
 @Entity(tableName = "students")
 data class Student(
@@ -393,44 +327,38 @@ data class Teacher(
 )
 
 @Entity(tableName = "units")
-data class Unit(
+data class Department(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val name: String
 )
 
-
 @Dao
 interface ContactDao {
     // Student
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertStudent(student: Student)
-
-    @Query("SELECT * FROM students ORDER BY name ASC")
-    suspend fun getAllStudents(): List<Student>
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertStudent(student: Student)
+    @Query("SELECT * FROM students ORDER BY name ASC") suspend fun getAllStudents(): List<Student>
+    @Update suspend fun updateStudent(student: Student)
+    @Delete suspend fun deleteStudent(student: Student)
 
     // Teacher
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertTeacher(teacher: Teacher)
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertTeacher(teacher: Teacher)
+    @Query("SELECT * FROM teachers ORDER BY name ASC") suspend fun getAllTeachers(): List<Teacher>
+    @Update suspend fun updateTeacher(teacher: Teacher)
+    @Delete suspend fun deleteTeacher(teacher: Teacher)
 
-    @Query("SELECT * FROM teachers ORDER BY name ASC")
-    suspend fun getAllTeachers(): List<Teacher>
-
-    // Unit
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertUnit(unit: Unit)
-
-    @Query("SELECT * FROM units ORDER BY name ASC")
-    suspend fun getAllUnits(): List<Unit>
+    // Department
+    @Insert(onConflict = OnConflictStrategy.REPLACE) suspend fun insertDepartment(unit: Department)
+    @Query("SELECT * FROM units ORDER BY name ASC") suspend fun getAllDepartments(): List<Department>
+    @Update suspend fun updateDepartment(unit: Department)
+    @Delete suspend fun deleteDepartment(unit: Department)
 }
 
-
-@Database(entities = [Student::class, Teacher::class, Unit::class], version = 1)
+@Database(entities = [Student::class, Teacher::class, Department::class], version = 1)
 abstract class ContactDatabase : RoomDatabase() {
     abstract fun contactDao(): ContactDao
 
     companion object {
-        @Volatile
-        private var INSTANCE: ContactDatabase? = null
+        @Volatile private var INSTANCE: ContactDatabase? = null
 
         fun getDatabase(context: Context): ContactDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -445,95 +373,3 @@ abstract class ContactDatabase : RoomDatabase() {
         }
     }
 }
-
-
-@Composable
-fun StudentListFromDb(students: List<Student>) {
-    LazyColumn {
-        item {
-            Text(
-                text = "Hồ sơ của bạn",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-            StudentItem("Ngô Bá Khá") // Giả định hồ sơ bạn
-        }
-
-        students.groupBy { it.name.first().uppercaseChar() }.forEach { (initial, group) ->
-            item {
-                Text(
-                    text = initial.toString(),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            }
-            items(group) { student ->
-                StudentItem(student.name)
-            }
-        }
-    }
-}
-
-@Composable
-fun TeacherListFromDb(teachers: List<Teacher>) {
-    LazyColumn {
-        item {
-            Text(
-                text = "Hồ sơ của bạn",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-            TeacherItem("Ngô Bá Khá")
-        }
-
-        teachers.groupBy { it.name.first().uppercaseChar() }.forEach { (initial, group) ->
-            item {
-                Text(
-                    text = initial.toString(),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            }
-            items(group) { teacher ->
-                TeacherItem(teacher.name)
-            }
-        }
-    }
-}
-
-
-@Composable
-fun UnitListFromDb(units: List<Unit>) {
-    LazyColumn {
-        item {
-            Text(
-                text = "Hồ sơ của bạn",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-            UnitItem("Ngô Bá Khá")
-        }
-
-        units.groupBy { it.name.first().uppercaseChar() }.forEach { (initial, group) ->
-            item {
-                Text(
-                    text = initial.toString(),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-            }
-            items(group) { unit ->
-                UnitItem(unit.name)
-            }
-        }
-    }
-}
-
-
-
