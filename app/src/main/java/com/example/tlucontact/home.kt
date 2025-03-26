@@ -1,6 +1,5 @@
 package com.example.tlucontact
 
-import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -38,7 +37,12 @@ import androidx.room.*
 import kotlinx.coroutines.launch
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
-
+import android.content.Context
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import org.apache.poi.xssf.usermodel.XSSFWorkbook
+import androidx.compose.material.icons.filled.CloudUpload
 
 class home : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -425,6 +429,22 @@ fun DirectoryScreen(navController: NavController) {
     var teachers by remember { mutableStateOf(emptyList<Teacher>()) }
     var departments by remember { mutableStateOf(emptyList<Department>()) }
 
+    val scope = rememberCoroutineScope()
+
+    val excelPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            scope.launch {
+                val students = readExcelFromUri(context, uri)
+                students.forEach { student ->
+                    dao.insertStudent(student)
+                }
+            }
+        }
+    }
+
+
     // Sử dụng LaunchedEffect để tải dữ liệu ngay lập tức
     LaunchedEffect(Unit) {
         students = dao.getAllStudents()
@@ -441,7 +461,11 @@ fun DirectoryScreen(navController: NavController) {
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            TopBar("Danh bạ $selectedTab")
+            TopBar("Danh bạ $selectedTab", onImportClick = {
+                if (selectedTab == "Sinh viên") {
+                    excelPickerLauncher.launch("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                }
+            })
             Spacer(Modifier.height(16.dp))
             SearchBar(query = query, onQueryChange = { query = it })
             Spacer(Modifier.height(16.dp))
@@ -507,14 +531,19 @@ fun DirectoryScreen(navController: NavController) {
 
 
 @Composable
-fun TopBar(title: String) {
+fun TopBar(title: String, onImportClick: () -> Unit) {
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Icon(Icons.Default.AccountCircle, contentDescription = null, modifier = Modifier.size(32.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onImportClick) {
+                Icon(Icons.Default.CloudUpload, contentDescription = "Import Excel")
+            }
+            Icon(Icons.Default.AccountCircle, contentDescription = null, modifier = Modifier.size(32.dp))
+        }
     }
 }
 
@@ -999,4 +1028,38 @@ abstract class ContactDatabase : RoomDatabase() {
             }
         }
     }
+}
+
+
+fun readExcelFromUri(context: Context, uri: Uri): List<Student> {
+    val inputStream = context.contentResolver.openInputStream(uri)
+    val workbook = XSSFWorkbook(inputStream)
+    val sheet = workbook.getSheetAt(0)
+
+    val students = mutableListOf<Student>()
+    for (i in 1..sheet.lastRowNum) { // Dòng 0 là tiêu đề
+        val row = sheet.getRow(i)
+        if (row != null) {
+            val name = row.getCell(0)?.stringCellValue ?: ""
+            val studentId = row.getCell(1)?.stringCellValue ?: ""
+            val className = row.getCell(2)?.stringCellValue ?: ""
+            val email = row.getCell(3)?.stringCellValue ?: ""
+            val phone = row.getCell(4)?.stringCellValue ?: ""
+            val address = row.getCell(5)?.stringCellValue ?: ""
+
+            students.add(
+                Student(
+                    name = name,
+                    studentId = studentId,
+                    className = className,
+                    email = email,
+                    phone = phone,
+                    address = address
+                )
+            )
+        }
+    }
+    workbook.close()
+    inputStream?.close()
+    return students
 }
