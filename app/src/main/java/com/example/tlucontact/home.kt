@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -38,11 +37,13 @@ import kotlinx.coroutines.launch
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.ExitToApp
 
 class home : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -444,7 +445,6 @@ fun DirectoryScreen(navController: NavController) {
         }
     }
 
-
     // Sử dụng LaunchedEffect để tải dữ liệu ngay lập tức
     LaunchedEffect(Unit) {
         students = dao.getAllStudents()
@@ -461,11 +461,23 @@ fun DirectoryScreen(navController: NavController) {
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            TopBar("Danh bạ $selectedTab", onImportClick = {
-                if (selectedTab == "Sinh viên") {
-                    excelPickerLauncher.launch("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            TopBar(
+                title = "Danh bạ $selectedTab",
+                onImportClick = {
+                    if (selectedTab == "Sinh viên") {
+                        excelPickerLauncher.launch("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                    }
+                },
+                onLogoutClick = {
+                    val preferenceHelper = PreferenceHelper(context)
+                    preferenceHelper.clearUserData() // Xóa dữ liệu đăng nhập
+
+                    // Chuyển về màn hình đăng nhập
+                    val intent = Intent(context, MainActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    context.startActivity(intent)
                 }
-            })
+            )
             Spacer(Modifier.height(16.dp))
             SearchBar(query = query, onQueryChange = { query = it })
             Spacer(Modifier.height(16.dp))
@@ -531,7 +543,7 @@ fun DirectoryScreen(navController: NavController) {
 
 
 @Composable
-fun TopBar(title: String, onImportClick: () -> Unit) {
+fun TopBar(title: String, onImportClick: () -> Unit, onLogoutClick: () -> Unit) {
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -542,10 +554,13 @@ fun TopBar(title: String, onImportClick: () -> Unit) {
             IconButton(onClick = onImportClick) {
                 Icon(Icons.Default.CloudUpload, contentDescription = "Import Excel")
             }
-            Icon(Icons.Default.AccountCircle, contentDescription = null, modifier = Modifier.size(32.dp))
+            IconButton(onClick = onLogoutClick) {
+                Icon(Icons.Default.ExitToApp, contentDescription = "Đăng xuất")
+            }
         }
     }
 }
+
 
 @Composable
 fun SearchBar(query: String, onQueryChange: (String) -> Unit) {
