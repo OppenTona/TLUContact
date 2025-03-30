@@ -5,6 +5,7 @@ import android.widget.Toast
 import com.example.tlucontact.MainActivity
 import com.example.tlucontact.data.model.User
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.UserProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -46,19 +47,15 @@ class AuthRepository(private val context: Context) {
                 if (task.isSuccessful) {
                     val firebaseUser = auth.currentUser
                     firebaseUser?.let { fbUser ->
-                        val profileUpdates = UserProfileChangeRequest.Builder()
-                            .setDisplayName(user.name)
-                            .build()
-                        fbUser.updateProfile(profileUpdates)
-                            .addOnCompleteListener { updateTask ->
-                                if (updateTask.isSuccessful) {
-                                    saveUserData(fbUser.uid, user) { success, saveError ->
-                                        onResult(success, saveError)
-                                    }
-                                } else {
-                                    onResult(false, updateTask.exception?.message)
+                        saveUserData(fbUser.uid, user) { success, saveError ->
+                            if (success) {
+                                sendEmailVerification(fbUser) { emailSuccess, emailError ->
+                                    onResult(emailSuccess, emailError)
                                 }
+                            } else {
+                                onResult(false, saveError)
                             }
+                        }
                     }
                 } else {
                     onResult(false, task.exception?.message)
@@ -86,11 +83,22 @@ class AuthRepository(private val context: Context) {
         val userData = hashMapOf(
             "uid" to uid,
             "email" to user.email,
-            "name" to user.name,
+            "phone" to user.phone,
             "userType" to userType
         )
 
         firestore.collection("users").document(uid).set(userData)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onResult(true, null)
+                } else {
+                    onResult(false, task.exception?.message)
+                }
+            }
+    }
+
+    private fun sendEmailVerification(user: FirebaseUser, onResult: (Boolean, String?) -> Unit) {
+        user.sendEmailVerification()
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     onResult(true, null)

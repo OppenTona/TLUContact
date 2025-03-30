@@ -1,6 +1,7 @@
 package com.example.tlucontact.viewmodel
 
 import android.app.Application
+import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
@@ -20,13 +21,17 @@ class SignupViewModel(application: Application, private val state: SavedStateHan
     var email = state.getStateFlow("email", "")
     var password = state.getStateFlow("password", "")
     var confirmPassword = state.getStateFlow("confirmPassword", "")
-    var name = state.getStateFlow("name", "")
 
     fun signup() {
-        val user = User(email.value, name.value)
+        val user = User(email.value, phone.value)
         viewModelScope.launch {
             repository.signup(user, password.value, confirmPassword.value) { success, error ->
                 _signupState.value = Pair(success, error)
+                if (!success) {
+                    Toast.makeText(getApplication(), "Signup Error: $error", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(getApplication(), "Please check your email for verification", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -45,9 +50,5 @@ class SignupViewModel(application: Application, private val state: SavedStateHan
 
     fun onConfirmPasswordChange(newConfirmPassword: String) {
         state["confirmPassword"] = newConfirmPassword
-    }
-
-    fun onNameChange(newName: String) {
-        state["name"] = newName
     }
 }
