@@ -1,15 +1,16 @@
 package com.example.tlucontact.data.repository
 
 import android.content.Context
-import android.content.Intent
 import android.widget.Toast
 import com.example.tlucontact.MainActivity
-import com.google.firebase.auth.FirebaseAuth
 import com.example.tlucontact.data.model.User
-import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.UserProfileChangeRequest
+import com.google.firebase.firestore.FirebaseFirestore
 
 class AuthRepository(private val context: Context) {
     private val auth = FirebaseAuth.getInstance()
+    private val firestore = FirebaseFirestore.getInstance()
 
     fun login(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
         val trimmedEmail = email.trim()
@@ -32,26 +33,35 @@ class AuthRepository(private val context: Context) {
     }
 
     fun signup(user: User, password: String, confirmPassword: String, onResult: (Boolean, String?) -> Unit) {
-        val trimmedemail = user.email.trim()
+        val email = user.email.trim()
 
-        val error = validateSignupInput(trimmedemail, password, confirmPassword)
+        val error = validateSignupInput(email, password, confirmPassword)
         if (error != null) {
             onResult(false, error)
             return
         }
 
-
-        val auth = FirebaseAuth.getInstance()
-        auth.createUserWithEmailAndPassword(trimmedemail, password)
+        auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    Toast.makeText(context, "Đăng ký thành công!", Toast.LENGTH_SHORT).show()
-                    val intent = Intent(context, MainActivity::class.java)
-                    var user = User(auth.currentUser?.uid ?: "", trimmedemail)
-                    saveUserData(user)
-                    context.startActivity(intent)
+                    val firebaseUser = auth.currentUser
+                    firebaseUser?.let { fbUser ->
+                        val profileUpdates = UserProfileChangeRequest.Builder()
+                            .setDisplayName(user.name)
+                            .build()
+                        fbUser.updateProfile(profileUpdates)
+                            .addOnCompleteListener { updateTask ->
+                                if (updateTask.isSuccessful) {
+                                    saveUserData(fbUser.uid, user) { success, saveError ->
+                                        onResult(success, saveError)
+                                    }
+                                } else {
+                                    onResult(false, updateTask.exception?.message)
+                                }
+                            }
+                    }
                 } else {
-                    Toast.makeText(context, "Lỗi: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                    onResult(false, task.exception?.message)
                 }
             }
     }
@@ -71,21 +81,22 @@ class AuthRepository(private val context: Context) {
         return null
     }
 
-    private fun saveUserData(user: User) {
-        if (user.uid.isEmpty()) return
-
-        val database = FirebaseDatabase.getInstance("https://tlucontract-default-rtdb.asia-southeast1.firebasedatabase.app/")
-        val userRef = database.getReference("users").child(user.uid)
-
-        val userData = mapOf(
-            "uid" to user.uid,
+    private fun saveUserData(uid: String, user: User, onResult: (Boolean, String?) -> Unit) {
+        val userType = if (user.email.endsWith("@tlu.edu.vn")) "lecturer" else "student"
+        val userData = hashMapOf(
+            "uid" to uid,
             "email" to user.email,
             "name" to user.name,
-            "phone" to user.phone,
-            "position" to user.position,
-            "image" to user.image
+            "userType" to userType
         )
 
-        userRef.setValue(userData)
+        firestore.collection("users").document(uid).set(userData)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onResult(true, null)
+                } else {
+                    onResult(false, task.exception?.message)
+                }
+            }
     }
 }

@@ -44,6 +44,7 @@ android {
 dependencies {
 
     implementation(libs.firebase.database.ktx)
+    implementation(libs.firebase.firestore.ktx)
     val composeBom = platform("androidx.compose:compose-bom:2025.02.00")
     implementation(composeBom)
     androidTestImplementation(composeBom)

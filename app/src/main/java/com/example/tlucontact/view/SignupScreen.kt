@@ -1,7 +1,5 @@
 package com.example.tlucontact.view
 
-
-import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -27,12 +25,13 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.tlucontact.R
-
+import com.example.tlucontact.viewmodel.SignupViewModel
 
 @Composable
-fun SignupScreen(navController: NavController) {
+fun SignupScreen(navController: NavController, viewModel: SignupViewModel = viewModel()) {
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
 
@@ -52,7 +51,7 @@ fun SignupScreen(navController: NavController) {
                 .weight(1f)
                 .fillMaxHeight()
                 .verticalScroll(rememberScrollState()) ) {
-                SignupForm(navController)
+                SignupForm(navController, viewModel)
             }
         }
     } else {
@@ -66,7 +65,7 @@ fun SignupScreen(navController: NavController) {
                 .weight(1f)
                 .fillMaxHeight()
                 .verticalScroll(rememberScrollState()) )
-            SignupForm(navController)
+            SignupForm(navController, viewModel)
         }
     }
 }
@@ -89,19 +88,20 @@ fun LogoSection() {
 }
 
 @Composable
-fun SignupForm(navController: NavController) {
+fun SignupForm(navController: NavController, viewModel: SignupViewModel) {
     val context = LocalContext.current
-    var phone by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
+
+    val phone by viewModel.phone.collectAsState()
+    val email by viewModel.email.collectAsState()
+    val password by viewModel.password.collectAsState()
+    val confirmPassword by viewModel.confirmPassword.collectAsState()
 
     Column {
         TextField(
             value = phone,
-            onValueChange = { phone = it },
+            onValueChange = { viewModel.onPhoneChange(it) },
             label = { Text("Số điện thoại") },
             colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent),
             modifier = Modifier.fillMaxWidth()
@@ -111,7 +111,7 @@ fun SignupForm(navController: NavController) {
 
         TextField(
             value = email,
-            onValueChange = { email = it },
+            onValueChange = { viewModel.onEmailChange(it) },
             label = { Text("Email") },
             colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent),
             modifier = Modifier.fillMaxWidth()
@@ -121,7 +121,7 @@ fun SignupForm(navController: NavController) {
 
         PasswordField(
             value = password,
-            onValueChange = { password = it },
+            onValueChange = { viewModel.onPasswordChange(it) },
             label = "Mật khẩu",
             passwordVisible = passwordVisible,
             onVisibilityChange = { passwordVisible = it }
@@ -131,7 +131,7 @@ fun SignupForm(navController: NavController) {
 
         PasswordField(
             value = confirmPassword,
-            onValueChange = { confirmPassword = it },
+            onValueChange = { viewModel.onConfirmPasswordChange(it) },
             label = "Nhập lại mật khẩu",
             passwordVisible = confirmPasswordVisible,
             onVisibilityChange = { confirmPasswordVisible = it }
@@ -141,8 +141,8 @@ fun SignupForm(navController: NavController) {
 
         Button(
             onClick = {
-                Toast.makeText(context, "Đăng ký thành công!", Toast.LENGTH_SHORT).show()
-                      navController.navigate("login")},
+                viewModel.signup()
+            },
             colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black),
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(8.dp)
