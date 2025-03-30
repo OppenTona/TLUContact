@@ -25,7 +25,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -92,7 +91,7 @@ fun LogoSection() {
 @Composable
 fun SignupForm(navController: NavController) {
     val context = LocalContext.current
-    var name by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
@@ -101,9 +100,9 @@ fun SignupForm(navController: NavController) {
 
     Column {
         TextField(
-            value = name,
-            onValueChange = { name = it },
-            label = { Text("Họ tên") },
+            value = phone,
+            onValueChange = { phone = it },
+            label = { Text("Số điện thoại") },
             colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent),
             modifier = Modifier.fillMaxWidth()
         )
