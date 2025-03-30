@@ -116,6 +116,7 @@ dependencies {
 
     implementation ("org.apache.poi:poi:5.2.3")
     implementation ("org.apache.poi:poi-ooxml:5.2.3")
+    implementation ("androidx.hilt:hilt-navigation-compose:1.0.0")
 
 
 

@@ -107,4 +107,31 @@ class AuthRepository(private val context: Context) {
                 }
             }
     }
+
+    // Giả định hàm gửi email xác nhận, ví dụ tích hợp với Firebase.
+    fun sendEmailVerification(email: String, callback: (Boolean, String?) -> Unit) {
+        // Thực hiện gửi email xác nhận.
+        // Nếu gửi email thành công:
+        callback(true, null)
+        // Nếu không thành công:
+        // callback(false, "Gửi email xác nhận thất bại!")
+    }
+
+    // Giả định reload trạng thái người dùng để kiểm tra email đã xác nhận hay chưa.
+    fun reloadUser(email: String, callback: (Boolean, String?) -> Unit) {
+        // Reload thông tin người dùng (ví dụ FirebaseAuth.getCurrentUser().reload()).
+        // Nếu email đã xác nhận:
+        callback(true, null)
+        // Nếu chưa xác nhận hoặc lỗi:
+        // callback(false, "Email chưa được xác nhận!")
+    }
+
+    // Giả định hàm tạo tài khoản sau khi email được xác nhận.
+    fun createAccount(email: String, password: String, callback: (Boolean, String?) -> Unit) {
+        // Tạo tài khoản với thông tin đã cung cấp.
+        // Nếu tạo tài khoản thành công:
+        callback(true, null)
+        // Nếu không:
+        // callback(false, "Tạo tài khoản thất bại!")
+    }
 }
