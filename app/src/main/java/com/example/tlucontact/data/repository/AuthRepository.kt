@@ -4,6 +4,7 @@ import android.content.Context
 import android.widget.Toast
 import com.example.tlucontact.MainActivity
 import com.example.tlucontact.data.model.User
+import com.google.firebase.auth.ActionCodeSettings
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.UserProfileChangeRequest
@@ -26,8 +27,24 @@ class AuthRepository(private val context: Context) {
         auth.signInWithEmailAndPassword(trimmedEmail, trimmedPassword)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    onResult(true, null)
-                } else {
+                    FirebaseAuth.getInstance().currentUser?.getIdToken(false)
+                        ?.addOnCompleteListener { tokenTask ->
+                            if (tokenTask.isSuccessful) {
+                                val firebaseToken = tokenTask.result?.token
+                                // Save token using SessionManager
+                                val sessionManager = SessionManager(context)
+                                if (firebaseToken != null) {
+                                    sessionManager.saveUserToken(firebaseToken)
+                                    onResult(true, firebaseToken)
+                                }
+                                else {
+                                    onResult(false, "Token is null")
+                                }
+                            } else {
+                                onResult(false, tokenTask.exception?.message)
+                            }
+                            }
+                        } else {
                     onResult(false, task.exception?.message)
                 }
             }
@@ -109,12 +126,22 @@ class AuthRepository(private val context: Context) {
     }
 
     // Giả định hàm gửi email xác nhận, ví dụ tích hợp với Firebase.
-    fun sendEmailVerification(email: String, callback: (Boolean, String?) -> Unit) {
-        // Thực hiện gửi email xác nhận.
-        // Nếu gửi email thành công:
-        callback(true, null)
-        // Nếu không thành công:
-        // callback(false, "Gửi email xác nhận thất bại!")
+    fun sendEmailVerificationLink(email: String, onResult: (Boolean, String?) -> Unit) {
+        val actionCodeSettings = ActionCodeSettings.newBuilder()
+            // Chỉnh sửa URL dưới đây thành URL deep link của ứng dụng bạn
+            .setUrl("https://yourapp.page.link/verify?email=$email")
+            .setHandleCodeInApp(true)
+            .setAndroidPackageName("com.example.tlucontact", true, null)
+            .build()
+
+        auth.sendSignInLinkToEmail(email, actionCodeSettings)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onResult(true, null)
+                } else {
+                    onResult(false, task.exception?.message)
+                }
+            }
     }
 
     // Giả định reload trạng thái người dùng để kiểm tra email đã xác nhận hay chưa.
@@ -134,4 +161,23 @@ class AuthRepository(private val context: Context) {
         // Nếu không:
         // callback(false, "Tạo tài khoản thất bại!")
     }
+
+    fun fetchFirebaseToken(onTokenReceived: (token: String?) -> Unit, onError: (Exception) -> Unit) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser != null) {
+            currentUser.getIdToken(false)
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        // Lấy token thành công
+                        val token = task.result?.token
+                        onTokenReceived(token)
+                    } else {
+                        // Xử lý khi có lỗi
+                        onError(task.exception ?: Exception("Unknown error"))
+                    }
+                }
+        } else {
+            onError(Exception("User is not logged in."))
+        }
+}
 }

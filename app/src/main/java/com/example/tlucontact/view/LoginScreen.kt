@@ -37,8 +37,6 @@ import com.example.tlucontact.viewmodel.LoginViewModel
 fun LoginScreen(navController: NavController) {
     val context = LocalContext.current
     val viewModel: LoginViewModel = viewModel()
-    val email by viewModel.email.collectAsState()
-    val password by viewModel.password.collectAsState()
     var passwordVisible by remember { mutableStateOf(false) }
 
     val loginState by viewModel.loginState.collectAsState()
