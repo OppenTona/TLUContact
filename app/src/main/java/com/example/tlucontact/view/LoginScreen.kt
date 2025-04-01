@@ -169,7 +169,7 @@ fun LoginForm(
             Text(
                 "Quên mật khẩu?",
                 color = Color.Blue,
-                modifier = Modifier.clickable { /* TODO: Điều hướng đến màn quên mật khẩu */ }
+                modifier = Modifier.clickable { navController.navigate("forgotpassword") }
             )
         }
 

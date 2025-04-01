@@ -25,19 +25,21 @@ class AuthRepository(private val context: Context) {
         auth.signInWithEmailAndPassword(trimmedEmail, trimmedPassword)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
+                    val firebaseUser = auth.currentUser
+                    // Kiểm tra xem email đã được xác minh chưa
+                    if (firebaseUser != null && !firebaseUser.isEmailVerified) {
+                        onResult(false, "Tài khoản chưa được xác minh. Vui lòng kiểm tra email để xác minh tài khoản.")
+                        return@addOnCompleteListener
+                    }
+
                     FirebaseAuth.getInstance().currentUser?.getIdToken(false)
                         ?.addOnCompleteListener { tokenTask ->
                             if (tokenTask.isSuccessful) {
-                                val firebaseToken = tokenTask.result?.token
-                                // Save token using SessionManager
-                                val sessionManager = SessionManager(context)
-                                if (firebaseToken != null) {
-                                    sessionManager.saveUserToken(firebaseToken)
+                                tokenTask.result?.token?.let { firebaseToken ->
+                                    // Lưu token bằng SessionManager
+                                    SessionManager(context).saveUserToken(firebaseToken)
                                     onResult(true, firebaseToken)
-                                }
-                                else {
-                                    onResult(false, "Token is null")
-                                }
+                                } ?: onResult(false, "Token is null")
                             } else {
                                 onResult(false, tokenTask.exception?.message)
                             }
@@ -94,7 +96,7 @@ class AuthRepository(private val context: Context) {
         val basicError = validateCredentials(email, password)
         if (basicError != null) return basicError
         if (password != confirmPassword) return "Mật khẩu không khớp"
-        if (!(isValidSchoolEmail(email))) return "Email không hợp lệ. Vui lòng sử dụng email của trường."
+        //if (!(isValidSchoolEmail(email))) return "Email không hợp lệ. Vui lòng sử dụng email của trường."
         return null
     }
 
@@ -169,8 +171,35 @@ class AuthRepository(private val context: Context) {
             callback(Result.failure(Exception("Email không hợp lệ. Vui lòng sử dụng email của trường.")))
             return
         }
-        // Nếu tài khoản hợp lệ, bạn có thể lưu thông tin người dùng lên Firestore nếu cần.
-        // Ở đây, ví dụ đơn giản chỉ trả về đối tượng FirebaseUser.
-        callback(Result.success(firebaseUser))
+
+        // Lấy token và lưu lại
+        firebaseUser.getIdToken(false)
+            .addOnCompleteListener { tokenTask ->
+                if (tokenTask.isSuccessful) {
+                    tokenTask.result?.token?.let { firebaseToken ->
+                        // Lưu token bằng SessionManager
+                        SessionManager(context).saveUserToken(firebaseToken)
+                        callback(Result.success(firebaseUser))
+                    } ?: callback(Result.failure(Exception("Token is null")))
+                } else {
+                    callback(Result.failure(tokenTask.exception ?: Exception("Không thể lấy token")))
+                }
+            }
+    }
+
+    fun resetPassword(email: String, onResult: (Boolean, String?) -> Unit) {
+        val trimmedEmail = email.trim()
+        if (trimmedEmail.isEmpty()) {
+            onResult(false, "Vui lòng nhập email!")
+            return
+        }
+        auth.sendPasswordResetEmail(trimmedEmail)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    onResult(true, "Email đặt lại mật khẩu đã được gửi!")
+                } else {
+                    onResult(false, task.exception?.message)
+                }
+            }
     }
 }

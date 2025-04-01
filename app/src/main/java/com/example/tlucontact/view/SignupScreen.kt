@@ -99,6 +99,7 @@ fun SignupForm(navController: NavController, viewModel: SignupViewModel) {
     LaunchedEffect(signupState) {
         if (signupState.first) {
             Toast.makeText(context, "Vui lòng kiểm tra email để xác minh", Toast.LENGTH_SHORT).show()
+            navController.navigate("login")
         } else if (signupState.second != null) {
             Toast.makeText(context, "Lỗi: ${signupState.second}", Toast.LENGTH_SHORT).show()
         }

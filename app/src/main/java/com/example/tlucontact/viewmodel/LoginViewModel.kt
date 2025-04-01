@@ -15,6 +15,10 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     private val _loginState = MutableStateFlow<Pair<Boolean, String?>>(Pair(false, null))
     val loginState = _loginState.asStateFlow()
 
+    // State cho đặt lại mật khẩu
+    private val _resetState = MutableStateFlow<Pair<Boolean, String?>>(Pair(false, null))
+    val resetState = _resetState.asStateFlow()
+
     var email = MutableStateFlow("")
     var password = MutableStateFlow("")
 
@@ -22,6 +26,15 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             repository.login(email, password) { success, error ->
                 _loginState.value = Pair(success, error)
+            }
+        }
+    }
+
+    // Hàm reset mật khẩu
+    fun resetPassword(email: String) {
+        viewModelScope.launch {
+            repository.resetPassword(email) { success, message ->
+                _resetState.value = Pair(success, message)
             }
         }
     }
@@ -41,4 +54,6 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+
+
 }
