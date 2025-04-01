@@ -1,5 +1,6 @@
 package com.example.tlucontact.viewmodel
 
+import android.app.Activity
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -21,6 +22,22 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             repository.login(email, password) { success, error ->
                 _loginState.value = Pair(success, error)
+            }
+        }
+    }
+
+    // Hỗ trợ đăng nhập bằng Microsoft (Outlook)
+    fun loginWithMicrosoft(activity: Activity, onResult: (Boolean, String?) -> Unit) {
+        viewModelScope.launch {
+            repository.loginWithMicrosoft(activity) { result ->
+                result.onSuccess { firebaseUser ->
+                    // Nếu cần, bạn có thể lưu token hoặc lưu thông tin user lên Firestore ở đây
+                    _loginState.value = Pair(true, null)
+                    onResult(true, null)
+                }.onFailure { exception ->
+                    _loginState.value = Pair(false, exception.message)
+                    onResult(false, exception.message)
+                }
             }
         }
     }

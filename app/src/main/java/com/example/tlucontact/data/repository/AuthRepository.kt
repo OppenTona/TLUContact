@@ -1,9 +1,11 @@
 package com.example.tlucontact.data.repository
 
+import android.app.Activity
 import android.content.Context
 import com.example.tlucontact.data.model.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.OAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 
 class AuthRepository(private val context: Context) {
@@ -84,11 +86,15 @@ class AuthRepository(private val context: Context) {
         return null
     }
 
+    private fun isValidSchoolEmail(email: String): Boolean {
+        return email.endsWith("@tlu.edu.vn") || email.endsWith("@e.tlu.edu.vn")
+    }
+
     private fun validateSignupInput(email: String, password: String, confirmPassword: String): String? {
         val basicError = validateCredentials(email, password)
         if (basicError != null) return basicError
         if (password != confirmPassword) return "Mật khẩu không khớp"
-        if (!(email.endsWith("@tlu.edu.vn") || email.endsWith("@e.tlu.edu.vn"))) return "Email không hợp lệ. Vui lòng sử dụng email của trường."
+        if (!(isValidSchoolEmail(email))) return "Email không hợp lệ. Vui lòng sử dụng email của trường."
         return null
     }
 
@@ -120,5 +126,50 @@ class AuthRepository(private val context: Context) {
                     onResult(false, task.exception?.message)
                 }
             }
+    }
+
+    // Login bằng tài khoản Microsoft (Outlook)
+    fun loginWithMicrosoft(activity: Activity, callback: (Result<FirebaseUser>) -> Unit) {
+        val provider = OAuthProvider.newBuilder("microsoft.com").apply {
+            addCustomParameter("tenant", "common")
+            scopes = listOf("openid", "profile", "User.Read")
+        }
+
+        if (auth.pendingAuthResult != null) {
+            auth.pendingAuthResult?.addOnSuccessListener { authResult ->
+                handleMicrosoftAuthResult(authResult.user, callback)
+            }?.addOnFailureListener { exception ->
+                callback(Result.failure(exception))
+            }
+        } else {
+            auth.startActivityForSignInWithProvider(activity, provider.build())
+                .addOnSuccessListener { authResult ->
+                    handleMicrosoftAuthResult(authResult.user, callback)
+                }
+                .addOnFailureListener { exception ->
+                    callback(Result.failure(exception))
+                }
+        }
+    }
+
+    // Xử lý kết quả từ đăng nhập Microsoft:
+    // Kiểm tra email trả về có đúng định dạng của trường hay không.
+    private fun handleMicrosoftAuthResult(
+        firebaseUser: FirebaseUser?,
+        callback: (Result<FirebaseUser>) -> Unit
+    ) {
+        if (firebaseUser == null) {
+            callback(Result.failure(Exception("Đăng nhập không thành công.")))
+            return
+        }
+        val userEmail = firebaseUser.email?.trim() ?: ""
+        if (!isValidSchoolEmail(userEmail)) {
+            firebaseUser.delete()
+            callback(Result.failure(Exception("Email không hợp lệ. Vui lòng sử dụng email của trường.")))
+            return
+        }
+        // Nếu tài khoản hợp lệ, bạn có thể lưu thông tin người dùng lên Firestore nếu cần.
+        // Ở đây, ví dụ đơn giản chỉ trả về đối tượng FirebaseUser.
+        callback(Result.success(firebaseUser))
     }
 }

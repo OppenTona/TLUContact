@@ -1,5 +1,6 @@
 package com.example.tlucontact.view
 
+import android.app.Activity
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.Image
@@ -121,6 +122,8 @@ fun LoginForm(
 ) {
     val email by viewModel.email.collectAsState()
     val password by viewModel.password.collectAsState()
+    val context = LocalContext.current
+    val activity = context as? Activity
 
     Column {
         TextField(
@@ -194,6 +197,24 @@ fun LoginForm(
                     navController.navigate("signup")
                 }
             )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Nút đăng nhập bằng Outlook (Microsoft)
+        Button(
+            onClick = {
+                activity?.let { act ->
+                    viewModel.loginWithMicrosoft(act) { success, error ->
+                        // Kết quả sẽ được xử lý bởi loginState thông qua ViewModel
+                    }
+                } ?: Toast.makeText(context, "Không xác định được Activity", Toast.LENGTH_SHORT).show()
+            },
+            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF0078D4)), // Màu xanh Microsoft
+            modifier = Modifier.fillMaxWidth().height(50.dp),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text("Đăng nhập bằng Outlook", color = Color.White, fontSize = 16.sp)
         }
     }
 }
