@@ -61,10 +61,7 @@ fun SignupScreen(navController: NavController, viewModel: SignupViewModel = view
         ) {
             Spacer(modifier = Modifier.height(40.dp))
             LogoSection()
-            Spacer(modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight()
-                .verticalScroll(rememberScrollState()) )
+            Spacer(modifier = Modifier.height(16.dp))
             SignupForm(navController, viewModel)
         }
     }
