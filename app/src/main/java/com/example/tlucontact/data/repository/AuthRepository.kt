@@ -131,7 +131,8 @@ class AuthRepository(private val context: Context) {
     // Login bằng tài khoản Microsoft (Outlook)
     fun loginWithMicrosoft(activity: Activity, callback: (Result<FirebaseUser>) -> Unit) {
         val provider = OAuthProvider.newBuilder("microsoft.com").apply {
-            addCustomParameter("tenant", "common")
+            // Giả sử tenant domain của trường là "tlu.edu.vn"
+            addCustomParameter("tenant", "tlu.edu.vn")
             scopes = listOf("openid", "profile", "User.Read")
         }
 
