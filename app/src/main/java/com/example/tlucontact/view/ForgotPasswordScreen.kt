@@ -42,6 +42,19 @@ fun ForgotPasswordScreen(navController: NavController) {
         modifier = Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+//        Row(
+//            modifier = Modifier.fillMaxWidth(),
+//            verticalAlignment = Alignment.CenterVertically
+//        ) {
+//            IconButton(onClick = { navController.popBackStack() }) {
+//                Icon(
+//                    painter = painterResource(id = R.drawable.staff_icon), // Thêm icon vào drawable
+//                    contentDescription = "Back",
+//                    tint = Color.Black
+//                )
+//            }
+//        }
+
         Spacer(modifier = Modifier.height(40.dp))
 
         Text("Gửi mã xác minh", fontSize = 24.sp, fontWeight = FontWeight.Bold)
