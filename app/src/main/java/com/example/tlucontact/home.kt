@@ -128,6 +128,7 @@ class home : ComponentActivity() {
                     DetailScreen(
                         navController = navController,
                         name = args.getString("name") ?: "",
+                        screenTitle = args.getString("screenTitle") ?: "sinh viên",
                         studentId = args.getString("studentId") ?: "",
                         className = args.getString("className") ?: "",
                         email = args.getString("email") ?: "",
@@ -151,6 +152,7 @@ class home : ComponentActivity() {
                     val args = backStackEntry.arguments!!
                     DetailScreen(
                         navController = navController,
+                        screenTitle = args.getString("screenTitle") ?: "giảng viên",
                         name = args.getString("name") ?: "",
                         studentId = args.getString("teacherId") ?: "",
                         className = args.getString("department") ?: "",
@@ -175,6 +177,7 @@ class home : ComponentActivity() {
                     val args = backStackEntry.arguments!!
                     DetailScreen(
                         navController = navController,
+                        screenTitle = args.getString("screenTitle") ?: "đơn vị",
                         name = args.getString("name") ?: "",
                         studentId = args.getString("code") ?: "",
                         className = args.getString("leader") ?: "",

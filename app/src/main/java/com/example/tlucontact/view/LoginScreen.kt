@@ -30,8 +30,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.tlucontact.R
-import com.example.tlucontact.ui.theme.StaffScreen
-
 import com.example.tlucontact.home
 import com.example.tlucontact.viewmodel.LoginViewModel
 
@@ -48,7 +46,7 @@ fun LoginScreen(navController: NavController) {
     LaunchedEffect(loginState) {
         if (loginState.first) {
             Toast.makeText(context, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show()
-            context.startActivity(Intent(context, home::class.java))
+            context.startActivity(Intent(context, HomeScreen::class.java))
         } else if (loginState.second != null) {
             Toast.makeText(context, "Lỗi: ${loginState.second}", Toast.LENGTH_SHORT).show()
         }
@@ -85,7 +83,7 @@ fun LoginScreen(navController: NavController) {
             Spacer(modifier = Modifier.width(32.dp))
 
             Box(modifier = Modifier
-                    .weight(1f)
+                .weight(1f)
                 .fillMaxHeight()
                 .verticalScroll(rememberScrollState()) ) {
                 LoginForm(viewModel, passwordVisible, navController) { passwordVisible = it }
