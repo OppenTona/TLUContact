@@ -255,21 +255,55 @@ fun Staffitem(
 @Composable
 fun Stafflist(staffs: List<Staff>, query: String, navController: NavController) {
     val filteredStaffs = staffs.filter { it.name.contains(query, ignoreCase = true) }
+        .sortedBy { it.name.lowercase() } // Sắp xếp A-Z
+
+    val groupedStaffs = ('A'..'Z').associateWith { letter ->
+        filteredStaffs.filter { it.name.firstOrNull()?.uppercaseChar() == letter }
+    } // Đảm bảo mọi chữ cái từ A-Z đều xuất hiện
 
     LazyColumn {
-        items(filteredStaffs) { staff ->
-            Staffitem(
-                staff = staff,
-                isSelected = false,
-                onClick = {
-                    navController.currentBackStackEntry?.savedStateHandle?.set("staff", staff)
-                    navController.navigate("DetailContactScreen")
-                },
-                navController = navController
-            )
+        groupedStaffs.forEach { (letter, staffList) ->
+            item {
+                Text(
+                    text = letter.toString(),
+                    fontSize = 16.sp, // Nhỏ hơn một chút
+                    fontWeight = FontWeight.Medium, // Chữ mảnh hơn
+                    color = Color.Gray,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp, horizontal = 16.dp) // Căn chỉnh đẹp hơn
+                )
+            }
+
+            if (staffList.isEmpty()) {
+                item {
+                    Text(
+                        text = "",
+                        fontSize = 14.sp,
+                        color = Color.Gray,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 32.dp, bottom = 6.dp) // Lùi vào giống danh sách
+                    )
+                }
+            } else {
+                items(staffList) { staff ->
+                    Staffitem(
+                        staff = staff,
+                        isSelected = false,
+                        onClick = {
+                            navController.currentBackStackEntry?.savedStateHandle?.set("staff", staff)
+                            navController.navigate("DetailContactScreen")
+                        },
+                        navController = navController
+                    )
+                }
+            }
         }
     }
 }
+
+
 @Composable
 fun Topbar(
     title: String,
