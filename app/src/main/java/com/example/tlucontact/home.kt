@@ -44,7 +44,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import org.apache.poi.xssf.usermodel.XSSFWorkbook
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.ExitToApp
-import com.example.tlucontact.data.repository.SessionManager
 
 class home : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -474,8 +473,6 @@ fun DirectoryScreen(navController: NavController) {
                     preferenceHelper.clearUserData() // Xóa dữ liệu đăng nhập
 
                     // Chuyển về màn hình đăng nhập
-                    val sessionManager = SessionManager(context)
-                    sessionManager.clearSession() // Xóa token
                     val intent = Intent(context, MainActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     context.startActivity(intent)
