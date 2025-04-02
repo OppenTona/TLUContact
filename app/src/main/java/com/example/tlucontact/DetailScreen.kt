@@ -57,6 +57,7 @@ import androidx.compose.material3.*
 @Composable
 fun DetailScreen(
     navController: NavController,
+    screenTitle: String,
     name: String,
     studentId: String,
     className: String,
@@ -65,6 +66,7 @@ fun DetailScreen(
     address: String,
     notes: String = ""
 ) {
+    val decodedScreenTitle = URLDecoder.decode(screenTitle, StandardCharsets.UTF_8.toString())
     val decodedName = URLDecoder.decode(name, StandardCharsets.UTF_8.toString())
     val decodedStudentId = URLDecoder.decode(studentId, StandardCharsets.UTF_8.toString())
     val decodedClassName = URLDecoder.decode(className, StandardCharsets.UTF_8.toString())
@@ -75,7 +77,7 @@ fun DetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Thông tin sinh viên") },
+                title = { Text("Thông tin $decodedScreenTitle") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) { // Quay lại màn hình trước
                         Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")

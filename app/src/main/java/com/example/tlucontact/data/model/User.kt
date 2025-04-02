@@ -1,6 +1,6 @@
 package com.example.tlucontact.data.model
 
-data class User(
-    val email: String = "",
-    val phone: String = "",
+open class User(
+    open val email: String = "",
+    open val phone: String = "",
 )
