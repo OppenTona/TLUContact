@@ -199,6 +199,10 @@ fun LoginForm(
             )
         }
 
+        Spacer(modifier = Modifier.height(32.dp))
+
+        DividerWithText(text = "hoặc nhập với")
+
         Spacer(modifier = Modifier.height(16.dp))
 
         // Nút đăng nhập bằng Outlook (Microsoft)
@@ -216,5 +220,30 @@ fun LoginForm(
         ) {
             Text("Đăng nhập bằng Outlook", color = Color.White, fontSize = 16.sp)
         }
+    }
+}
+
+@Composable
+fun DividerWithText(text: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Divider(
+            color = Color.Gray,
+            modifier = Modifier
+                .weight(1f)
+                .height(1.dp)
+        )
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 8.dp)
+        )
+        Divider(
+            color = Color.Gray,
+            modifier = Modifier
+                .weight(1f)
+                .height(1.dp)
+        )
     }
 }
