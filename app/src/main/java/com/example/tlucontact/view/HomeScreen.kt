@@ -399,7 +399,7 @@ fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
                     onDismissRequest = { filterExpanded = false },
                     offset = filterMenuOffset
                 ) {
-                    DropdownMenuItem(onClick = { /* Xử lý Lọc Khoa */ }) {
+                    DropdownMenuItem(onClick = {/* Xử lý Lọc Khoa */ }) {
                         Text("Khoa")
                     }
                     DropdownMenuItem(onClick = { /* Xử lý Lọc Viện */ }) {
@@ -519,5 +519,4 @@ val phongList = listOf(
     "Phòng Khoa học và Công nghệ",
     "Phòng Chính trị & Công tác Sinh viên"
 )
-
 

@@ -36,9 +36,9 @@ class StaffViewModel : ViewModel() {
             .addOnSuccessListener { result ->
                 val staffItems = result.map { doc ->
                     Staff(
-                        staffId = doc.id,
+                        staffId = doc.getString("staffid") ?: "",
                         name = doc.getString("fullName") ?: "Không có tên",
-                        email = doc.getString("email") ?: "",
+                        email = doc.id,
                         phone = doc.getString("phone") ?: "",
                         department = doc.getString("unit") ?: "",
                         position = doc.getString("position") ?: "",
