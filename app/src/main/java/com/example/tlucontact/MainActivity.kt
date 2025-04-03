@@ -59,8 +59,8 @@ class MainActivity : ComponentActivity() {
 
             composable("Home screen") {
                 val context = LocalContext.current
-                //context.startActivity(Intent(context, HomeScreen::class.java))
-                context.startActivity(Intent(context, home::class.java))
+                context.startActivity(Intent(context, HomeScreen::class.java))
+                //context.startActivity(Intent(context, home::class.java))
             }
 
         }

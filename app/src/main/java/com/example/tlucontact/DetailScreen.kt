@@ -54,6 +54,7 @@ import android.app.Activity
 import androidx.navigation.NavController
 import androidx.compose.material3.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailScreen(
     navController: NavController,
