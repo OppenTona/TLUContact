@@ -2,6 +2,13 @@
 
 Dự án bài tập lớn TLUContact của các sinh viên trường đại học Thủy lợi.
 
+## Thành viên nhóm:
+
+- Nguyễn Thế Toàn(OppenTona)
+- Nguyễn Thị Thanh Vân (ThanhVan2024)
+- Lưu Hiểu Khánh (HieuKhanh04)
+- Lê Hà Phương (phuonghale)
+
 ## Giới thiệu về đề tài
 
 - **Hiện trạng:**
