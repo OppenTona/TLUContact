@@ -254,54 +254,48 @@ fun Staffitem(
 
 @Composable
 fun Stafflist(staffs: List<Staff>, query: String, navController: NavController) {
+    var sortAscending by remember { mutableStateOf(true) } // Trạng thái sắp xếp
+
     val filteredStaffs = staffs.filter { it.name.contains(query, ignoreCase = true) }
-        .sortedBy { it.name.lowercase() } // Sắp xếp A-Z
+    val sortedStaffs = if (sortAscending) {
+        filteredStaffs.sortedBy { it.name.lowercase() } // A-Z
+    } else {
+        filteredStaffs.sortedByDescending { it.name.lowercase() } // Z-A
+    }
 
     val groupedStaffs = ('A'..'Z').associateWith { letter ->
-        filteredStaffs.filter { it.name.firstOrNull()?.uppercaseChar() == letter }
-    } // Đảm bảo mọi chữ cái từ A-Z đều xuất hiện
+        sortedStaffs.filter { it.name.firstOrNull()?.uppercaseChar() == letter }
+    }
 
     LazyColumn {
         groupedStaffs.forEach { (letter, staffList) ->
             item {
                 Text(
                     text = letter.toString(),
-                    fontSize = 16.sp, // Nhỏ hơn một chút
-                    fontWeight = FontWeight.Medium, // Chữ mảnh hơn
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
                     color = Color.Gray,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 6.dp, horizontal = 16.dp) // Căn chỉnh đẹp hơn
+                        .padding(vertical = 6.dp, horizontal = 16.dp)
                 )
             }
 
-            if (staffList.isEmpty()) {
-                item {
-                    Text(
-                        text = "",
-                        fontSize = 14.sp,
-                        color = Color.Gray,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 32.dp, bottom = 6.dp) // Lùi vào giống danh sách
-                    )
-                }
-            } else {
-                items(staffList) { staff ->
-                    Staffitem(
-                        staff = staff,
-                        isSelected = false,
-                        onClick = {
-                            navController.currentBackStackEntry?.savedStateHandle?.set("staff", staff)
-                            navController.navigate("DetailContactScreen")
-                        },
-                        navController = navController
-                    )
-                }
+            items(staffList) { staff ->
+                Staffitem(
+                    staff = staff,
+                    isSelected = false,
+                    onClick = {
+                        navController.currentBackStackEntry?.savedStateHandle?.set("staff", staff)
+                        navController.navigate("DetailContactScreen")
+                    },
+                    navController = navController
+                )
             }
         }
     }
 }
+
 
 
 @Composable
