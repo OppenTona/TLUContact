@@ -19,7 +19,7 @@ import com.example.tlucontact.data.model.Department
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetailDepartmentScreen(department: Department, onBack: () -> Unit) {
+fun DepartmentDetailView(department: Department, onBack: () -> Unit) {
     val scrollState = rememberScrollState()
 
     Scaffold(
