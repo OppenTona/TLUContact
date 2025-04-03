@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,7 +34,7 @@ fun ForgotPasswordScreen(navController: NavController) {
     LaunchedEffect(resetState) {
         if (resetState.first) {
             Toast.makeText(context, resetState.second ?: "Success", Toast.LENGTH_LONG).show()
-            navController.popBackStack()
+            navController.navigate("login")
         } else if (resetState.second != null) {
             Toast.makeText(context, "Lỗi: ${resetState.second}", Toast.LENGTH_LONG).show()
         }
@@ -42,18 +44,18 @@ fun ForgotPasswordScreen(navController: NavController) {
         modifier = Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-//        Row(
-//            modifier = Modifier.fillMaxWidth(),
-//            verticalAlignment = Alignment.CenterVertically
-//        ) {
-//            IconButton(onClick = { navController.popBackStack() }) {
-//                Icon(
-//                    painter = painterResource(id = R.drawable.staff_icon), // Thêm icon vào drawable
-//                    contentDescription = "Back",
-//                    tint = Color.Black
-//                )
-//            }
-//        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowBack, // Dùng cùng icon với TopAppBar
+                    contentDescription = "Back",
+                    tint = Color.Black
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(40.dp))
 

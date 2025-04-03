@@ -46,7 +46,7 @@ fun LoginScreen(navController: NavController) {
     LaunchedEffect(loginState) {
         if (loginState.first) {
             Toast.makeText(context, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show()
-            context.startActivity(Intent(context, HomeScreen::class.java))
+            navController.navigate("Home screen")
         } else if (loginState.second != null) {
             Toast.makeText(context, "Lỗi: ${loginState.second}", Toast.LENGTH_SHORT).show()
         }
@@ -76,7 +76,7 @@ fun LoginScreen(navController: NavController) {
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Chào mừng đến với TLUContract", fontSize = 14.sp, color = Color.Gray)
+                    Text("Chào mừng đến với TLUContact", fontSize = 14.sp, color = Color.Gray)
                 }
             }
 
@@ -105,7 +105,7 @@ fun LoginScreen(navController: NavController) {
             )
 
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Chào mừng đến với TLUContract", fontSize = 14.sp, color = Color.Gray)
+            Text("Chào mừng đến với TLUContact", fontSize = 14.sp, color = Color.Gray)
             Spacer(modifier = Modifier.height(16.dp))
 
             LoginForm(viewModel, passwordVisible, navController) { passwordVisible = it }
