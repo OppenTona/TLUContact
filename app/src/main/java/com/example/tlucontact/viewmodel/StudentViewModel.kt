@@ -16,11 +16,31 @@ class StudentViewModel : ViewModel() {
     val selectedStudent: StateFlow<Student?> = _selectedStudent
 
     init {
-        fetchStudents() // Lấy tất cả sinh viên ban đầu
+        try {
+            fetchStudents() // Lấy tất cả sinh viên ban đầu
+        }
+        catch (
+            e: Exception) {
+            println("Lỗi lấy dữ liệu sinh viên: ${e.message}")
+        }
+
     }
 
     private fun fetchStudents() {
-        db.collection("students").get()
+        db.collection("student")
+            .get()
+        .addOnSuccessListener { result ->
+            for (document in result) {
+                println("${document.id} => ${document.data}") // In dữ liệu
+            }
+        }
+            .addOnFailureListener { exception ->
+                println("Lỗi khi lấy dữ liệu: ${exception.message}")
+            }
+
+
+
+        db.collection("student").get()
             .addOnSuccessListener { result ->
                 val studentItems = result.map { doc ->
                     Student(
