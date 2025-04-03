@@ -4,7 +4,7 @@ Dự án bài tập lớn TLUContact của các sinh viên trường đại họ
 
 ## Thành viên nhóm:
 
-- Nguyễn Thế Toàn(OppenTona)
+- Nguyễn Thế Toàn (OppenTona)
 - Nguyễn Thị Thanh Vân (ThanhVan2024)
 - Lưu Hiểu Khánh (HieuKhanh04)
 - Lê Hà Phương (phuonghale)
