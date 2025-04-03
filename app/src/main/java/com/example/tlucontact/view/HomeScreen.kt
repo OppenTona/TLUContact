@@ -43,8 +43,12 @@ import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.School
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.tlucontact.R
@@ -111,10 +115,10 @@ class HomeScreen: ComponentActivity() {
 
                 // Route cho Đơn vị
                 composable(
-                    route = "department_detail/{name}/{code}/{leader}/{email}/{phone}/{address}",
+                    route = "department_detail/{name}/{id}/{leader}/{email}/{phone}/{address}",
                     arguments = listOf(
                         navArgument("name") { type = NavType.StringType },
-                        navArgument("code") { type = NavType.StringType },
+                        navArgument("id") { type = NavType.StringType },
                         navArgument("leader") { type = NavType.StringType },
                         navArgument("email") { type = NavType.StringType },
                         navArgument("phone") { type = NavType.StringType },
@@ -126,7 +130,7 @@ class HomeScreen: ComponentActivity() {
                         navController = navController,
                         screenTitle = args.getString("screenTitle") ?: "đơn vị",
                         name = args.getString("name") ?: "",
-                        studentId = args.getString("code") ?: "",
+                        studentId = args.getString("id") ?: "",
                         className = args.getString("leader") ?: "",
                         email = args.getString("email") ?: "",
                         phone = args.getString("phone") ?: "",
@@ -328,7 +332,11 @@ fun Topbar(
 @Composable
 fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    val dropdownOffset = DpOffset(0.dp, 10.dp) // Điều chỉnh vị trí
+    var filterExpanded by remember { mutableStateOf(false) }
+    val dropdownOffset = DpOffset(0.dp, 10.dp)
+    val density = LocalDensity.current
+    var filterButtonPosition by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+    var filterButtonSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
 
     Box(
         modifier = Modifier
@@ -349,6 +357,7 @@ fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
                 singleLine = true
             )
             Spacer(Modifier.width(8.dp))
+
             Box {
                 IconButton(onClick = { expanded = true }) {
                     Icon(
@@ -364,15 +373,49 @@ fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
                     DropdownMenuItem(onClick = { /* Xử lý sắp xếp */ }) {
                         Text("Sắp xếp")
                     }
-                    DropdownMenuItem(onClick = { /* Xử lý lọc */ }) {
+                    DropdownMenuItem(
+                        onClick = { filterExpanded = true },
+                        modifier = Modifier.onGloballyPositioned { coordinates ->
+                            filterButtonPosition = coordinates.positionInRoot()
+                            filterButtonSize = coordinates.size.toSize()
+                        }
+                    ) {
                         Text("Lọc")
+                    }
+                }
+            }
+
+            // Menu lọc, căn về bên phải và xuống dưới của nút lọc
+            if (filterExpanded) {
+                val filterMenuOffset = with(density) {
+                    DpOffset(
+                        filterButtonPosition.x.toDp() + filterButtonSize.width.toDp(),
+                        filterButtonPosition.y.toDp() + filterButtonSize.height.toDp() // Dịch xuống dưới
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = filterExpanded,
+                    onDismissRequest = { filterExpanded = false },
+                    offset = filterMenuOffset
+                ) {
+                    DropdownMenuItem(onClick = { /* Xử lý Lọc Khoa */ }) {
+                        Text("Khoa")
+                    }
+                    DropdownMenuItem(onClick = { /* Xử lý Lọc Viện */ }) {
+                        Text("Viện")
+                    }
+                    DropdownMenuItem(onClick = { /* Xử lý Lọc Phòng */ }) {
+                        Text("Phòng")
+                    }
+                    DropdownMenuItem(onClick = { /* Xử lý Lọc Trung tâm */ }) {
+                        Text("Trung tâm")
                     }
                 }
             }
         }
     }
 }
-
 @Composable
 fun Bottomnavigationbar(selectedTab: String, onTabSelected: (String) -> Unit) {
     BottomNavigation(backgroundColor = Color.White, contentColor = Color.Black) {

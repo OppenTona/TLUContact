@@ -52,11 +52,10 @@ fun DetailContactScreen(staff: Staff, onBack: () -> Unit) {
         ) {
             Image(
                 painter = rememberAsyncImagePainter("https://i.pravatar.cc/150?u=${staff.email}"),
-                contentDescription = "Ảnh đại diện",
+                contentDescription = "Avatar",
                 modifier = Modifier
                     .size(100.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
+                    .clip(CircleShape)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
