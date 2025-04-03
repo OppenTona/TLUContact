@@ -10,7 +10,7 @@ Dự án bài tập lớn TLUContact của các sinh viên trường đại họ
 
 - **Vấn đề:**
   - Chưa có hệ thống danh bạ tập trung giúp sinh viên và giảng viên liên lạc trực tiếp với nhau.
-  - Việc trao đổi thông tin thường phải thông qua giáo viên phụ trách, gây mất thời gian và giảm hiệu quả giao tiếp.
+  - Việc trao đổi thông tin thường phải thông qua bên trung gian như giáo viên chủ nhiệm hoặc liên chi đoàn khoa gây mất thời gian và giảm hiệu quả giao tiếp.
 
 - **Giải pháp:**
   - Dự án “TLUContact – Ứng dụng danh bạ điện tử cho Đại học Thủy Lợi” ra đời nhằm giải quyết các vấn đề trên.
