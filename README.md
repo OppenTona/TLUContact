@@ -5,6 +5,9 @@ Dự án bài tập lớn TLUContact của các sinh viên trường đại họ
 ## Mục tiêu dự án
 Mục tiêu của dự án TLUContact là phát triển một ứng dụng quản lý danh bạ giúp người dùng lưu trữ, quản lý và tìm kiếm thông tin liên lạc một cách hiệu quả và tiện lợi.
 
+## Giao diện người dùng
+https://www.figma.com/design/ezrsY5J8DKXXSKSgMs3o6s/Untitled?node-id=0-1&p=f&t=62QHq8iLZ3Ec66an-0
+
 ## Tính năng chính
 - Thêm, sửa, xóa danh bạ
 - Tìm kiếm và lọc danh bạ theo tên, số điện thoại
