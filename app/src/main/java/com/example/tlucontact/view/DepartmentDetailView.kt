@@ -44,12 +44,12 @@ fun DetailDepartmentScreen(department: Department, onBack: () -> Unit) {
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = department.nameDepartment, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+            Text(text = department.name, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.Black)
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            InfoField(label = "Mã đơn vị", value = department.departmentID)
-            InfoField(label = "Tên đơn vị", value = department.nameDepartment)
+            InfoField(label = "Mã đơn vị", value = department.id)
+            InfoField(label = "Tên đơn vị", value = department.name)
             InfoField(label = "Số điện thoại", value = department.phone)
             InfoField(label = "Email", value = department.email)
             InfoField(label = "Ghi chú", value = "_")

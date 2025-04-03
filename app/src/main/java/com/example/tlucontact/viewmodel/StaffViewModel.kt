@@ -28,11 +28,35 @@ class StaffViewModel : ViewModel() {
     val selectedStaff: StateFlow<Staff?> = _selectedStaff
 
     init {
-        fetchStaffs()
+        fetchStaffs() // Lấy tất cả nhân viên ban đầu
     }
 
     private fun fetchStaffs() {
         db.collection("staffs").get()
+            .addOnSuccessListener { result ->
+                val staffItems = result.map { doc ->
+                    Staff(
+                        staffId = doc.id,
+                        name = doc.getString("fullName") ?: "Không có tên",
+                        email = doc.getString("email") ?: "",
+                        phone = doc.getString("phone") ?: "",
+                        department = doc.getString("unit") ?: "",
+                        position = doc.getString("position") ?: "",
+                        avatarURL = doc.getString("photoURL") ?: ""
+                    )
+                }
+                _staffList.value = staffItems
+            }
+            .addOnFailureListener { exception ->
+                println("Lỗi lấy dữ liệu: ${exception.message}")
+            }
+    }
+
+    // Phương thức lọc nhân viên theo department (Khoa, Viện, Phòng, Trung tâm)
+    fun filterStaffs(department: String) {
+        db.collection("staffs")
+            .whereEqualTo("unit", department) // Lọc theo department (Khoa, Viện...)
+            .get()
             .addOnSuccessListener { result ->
                 val staffItems = result.map { doc ->
                     Staff(
