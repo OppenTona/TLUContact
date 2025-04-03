@@ -258,22 +258,50 @@ fun Staffitem(
 
 @Composable
 fun Stafflist(staffs: List<Staff>, query: String, navController: NavController) {
+    var sortAscending by remember { mutableStateOf(true) } // Trạng thái sắp xếp
+
     val filteredStaffs = staffs.filter { it.name.contains(query, ignoreCase = true) }
+    val sortedStaffs = if (sortAscending) {
+        filteredStaffs.sortedBy { it.name.lowercase() } // A-Z
+    } else {
+        filteredStaffs.sortedByDescending { it.name.lowercase() } // Z-A
+    }
+
+    val groupedStaffs = ('A'..'Z').associateWith { letter ->
+        sortedStaffs.filter { it.name.firstOrNull()?.uppercaseChar() == letter }
+    }
 
     LazyColumn {
-        items(filteredStaffs) { staff ->
-            Staffitem(
-                staff = staff,
-                isSelected = false,
-                onClick = {
-                    navController.currentBackStackEntry?.savedStateHandle?.set("staff", staff)
-                    navController.navigate("DetailContactScreen")
-                },
-                navController = navController
-            )
+        groupedStaffs.forEach { (letter, staffList) ->
+            item {
+                Text(
+                    text = letter.toString(),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Gray,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp, horizontal = 16.dp)
+                )
+            }
+
+            items(staffList) { staff ->
+                Staffitem(
+                    staff = staff,
+                    isSelected = false,
+                    onClick = {
+                        navController.currentBackStackEntry?.savedStateHandle?.set("staff", staff)
+                        navController.navigate("DetailContactScreen")
+                    },
+                    navController = navController
+                )
+            }
         }
     }
 }
+
+
+
 @Composable
 fun Topbar(
     title: String,
@@ -388,39 +416,6 @@ fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
         }
     }
 }
-// Danh sách Khoa
-val khoaList = listOf(
-    "Khoa Công trình",
-    "Khoa Kĩ thuật Tài nguyên Nước",
-    "Khoa Hóa & Môi trường",
-    "Khoa Cơ khí",
-    "Khoa Kinh tế và Quản lý",
-    "Khoa Công nghệ Thông tin",
-    "Khoa Lý luận Chính trị"
-)
-
-// Danh sách Viện
-val vienList = listOf(
-    "Viện Đào tạo và Khoa học ứng dụng miền Trung",
-    "Viện Đào tạo Quốc tế",
-    "Viện Đào tạo Sau đại học",
-)
-
-// Danh sách Trung tâm
-val trungTamList = listOf(
-    "Trung tâm Khoa học & Triển khai Kỹ thuật Thủy lợi",
-    "Trung tâm Nội trú",
-    "Thư viện"
-)
-
-// Danh sách Phòng
-val phongList = listOf(
-    "Trạm Y tế",
-    "Phòng Hợp tác Quốc tế",
-    "Phòng Khoa học và Công nghệ",
-    "Phòng Chính trị & Công tác Sinh viên"
-)
-
 @Composable
 fun Bottomnavigationbar(selectedTab: String, onTabSelected: (String) -> Unit) {
     BottomNavigation(backgroundColor = Color.White, contentColor = Color.Black) {
