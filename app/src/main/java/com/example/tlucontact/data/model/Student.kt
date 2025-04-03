@@ -1,5 +1,9 @@
 package com.example.tlucontact.data.model
+import android.os.Parcelable
+import com.google.firebase.firestore.DocumentReference
+import kotlinx.parcelize.Parcelize
 
+@Parcelize
 data class Student(
     val studentID : String = "",
     val fullNameStudent : String = "",
@@ -9,4 +13,4 @@ data class Student(
     val address : String = "",
     val className : String = "",
     val userID : String = ""
-) : User(email, phone)
+) : User(email, phone), Parcelable
