@@ -1,6 +1,6 @@
 package com.example.tlucontact.data.model
 
-data class Department (
+data class Department(
     val departmentID: String = "",
     val nameDepartment: String = "",
     val leader: String = "",
@@ -9,4 +9,3 @@ data class Department (
     val phone: String = "",
     val address: String = ""
 )
-

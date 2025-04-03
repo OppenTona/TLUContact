@@ -10,14 +10,12 @@ class DepartmentRepository {
 
     suspend fun getDepartments(): List<Department> {
         return try {
-            // Lấy danh sách các đơn vị từ Firestore
             val snapshot = db.collection("department").get().await()
-
             snapshot.documents.map { doc ->
                 doc.toObject(Department::class.java) ?: Department()
             }
         } catch (e: Exception) {
-            emptyList() // Nếu có lỗi thì trả về danh sách trống
+            emptyList() // Trả về danh sách trống nếu có lỗi
         }
     }
 }

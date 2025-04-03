@@ -111,10 +111,10 @@ class HomeScreen: ComponentActivity() {
 
                 // Route cho Đơn vị
                 composable(
-                    route = "department_detail/{name}/{code}/{leader}/{email}/{phone}/{address}",
+                    route = "department_detail/{name}/{id}/{leader}/{email}/{phone}/{address}",
                     arguments = listOf(
                         navArgument("name") { type = NavType.StringType },
-                        navArgument("code") { type = NavType.StringType },
+                        navArgument("id") { type = NavType.StringType },
                         navArgument("leader") { type = NavType.StringType },
                         navArgument("email") { type = NavType.StringType },
                         navArgument("phone") { type = NavType.StringType },
@@ -126,7 +126,7 @@ class HomeScreen: ComponentActivity() {
                         navController = navController,
                         screenTitle = args.getString("screenTitle") ?: "đơn vị",
                         name = args.getString("name") ?: "",
-                        studentId = args.getString("code") ?: "",
+                        studentId = args.getString("id") ?: "",
                         className = args.getString("leader") ?: "",
                         email = args.getString("email") ?: "",
                         phone = args.getString("phone") ?: "",

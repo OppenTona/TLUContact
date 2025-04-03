@@ -19,9 +19,12 @@ class DepartmentViewModel(private val repository: DepartmentRepository) : ViewMo
 
     private fun fetchDepartments() {
         viewModelScope.launch {
-            val departmentList = repository.getDepartments()
-            _departments.value = departmentList
+            try {
+                val departmentList = repository.getDepartments()
+                _departments.value = departmentList
+            } catch (e: Exception) {
+                _departments.value = emptyList()
+            }
         }
     }
 }
-
