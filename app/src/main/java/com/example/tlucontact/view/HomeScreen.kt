@@ -47,10 +47,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.DpOffset
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.tlucontact.BottomNavigationBar
 import com.example.tlucontact.R
+import com.example.tlucontact.SearchBar
+import com.example.tlucontact.TopBar
 import com.example.tlucontact.data.model.Staff
+import com.example.tlucontact.data.model.Student
 import com.example.tlucontact.data.repository.SessionManager
 import com.example.tlucontact.viewmodel.StaffViewModel
+import com.example.tlucontact.viewmodel.StudentViewModel
 
 class HomeScreen: ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -111,10 +116,10 @@ class HomeScreen: ComponentActivity() {
 
                 // Route cho Đơn vị
                 composable(
-                    route = "department_detail/{name}/{id}/{leader}/{email}/{phone}/{address}",
+                    route = "department_detail/{name}/{code}/{leader}/{email}/{phone}/{address}",
                     arguments = listOf(
                         navArgument("name") { type = NavType.StringType },
-                        navArgument("id") { type = NavType.StringType },
+                        navArgument("code") { type = NavType.StringType },
                         navArgument("leader") { type = NavType.StringType },
                         navArgument("email") { type = NavType.StringType },
                         navArgument("phone") { type = NavType.StringType },
@@ -126,7 +131,7 @@ class HomeScreen: ComponentActivity() {
                         navController = navController,
                         screenTitle = args.getString("screenTitle") ?: "đơn vị",
                         name = args.getString("name") ?: "",
-                        studentId = args.getString("id") ?: "",
+                        studentId = args.getString("code") ?: "",
                         className = args.getString("leader") ?: "",
                         email = args.getString("email") ?: "",
                         phone = args.getString("phone") ?: "",
@@ -140,15 +145,20 @@ class HomeScreen: ComponentActivity() {
 
 // ========== UI ==========
 @Composable
-fun Directoryscreen(navController: NavController, viewModel: StaffViewModel = StaffViewModel()) {
+fun Directoryscreen(
+    navController: NavController,
+    staffViewModel: StaffViewModel = viewModel(),
+    studentViewModel: StudentViewModel = viewModel()
+) {
     val context = LocalContext.current
     var selectedTab by remember { mutableStateOf("Giảng viên") }
     var query by remember { mutableStateOf("") }
-    val staffs by viewModel.staffList.collectAsState()
+    val staffs by staffViewModel.staffList.collectAsState(initial = emptyList())
+    val students by studentViewModel.studentList.collectAsState(initial = emptyList())
 
     Scaffold(
         bottomBar = {
-            Bottomnavigationbar(selectedTab) { newTab ->
+            BottomNavigationBar(selectedTab) { newTab ->
                 selectedTab = newTab
             }
         }
@@ -163,7 +173,7 @@ fun Directoryscreen(navController: NavController, viewModel: StaffViewModel = St
                 title = "Danh bạ $selectedTab",
                 onLogoutClick = {
                     val sessionManager = SessionManager(context)
-                    sessionManager.clearSession()  // Thêm hàm này để xóa token hoặc trạng thái đăng nhập
+                    sessionManager.clearSession()
                     val intent = Intent(context, MainActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     context.startActivity(intent)
@@ -171,7 +181,7 @@ fun Directoryscreen(navController: NavController, viewModel: StaffViewModel = St
             )
 
             Spacer(Modifier.height(16.dp))
-            Searchbar(query = query, onQueryChange = { query = it })
+            SearchBar(query = query, onQueryChange = { query = it })
             Spacer(Modifier.height(8.dp))
 
             Row(
@@ -179,7 +189,7 @@ fun Directoryscreen(navController: NavController, viewModel: StaffViewModel = St
                 modifier = Modifier.padding(8.dp)
             ) {
                 Useravatar(navController)
-                Spacer(modifier = Modifier.width(8.dp)) // Khoảng cách giữa avatar và text
+                Spacer(modifier = Modifier.width(8.dp))
                 Column {
                     Text("Hồ sơ của bạn", fontSize = 14.sp, color = Color.Gray)
                     Text("Nguyễn Thị Mai Hương", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
@@ -190,10 +200,13 @@ fun Directoryscreen(navController: NavController, viewModel: StaffViewModel = St
 
             if (selectedTab == "Giảng viên") {
                 Stafflist(staffs = staffs, query = query, navController = navController)
+            } else if (selectedTab == "Sinh viên") {
+                Studentlist(students = students, query = query, navController = navController)
             }
         }
     }
 }
+
 
 @Composable
 fun Useravatar(navController: NavController) {
@@ -251,7 +264,6 @@ fun Staffitem(
     }
 }
 
-
 @Composable
 fun Stafflist(staffs: List<Staff>, query: String, navController: NavController) {
     val filteredStaffs = staffs.filter { it.name.contains(query, ignoreCase = true) }
@@ -270,37 +282,93 @@ fun Stafflist(staffs: List<Staff>, query: String, navController: NavController) 
         }
     }
 }
+
+@Composable
+fun Studentitem(
+    student: Student,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    navController: NavController
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                model = student.photoURL,
+                contentDescription = "Avatar",
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(Color.LightGray, CircleShape)
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Column {
+                Text(text = student.fullNameStudent, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Text(text = student.className, fontSize = 14.sp, color = Color.Gray)
+            }
+        }
+
+        if (isSelected) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Email: ${student.email}", fontSize = 14.sp)
+            Text("Số điện thoại: ${student.phone}", fontSize = 14.sp)
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        Divider(color = Color.LightGray.copy(alpha = 0.5f))
+    }
+}
+
+@Composable
+fun Studentlist(students: List<Student>, query: String, navController: NavController) {
+    val filteredStudents = students.filter { it.fullNameStudent.contains(query, ignoreCase = true) }
+
+    LazyColumn {
+        items(filteredStudents) { student ->
+            Studentitem(
+                student = student,
+                isSelected = false,
+                onClick = {
+                    navController.currentBackStackEntry?.savedStateHandle?.set("student", student)
+                    navController.navigate("student_detail/${student.fullNameStudent}/${student.studentID}/${student.className}/${student.email}/${student.phone}/${student.address}")
+                },
+                navController = navController
+            )
+        }
+    }
+}
+
 @Composable
 fun Topbar(
     title: String,
-    onLogoutClick: () -> Unit // Thêm tham số onLogoutClick
-
-
-
-
+    onLogoutClick: () -> Unit
 ) {
     Row(
         Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween, // Thay đổi thành SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        IconButton(onClick = onLogoutClick) { // Thêm IconButton đăng xuất
+        IconButton(onClick = onLogoutClick) {
             Icon(
                 imageVector = Icons.Default.Logout,
                 contentDescription = "Đăng xuất"
             )
         }
     }
-
-
 }
-
 
 @Composable
 fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    val dropdownOffset = DpOffset(0.dp, 10.dp) // Điều chỉnh vị trí
+    val dropdownOffset = DpOffset(0.dp, 10.dp)
 
     Box(
         modifier = Modifier
@@ -351,9 +419,9 @@ fun Bottomnavigationbar(selectedTab: String, onTabSelected: (String) -> Unit) {
         BottomNavigationItem(
             icon = {
                 Image(
-                    painter = painterResource(id = R.drawable.department_icon), // Ảnh Đơn vị
+                    painter = painterResource(id = R.drawable.department_icon),
                     contentDescription = "Đơn vị",
-                    modifier = Modifier.size(24.dp), // Thu nhỏ icon Đơn vị
+                    modifier = Modifier.size(24.dp),
                     colorFilter = ColorFilter.tint(
                         if (selectedTab == "Đơn vị") Color(0xFF007BFE) else Color.Black,
                         BlendMode.SrcIn
@@ -373,9 +441,9 @@ fun Bottomnavigationbar(selectedTab: String, onTabSelected: (String) -> Unit) {
         BottomNavigationItem(
             icon = {
                 Image(
-                    painter = painterResource(id = R.drawable.staff_icon), // Ảnh Giảng viên
+                    painter = painterResource(id = R.drawable.staff_icon),
                     contentDescription = "Giảng viên",
-                    modifier = Modifier.size(24.dp), // Thu nhỏ icon Đơn vị
+                    modifier = Modifier.size(24.dp),
                     colorFilter = ColorFilter.tint(
                         if (selectedTab == "Giảng viên") Color(0xFF007BFE) else Color.Black,
                         BlendMode.SrcIn
@@ -395,7 +463,7 @@ fun Bottomnavigationbar(selectedTab: String, onTabSelected: (String) -> Unit) {
         BottomNavigationItem(
             icon = {
                 Icon(
-                    imageVector = Icons.Default.School, // Biểu tượng Sinh viên
+                    imageVector = Icons.Default.School,
                     contentDescription = "Sinh viên",
                     tint = if (selectedTab == "Sinh viên") Color(0xFF007BFE) else Color.Black
                 )
@@ -418,4 +486,3 @@ fun PreviewScreen() {
     val navController = rememberNavController()
     Directoryscreen(navController = navController)
 }
-
