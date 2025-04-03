@@ -388,6 +388,39 @@ fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
         }
     }
 }
+// Danh sách Khoa
+val khoaList = listOf(
+    "Khoa Công trình",
+    "Khoa Kĩ thuật Tài nguyên Nước",
+    "Khoa Hóa & Môi trường",
+    "Khoa Cơ khí",
+    "Khoa Kinh tế và Quản lý",
+    "Khoa Công nghệ Thông tin",
+    "Khoa Lý luận Chính trị"
+)
+
+// Danh sách Viện
+val vienList = listOf(
+    "Viện Đào tạo và Khoa học ứng dụng miền Trung",
+    "Viện Đào tạo Quốc tế",
+    "Viện Đào tạo Sau đại học",
+)
+
+// Danh sách Trung tâm
+val trungTamList = listOf(
+    "Trung tâm Khoa học & Triển khai Kỹ thuật Thủy lợi",
+    "Trung tâm Nội trú",
+    "Thư viện"
+)
+
+// Danh sách Phòng
+val phongList = listOf(
+    "Trạm Y tế",
+    "Phòng Hợp tác Quốc tế",
+    "Phòng Khoa học và Công nghệ",
+    "Phòng Chính trị & Công tác Sinh viên"
+)
+
 @Composable
 fun Bottomnavigationbar(selectedTab: String, onTabSelected: (String) -> Unit) {
     BottomNavigation(backgroundColor = Color.White, contentColor = Color.Black) {
