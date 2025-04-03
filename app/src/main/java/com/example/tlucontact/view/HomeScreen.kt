@@ -46,11 +46,13 @@ import coil.compose.AsyncImage
 import com.example.tlucontact.R
 import com.example.tlucontact.data.model.Department
 import com.example.tlucontact.data.model.Staff
+import com.example.tlucontact.data.model.Student
 import com.example.tlucontact.data.repository.DepartmentRepository
 import com.example.tlucontact.data.repository.SessionManager
 import com.example.tlucontact.viewmodel.DepartmentViewModel
 import com.example.tlucontact.viewmodel.DepartmentViewModelFactory
 import com.example.tlucontact.viewmodel.StaffViewModel
+import com.example.tlucontact.viewmodel.StudentViewModel
 
 class HomeScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -139,12 +141,14 @@ class HomeScreen : ComponentActivity() {
 @Composable
 fun Directoryscreen(
     navController: NavController,
-    viewModel: StaffViewModel = StaffViewModel(),
+    staffViewModel: StaffViewModel = StaffViewModel(),
+    studentViewModel: StudentViewModel = StudentViewModel()
 ) {
     val context = LocalContext.current
     var selectedTab by remember { mutableStateOf("Giảng viên") }
     var query by remember { mutableStateOf("") }
-    val staffs by viewModel.staffList.collectAsState()
+    val staffs by staffViewModel.staffList.collectAsState()
+    val students by studentViewModel.studentList.collectAsState()
 
     val departmentRepository = DepartmentRepository()
     val departmentViewModel: DepartmentViewModel = viewModel(
@@ -198,11 +202,99 @@ fun Directoryscreen(
                 Stafflist(staffs = staffs, query = query, navController = navController)
             } else if (selectedTab == "Đơn vị") {
                 DepartmentList(departments = departments, query = query, navController = navController)
+            } else if (selectedTab == "Sinh viên") {
+                StudentList(students = students, query = query, navController = navController)
             }
         }
     }
 }
 
+@Composable
+fun StudentList(students: List<Student>, query: String, navController: NavController) {
+    var sortAscending by remember { mutableStateOf(true) }
+
+    val filteredStudents = students.filter { it.fullNameStudent.contains(query, ignoreCase = true) }
+    val sortedStudents = if (sortAscending) {
+        filteredStudents.sortedBy { it.fullNameStudent.lowercase() }
+    } else {
+        filteredStudents.sortedByDescending { it.fullNameStudent.lowercase() }
+    }
+
+    val groupedStudents = ('A'..'Z').associateWith { letter ->
+        sortedStudents.filter { it.fullNameStudent.firstOrNull()?.uppercaseChar() == letter }
+    }
+
+    LazyColumn {
+        groupedStudents.forEach { (letter, studentList) ->
+            item {
+                Text(
+                    text = letter.toString(),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Gray,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp, horizontal = 16.dp)
+                )
+            }
+
+            items(studentList) { student ->
+                StudentItem(
+                    student = student,
+                    isSelected = false,
+                    onClick = {
+                        navController.navigate("student_detail/${student.fullNameStudent}/${student.studentID}/${student.className}/${student.email}/${student.phone}/${student.address}")
+                    },
+                    navController = navController
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun StudentItem(
+    student: Student,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    navController: NavController
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                model = student.photoURL,
+                contentDescription = "Avatar",
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(Color.LightGray, CircleShape)
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Column {
+                Text(text = student.fullNameStudent, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Text(text = student.className, fontSize = 14.sp, color = Color.Gray)
+            }
+        }
+
+        if (isSelected) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Email: ${student.email}", fontSize = 14.sp)
+            Text("Số điện thoại: ${student.phone}", fontSize = 14.sp)
+            Text("Địa chỉ: ${student.address}", fontSize = 14.sp)
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        Divider(color = Color.LightGray.copy(alpha = 0.5f))
+    }
+}
 @Composable
 fun DepartmentList(departments: List<Department>, query: String, navController: NavController) {
     val filteredDepartments = departments.filter { it.name.contains(query, ignoreCase = true) }
