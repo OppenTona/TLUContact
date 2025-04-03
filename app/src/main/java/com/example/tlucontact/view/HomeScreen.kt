@@ -1,11 +1,14 @@
 package com.example.tlucontact.view
+
+import android.content.Intent
 import com.example.tlucontact.DetailScreen
 import com.example.tlucontact.MainActivity
-
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -13,50 +16,43 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
-import android.content.Intent
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Logout
-import androidx.compose.material.icons.filled.Message
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.School
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.DpOffset
-import androidx.compose.ui.unit.toSize
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.tlucontact.R
+import com.example.tlucontact.data.model.Department
 import com.example.tlucontact.data.model.Staff
+import com.example.tlucontact.data.repository.DepartmentRepository
 import com.example.tlucontact.data.repository.SessionManager
+import com.example.tlucontact.viewmodel.DepartmentViewModel
+import com.example.tlucontact.viewmodel.DepartmentViewModelFactory
 import com.example.tlucontact.viewmodel.StaffViewModel
 
-class HomeScreen: ComponentActivity() {
+class HomeScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -66,10 +62,9 @@ class HomeScreen: ComponentActivity() {
                 navController = navController,
                 startDestination = "directory"
             ) {
-                // Thêm route cho UpdateDetailScreen
                 composable(route = "update_detail") {
                     UpdateDetailScreen(
-                        onBack = { navController.popBackStack() },  // Quay lại màn hình trước
+                        onBack = { navController.popBackStack() },
                         onSave = { /* Xử lý lưu thông tin */ }
                     )
                 }
@@ -78,7 +73,6 @@ class HomeScreen: ComponentActivity() {
                     Directoryscreen(navController = navController)
                 }
 
-                // Route cho Sinh viên
                 composable(
                     route = "student_detail/{name}/{studentId}/{className}/{email}/{phone}/{address}",
                     arguments = listOf(
@@ -103,9 +97,10 @@ class HomeScreen: ComponentActivity() {
                     )
                 }
 
-                // Route cho Giảng viên
                 composable(route = "DetailContactScreen") {
-                    val staff = navController.previousBackStackEntry?.savedStateHandle?.get<Staff>("staff")?:Staff("","","","")
+                    val staff =
+                        navController.previousBackStackEntry?.savedStateHandle?.get<Staff>("staff")
+                            ?: Staff("", "", "", "")
 
                     DetailContactScreen(
                         staff = staff,
@@ -113,12 +108,11 @@ class HomeScreen: ComponentActivity() {
                     )
                 }
 
-                // Route cho Đơn vị
                 composable(
-                    route = "department_detail/{name}/{id}/{leader}/{email}/{phone}/{address}",
+                    route = "department_detail/{name}/{code}/{leader}/{email}/{phone}/{address}",
                     arguments = listOf(
                         navArgument("name") { type = NavType.StringType },
-                        navArgument("id") { type = NavType.StringType },
+                        navArgument("code") { type = NavType.StringType },
                         navArgument("leader") { type = NavType.StringType },
                         navArgument("email") { type = NavType.StringType },
                         navArgument("phone") { type = NavType.StringType },
@@ -130,7 +124,7 @@ class HomeScreen: ComponentActivity() {
                         navController = navController,
                         screenTitle = args.getString("screenTitle") ?: "đơn vị",
                         name = args.getString("name") ?: "",
-                        studentId = args.getString("id") ?: "",
+                        studentId = args.getString("code") ?: "",
                         className = args.getString("leader") ?: "",
                         email = args.getString("email") ?: "",
                         phone = args.getString("phone") ?: "",
@@ -142,13 +136,21 @@ class HomeScreen: ComponentActivity() {
     }
 }
 
-// ========== UI ==========
 @Composable
-fun Directoryscreen(navController: NavController, viewModel: StaffViewModel = StaffViewModel()) {
+fun Directoryscreen(
+    navController: NavController,
+    viewModel: StaffViewModel = StaffViewModel(),
+) {
     val context = LocalContext.current
     var selectedTab by remember { mutableStateOf("Giảng viên") }
     var query by remember { mutableStateOf("") }
     val staffs by viewModel.staffList.collectAsState()
+
+    val departmentRepository = DepartmentRepository()
+    val departmentViewModel: DepartmentViewModel = viewModel(
+        factory = DepartmentViewModelFactory(departmentRepository)
+    )
+    val departments by departmentViewModel.departmentList.collectAsState()
 
     Scaffold(
         bottomBar = {
@@ -167,7 +169,7 @@ fun Directoryscreen(navController: NavController, viewModel: StaffViewModel = St
                 title = "Danh bạ $selectedTab",
                 onLogoutClick = {
                     val sessionManager = SessionManager(context)
-                    sessionManager.clearSession()  // Thêm hàm này để xóa token hoặc trạng thái đăng nhập
+                    sessionManager.clearSession()
                     val intent = Intent(context, MainActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     context.startActivity(intent)
@@ -183,7 +185,7 @@ fun Directoryscreen(navController: NavController, viewModel: StaffViewModel = St
                 modifier = Modifier.padding(8.dp)
             ) {
                 Useravatar(navController)
-                Spacer(modifier = Modifier.width(8.dp)) // Khoảng cách giữa avatar và text
+                Spacer(modifier = Modifier.width(8.dp))
                 Column {
                     Text("Hồ sơ của bạn", fontSize = 14.sp, color = Color.Gray)
                     Text("Nguyễn Thị Mai Hương", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
@@ -194,8 +196,36 @@ fun Directoryscreen(navController: NavController, viewModel: StaffViewModel = St
 
             if (selectedTab == "Giảng viên") {
                 Stafflist(staffs = staffs, query = query, navController = navController)
+            } else if (selectedTab == "Đơn vị") {
+                DepartmentList(departments = departments, query = query, navController = navController)
             }
         }
+    }
+}
+
+@Composable
+fun DepartmentList(departments: List<Department>, query: String, navController: NavController) {
+    val filteredDepartments = departments.filter { it.name.contains(query, ignoreCase = true) }
+
+    LazyColumn {
+        items(filteredDepartments) { department ->
+            DepartmentItem(department = department, navController = navController)
+        }
+    }
+}
+
+@Composable
+fun DepartmentItem(department: Department, navController: NavController) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                navController.navigate("department_detail/${department.name}/${department.id}/${department.leader}/${department.email}/${department.phone}/${department.address}")
+            }
+            .padding(8.dp)
+    ) {
+        Text(text = department.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        Divider(color = Color.LightGray.copy(alpha = 0.5f))
     }
 }
 
@@ -255,7 +285,6 @@ fun Staffitem(
     }
 }
 
-
 @Composable
 fun Stafflist(staffs: List<Staff>, query: String, navController: NavController) {
     var sortAscending by remember { mutableStateOf(true) } // Trạng thái sắp xếp
@@ -300,43 +329,30 @@ fun Stafflist(staffs: List<Staff>, query: String, navController: NavController) 
     }
 }
 
-
-
 @Composable
 fun Topbar(
     title: String,
-    onLogoutClick: () -> Unit // Thêm tham số onLogoutClick
-
-
-
-
+    onLogoutClick: () -> Unit
 ) {
     Row(
         Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween, // Thay đổi thành SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        IconButton(onClick = onLogoutClick) { // Thêm IconButton đăng xuất
+        IconButton(onClick = onLogoutClick) {
             Icon(
-                imageVector = Icons.Default.Logout,
+                imageVector = Icons.AutoMirrored.Filled.Logout,
                 contentDescription = "Đăng xuất"
             )
         }
     }
-
-
 }
-
 
 @Composable
 fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    var filterExpanded by remember { mutableStateOf(false) }
     val dropdownOffset = DpOffset(0.dp, 10.dp)
-    val density = LocalDensity.current
-    var filterButtonPosition by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
-    var filterButtonSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
 
     Box(
         modifier = Modifier
@@ -357,7 +373,6 @@ fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
                 singleLine = true
             )
             Spacer(Modifier.width(8.dp))
-
             Box {
                 IconButton(onClick = { expanded = true }) {
                     Icon(
@@ -373,17 +388,12 @@ fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
                     DropdownMenuItem(onClick = { /* Xử lý sắp xếp */ }) {
                         Text("Sắp xếp")
                     }
-                    DropdownMenuItem(
-                        onClick = { filterExpanded = true },
-                        modifier = Modifier.onGloballyPositioned { coordinates ->
-                            filterButtonPosition = coordinates.positionInRoot()
-                            filterButtonSize = coordinates.size.toSize()
-                        }
-                    ) {
+                    DropdownMenuItem(onClick = { /* Xử lý lọc */ }) {
                         Text("Lọc")
                     }
                 }
             }
+
 
             // Menu lọc, căn về bên phải và xuống dưới của nút lọc
             if (filterExpanded) {
@@ -413,18 +423,20 @@ fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
                     }
                 }
             }
+
         }
     }
 }
+
 @Composable
 fun Bottomnavigationbar(selectedTab: String, onTabSelected: (String) -> Unit) {
     BottomNavigation(backgroundColor = Color.White, contentColor = Color.Black) {
         BottomNavigationItem(
             icon = {
                 Image(
-                    painter = painterResource(id = R.drawable.department_icon), // Ảnh Đơn vị
+                    painter = painterResource(id = R.drawable.department_icon),
                     contentDescription = "Đơn vị",
-                    modifier = Modifier.size(24.dp), // Thu nhỏ icon Đơn vị
+                    modifier = Modifier.size(24.dp),
                     colorFilter = ColorFilter.tint(
                         if (selectedTab == "Đơn vị") Color(0xFF007BFE) else Color.Black,
                         BlendMode.SrcIn
@@ -444,9 +456,9 @@ fun Bottomnavigationbar(selectedTab: String, onTabSelected: (String) -> Unit) {
         BottomNavigationItem(
             icon = {
                 Image(
-                    painter = painterResource(id = R.drawable.staff_icon), // Ảnh Giảng viên
+                    painter = painterResource(id = R.drawable.staff_icon),
                     contentDescription = "Giảng viên",
-                    modifier = Modifier.size(24.dp), // Thu nhỏ icon Đơn vị
+                    modifier = Modifier.size(24.dp),
                     colorFilter = ColorFilter.tint(
                         if (selectedTab == "Giảng viên") Color(0xFF007BFE) else Color.Black,
                         BlendMode.SrcIn
@@ -466,7 +478,7 @@ fun Bottomnavigationbar(selectedTab: String, onTabSelected: (String) -> Unit) {
         BottomNavigationItem(
             icon = {
                 Icon(
-                    imageVector = Icons.Default.School, // Biểu tượng Sinh viên
+                    imageVector = Icons.Default.School,
                     contentDescription = "Sinh viên",
                     tint = if (selectedTab == "Sinh viên") Color(0xFF007BFE) else Color.Black
                 )
@@ -489,6 +501,7 @@ fun PreviewScreen() {
     val navController = rememberNavController()
     Directoryscreen(navController = navController)
 }
+
 // Danh sách Khoa
 val khoaList = listOf(
     "Khoa Công trình",
