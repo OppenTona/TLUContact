@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 
 class PreferenceHelper(context: Context) {
+
     private val sharedPreferences: SharedPreferences =
         context.getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
 
