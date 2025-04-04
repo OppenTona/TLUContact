@@ -281,6 +281,10 @@ fun StudentItem(
             Column {
                 Text(text = student.fullNameStudent, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 Text(text = student.className, fontSize = 14.sp, color = Color.Gray)
+                Divider(
+                    color = Color.LightGray.copy(alpha = 0.5f),
+                    modifier = Modifier.wrapContentWidth(Alignment.Start)
+                )
             }
         }
 
@@ -292,7 +296,7 @@ fun StudentItem(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        Divider(color = Color.LightGray.copy(alpha = 0.5f))
+//        Divider(color = Color.LightGray.copy(alpha = 0.5f))
     }
 }
 @Composable
@@ -363,6 +367,10 @@ fun Staffitem(
             Column {
                 Text(text = staff.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 Text(text = staff.position, fontSize = 14.sp, color = Color.Gray)
+                Divider(
+                    color = Color.LightGray.copy(alpha = 0.5f),
+                    modifier = Modifier.wrapContentWidth(Alignment.Start)
+                )
             }
         }
 
@@ -373,7 +381,7 @@ fun Staffitem(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        Divider(color = Color.LightGray.copy(alpha = 0.5f))
+//        Divider(color = Color.LightGray.copy(alpha = 0.5f))
     }
 }
 
