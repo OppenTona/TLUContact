@@ -1,9 +1,11 @@
 package com.example.tlucontact.view
 
 import android.content.Intent
+import android.net.Uri
 import com.example.tlucontact.DetailScreen
 import com.example.tlucontact.MainActivity
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -25,6 +27,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -43,6 +46,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
 import com.example.tlucontact.R
 import com.example.tlucontact.data.model.Department
 import com.example.tlucontact.data.model.Staff
@@ -111,26 +115,30 @@ class HomeScreen : ComponentActivity() {
                 }
 
                 composable(
-                    route = "department_detail/{name}/{code}/{leader}/{email}/{phone}/{address}",
+                    route = "department_detail/{name}/{id}/{leader}/{email}/{phone}/{address}?screenTitle={screenTitle}",
                     arguments = listOf(
                         navArgument("name") { type = NavType.StringType },
-                        navArgument("code") { type = NavType.StringType },
+                        navArgument("id") { type = NavType.StringType },
                         navArgument("leader") { type = NavType.StringType },
                         navArgument("email") { type = NavType.StringType },
                         navArgument("phone") { type = NavType.StringType },
-                        navArgument("address") { type = NavType.StringType }
+                        navArgument("address") { type = NavType.StringType },
+                        navArgument("screenTitle") { type = NavType.StringType }
                     )
                 ) { backStackEntry ->
                     val args = backStackEntry.arguments!!
-                    DetailScreen(
-                        navController = navController,
-                        screenTitle = args.getString("screenTitle") ?: "đơn vị",
-                        name = args.getString("name") ?: "",
-                        studentId = args.getString("code") ?: "",
-                        className = args.getString("leader") ?: "",
-                        email = args.getString("email") ?: "",
-                        phone = args.getString("phone") ?: "",
-                        address = args.getString("address") ?: ""
+                    val department = Department(
+                        name = Uri.decode(args.getString("name") ?: ""),
+                        id = Uri.decode(args.getString("id") ?: ""),
+                        leader = Uri.decode(args.getString("leader") ?: ""),
+                        email = Uri.decode(args.getString("email") ?: ""),
+                        phone = Uri.decode(args.getString("phone") ?: ""),
+                        address = Uri.decode(args.getString("address") ?: "")
+                    )
+
+                    DepartmentDetailView(
+                        department = department,
+                        onBack = { navController.popBackStack() }
                     )
                 }
             }
@@ -281,10 +289,6 @@ fun StudentItem(
             Column {
                 Text(text = student.fullNameStudent, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 Text(text = student.className, fontSize = 14.sp, color = Color.Gray)
-                Divider(
-                    color = Color.LightGray.copy(alpha = 0.5f),
-                    modifier = Modifier.wrapContentWidth(Alignment.Start)
-                )
             }
         }
 
@@ -296,32 +300,75 @@ fun StudentItem(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-//        Divider(color = Color.LightGray.copy(alpha = 0.5f))
+        Divider(color = Color.LightGray.copy(alpha = 0.5f))
     }
 }
+
+
+
 @Composable
 fun DepartmentList(departments: List<Department>, query: String, navController: NavController) {
     val filteredDepartments = departments.filter { it.name.contains(query, ignoreCase = true) }
+    val groupedDepartments = filteredDepartments.groupBy { it.name.first().uppercaseChar() }
 
     LazyColumn {
-        items(filteredDepartments) { department ->
-            DepartmentItem(department = department, navController = navController)
+        ('A'..'Z').forEach { letter ->
+            if (groupedDepartments.containsKey(letter)) {
+                item {
+                    Text(
+                        text = letter.toString(),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
+
+                items(groupedDepartments[letter]!!) { department ->
+                    DepartmentItem(department = department, navController = navController)
+                }
+            }
         }
     }
 }
 
 @Composable
 fun DepartmentItem(department: Department, navController: NavController) {
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                navController.navigate("department_detail/${department.name}/${department.id}/${department.leader}/${department.email}/${department.phone}/${department.address}")
+                Log.d("Navigation", "Navigating to department_detail with: ${department.name}, ${department.id}, ${department.phone}")
+                navController.navigate(
+                    "department_detail/" +
+                            "${Uri.encode(department.name)}/" +
+                            "${Uri.encode(department.id)}/" +
+                            "${Uri.encode(department.leader)}/" +
+                            "${Uri.encode(department.email)}/" +
+                            "${Uri.encode(department.phone)}/" +
+                            "${Uri.encode(department.address)}?screenTitle=${Uri.encode(department.name)}"
+                )
             }
-            .padding(8.dp)
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically // Căn chỉnh theo chiều dọc
     ) {
-        Text(text = department.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-        Divider(color = Color.LightGray.copy(alpha = 0.5f))
+        Image(
+            painter = if (department.photoURL.isNullOrEmpty()) {
+                painterResource(id = R.drawable.thuyloi) // Ảnh mặc định nếu không có photoURL
+            } else {
+                rememberAsyncImagePainter(department.photoURL) // Tải ảnh từ URL
+            },
+            contentDescription = "Ảnh đại diện",
+            modifier = Modifier
+                .size(30.dp) // Kích thước ảnh
+                .clip(CircleShape) // Bo tròn ảnh
+        )
+
+        Spacer(modifier = Modifier.width(16.dp)) // Khoảng cách giữa ảnh và text
+
+        Column {
+            Text(text = department.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            Divider(color = Color.LightGray.copy(alpha = 0.5f))
+        }
     }
 }
 
@@ -367,10 +414,6 @@ fun Staffitem(
             Column {
                 Text(text = staff.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 Text(text = staff.position, fontSize = 14.sp, color = Color.Gray)
-                Divider(
-                    color = Color.LightGray.copy(alpha = 0.5f),
-                    modifier = Modifier.wrapContentWidth(Alignment.Start)
-                )
             }
         }
 
@@ -381,7 +424,7 @@ fun Staffitem(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-//        Divider(color = Color.LightGray.copy(alpha = 0.5f))
+        Divider(color = Color.LightGray.copy(alpha = 0.5f))
     }
 }
 
