@@ -5,7 +5,7 @@ import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.example.tlucontact.data.model.User
+import com.example.tlucontact.data.model.Guest
 import com.example.tlucontact.data.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,9 +25,9 @@ class SignupViewModel(application: Application, private val state: SavedStateHan
     var confirmPassword = state.getStateFlow("confirmPassword", "")
 
     fun signup() {
-        val user = User(email.value, phone.value)
+        val guest = Guest(email.value, phone.value,name.value)
         viewModelScope.launch {
-            repository.signup(user, password.value, confirmPassword.value) { success, error ->
+            repository.signup(guest, password.value, confirmPassword.value) { success, error ->
                 _signupState.value = Pair(success, error)
                 if (!success) {
                     Toast.makeText(getApplication(), "Signup Error: $error", Toast.LENGTH_SHORT).show()
