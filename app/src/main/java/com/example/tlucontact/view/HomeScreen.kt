@@ -91,15 +91,16 @@ class HomeScreen : ComponentActivity() {
                     )
                 ) { backStackEntry ->
                     val args = backStackEntry.arguments!!
-                    DetailScreen(
-                        navController = navController,
-                        screenTitle = args.getString("screenTitle") ?: "sinh viên",
-                        name = args.getString("name") ?: "",
-                        studentId = args.getString("studentId") ?: "",
-                        className = args.getString("className") ?: "",
-                        email = args.getString("email") ?: "",
-                        phone = args.getString("phone") ?: "",
-                        address = args.getString("address") ?: ""
+                    DetailStudentScreen(
+                        student = Student(
+                            fullNameStudent = args.getString("name") ?: "",
+                            studentID = args.getString("studentId") ?: "",
+                            className = args.getString("className") ?: "",
+                            email = args.getString("email") ?: "",
+                            phone = args.getString("phone") ?: "",
+                            address = args.getString("address") ?: ""
+                        ),
+                        onBack = { navController.popBackStack() }
                     )
                 }
 
