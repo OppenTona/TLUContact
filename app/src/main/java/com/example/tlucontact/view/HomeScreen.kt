@@ -228,24 +228,23 @@ fun StudentList(students: List<Student>, query: String, navController: NavContro
         filteredStudents.sortedByDescending { it.fullNameStudent.lowercase() }
     }
 
-    val groupedStudents = ('A'..'Z').associateWith { letter ->
-        sortedStudents.filter { it.fullNameStudent.firstOrNull()?.uppercaseChar() == letter }
-    }
+    val groupedStudents = sortedStudents.groupBy { it.fullNameStudent.firstOrNull()?.uppercaseChar() ?: '#' }
 
     LazyColumn {
         groupedStudents.forEach { (letter, studentList) ->
-            item {
-                Text(
-                    text = letter.toString(),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.Gray,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 6.dp, horizontal = 16.dp)
-                )
+            if (letter != '#') { // Chỉ hiển thị header nếu có sinh viên bắt đầu bằng chữ cái
+                item {
+                    Text(
+                        text = letter.toString(),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Gray,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp, horizontal = 16.dp)
+                    )
+                }
             }
-
             items(studentList) { student ->
                 StudentItem(
                     student = student,
@@ -289,6 +288,10 @@ fun StudentItem(
             Column {
                 Text(text = student.fullNameStudent, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 Text(text = student.className, fontSize = 14.sp, color = Color.Gray)
+                Divider(
+                    color = Color.LightGray.copy(alpha = 0.5f),
+                    modifier = Modifier.wrapContentWidth(Alignment.Start) // Giới hạn chiều rộng theo nội dung và căn trái
+                )
             }
         }
 
@@ -300,7 +303,7 @@ fun StudentItem(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        Divider(color = Color.LightGray.copy(alpha = 0.5f))
+//        Divider(color = Color.LightGray.copy(alpha = 0.5f))
     }
 }
 
@@ -415,6 +418,10 @@ fun Staffitem(
             Column {
                 Text(text = staff.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 Text(text = staff.position, fontSize = 14.sp, color = Color.Gray)
+                Divider(
+                    color = Color.LightGray.copy(alpha = 0.5f),
+                    modifier = Modifier.wrapContentWidth(Alignment.Start) // Giới hạn chiều rộng theo nội dung và căn trái
+                )
             }
         }
 
@@ -425,7 +432,7 @@ fun Staffitem(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        Divider(color = Color.LightGray.copy(alpha = 0.5f))
+//        Divider(color = Color.LightGray.copy(alpha = 0.5f))
     }
 }
 
