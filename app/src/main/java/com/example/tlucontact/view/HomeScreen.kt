@@ -317,9 +317,10 @@ fun DepartmentList(departments: List<Department>, query: String, navController: 
                 item {
                     Text(
                         text = letter.toString(),
-                        fontSize = 20.sp,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(8.dp)
+                        color = Color.Gray.copy(alpha = 0.6f), // Màu xám nhạt hơn
+                        modifier = Modifier.padding(5.dp)
                     )
                 }
 
