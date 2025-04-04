@@ -181,7 +181,7 @@ fun Directoryscreen(
             )
 
             Spacer(Modifier.height(16.dp))
-            Searchbar(query = query, onQueryChange = { query = it })
+            Searchbar(query = query, onQueryChange = { query = it }, selectedTab = selectedTab)
             Spacer(Modifier.height(8.dp))
 
             Row(
@@ -442,9 +442,11 @@ fun Topbar(
 }
 
 @Composable
-fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
+fun Searchbar(query: String, onQueryChange: (String) -> Unit, selectedTab: String) {
     var expanded by remember { mutableStateOf(false) }
+    var expandedFilter by remember { mutableStateOf(false) }
     val dropdownOffset = DpOffset(0.dp, 10.dp)
+    val filterMenuOffset = DpOffset((105).dp, 145.dp) // Điều chỉnh vị trí của menu lọc
 
     Box(
         modifier = Modifier
@@ -480,15 +482,51 @@ fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
                     DropdownMenuItem(onClick = { /* Xử lý sắp xếp */ }) {
                         Text("Sắp xếp")
                     }
-                    DropdownMenuItem(onClick = { /* Xử lý lọc */ }) {
+                    DropdownMenuItem(onClick = { expandedFilter = true}) {
                         Text("Lọc")
+                    }
+                    if (expandedFilter) { // Hiển thị menu lọc nếu expandedFilter là true
+                        DropdownMenu(
+                            expanded = expandedFilter,
+                            onDismissRequest = { expandedFilter = false },
+                            offset = filterMenuOffset // Sử dụng filterMenuOffset
+                        ) {
+                            when (selectedTab) {
+                                "Sinh viên" -> {
+                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo lớp */ }) {
+                                        Text("Theo Lớp")
+                                    }
+                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo tên */ }) {
+                                        Text("Theo Tên")
+                                    }
+                                }
+                                "Giảng viên" -> {
+                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo chức vụ */ }) {
+                                        Text("Theo Chức Vụ")
+                                    }
+                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo tên */ }) {
+                                        Text("Theo Tên")
+                                    }
+                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo đơn vị */ }) {
+                                        Text("Theo Đơn Vị")
+                                    }
+                                }
+                                "Đơn vị" -> {
+                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo khoa */ }) {
+                                        Text("Theo Khoa")
+                                    }
+                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo ngành */ }) {
+                                        Text("Theo Ngành")
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
     }
 }
-
 @Composable
 fun Bottomnavigationbar(selectedTab: String, onTabSelected: (String) -> Unit) {
     BottomNavigation(backgroundColor = Color.White, contentColor = Color.Black) {
