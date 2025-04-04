@@ -17,6 +17,8 @@ class SignupViewModel(application: Application, private val state: SavedStateHan
     private val _signupState = MutableStateFlow<Pair<Boolean, String?>>(Pair(false, null))
     val signupState = _signupState.asStateFlow()
 
+
+    var name = state.getStateFlow("name", "")
     var phone = state.getStateFlow("phone", "")
     var email = state.getStateFlow("email", "")
     var password = state.getStateFlow("password", "")
@@ -34,6 +36,10 @@ class SignupViewModel(application: Application, private val state: SavedStateHan
                 }
             }
         }
+    }
+
+    fun onNameChange(newName: String) {
+        state["name"] = newName
     }
 
     fun onPhoneChange(newPhone: String) {

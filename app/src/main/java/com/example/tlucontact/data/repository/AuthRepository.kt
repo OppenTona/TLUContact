@@ -96,7 +96,7 @@ class AuthRepository(private val context: Context) {
         val basicError = validateCredentials(email, password)
         if (basicError != null) return basicError
         if (password != confirmPassword) return "Mật khẩu không khớp"
-        //if (!(isValidSchoolEmail(email))) return "Email không hợp lệ. Vui lòng sử dụng email của trường."
+        if (isValidSchoolEmail(email)) return "Hãy đăng nhập bằng outlook."
         return null
     }
 

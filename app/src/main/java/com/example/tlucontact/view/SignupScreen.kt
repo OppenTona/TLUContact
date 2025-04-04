@@ -56,7 +56,7 @@ fun SignupScreen(navController: NavController, viewModel: SignupViewModel = view
         }
     } else {
         Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
+            modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(40.dp))
@@ -90,6 +90,7 @@ fun SignupForm(navController: NavController, viewModel: SignupViewModel) {
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
 
+    val name by viewModel.name.collectAsState()
     val phone by viewModel.phone.collectAsState()
     val email by viewModel.email.collectAsState()
     val password by viewModel.password.collectAsState()
@@ -106,6 +107,16 @@ fun SignupForm(navController: NavController, viewModel: SignupViewModel) {
     }
 
     Column {
+        TextField(
+            value = name,
+            onValueChange = { viewModel.onNameChange(it) },
+            label = { Text("Họ và tên") },
+            colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         TextField(
             value = phone,
             onValueChange = { viewModel.onPhoneChange(it) },
