@@ -71,7 +71,7 @@ fun DetailStudentScreen(student: Student, onBack: () -> Unit) {
             ) {
                 StudentActionButton(icon = Icons.Filled.Chat, label = "tin nhắn")
                 StudentActionButton(icon = Icons.Filled.Phone, label = "gọi")
-                ActionButton(icon = Icons.Filled.VideoCall, label = "gọi video")
+                StudentActionButton(icon = Icons.Filled.VideoCall, label = "gọi video")
                 StudentActionButton(icon = Icons.Filled.Email, label = "mail")
             }
 
