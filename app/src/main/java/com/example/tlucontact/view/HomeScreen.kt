@@ -156,6 +156,8 @@ fun Directoryscreen(
     val context = LocalContext.current
     var selectedTab by remember { mutableStateOf("Giảng viên") }
     var query by remember { mutableStateOf("") }
+    var isFilterActive by remember { mutableStateOf(false) } // Thêm trạng thái lọc
+    var selectedDepartment by remember { mutableStateOf("") } // Thêm trạng thái đơn vị đã chọn
     val staffs by staffViewModel.staffList.collectAsState()
     val students by studentViewModel.studentList.collectAsState()
 
@@ -190,7 +192,7 @@ fun Directoryscreen(
             )
 
             Spacer(Modifier.height(16.dp))
-            Searchbar(query = query, onQueryChange = { query = it }, selectedTab = selectedTab)
+            Searchbar(query = query, onQueryChange = { query = it }, selectedTab = selectedTab, onFilterClick = { isFilterActive = true })
             Spacer(Modifier.height(8.dp))
 
             Row(
@@ -208,7 +210,13 @@ fun Directoryscreen(
             Spacer(Modifier.height(16.dp))
 
             if (selectedTab == "Giảng viên") {
-                Stafflist(staffs = staffs, query = query, navController = navController)
+                Stafflist(
+                    staffs = staffs,
+                    query = query,
+                    navController = navController,
+                    isFilterActive = isFilterActive,
+                    selectedDepartment = selectedDepartment // Truyền giá trị của selectedDepartment
+                )
             } else if (selectedTab == "Đơn vị") {
                 DepartmentList(departments = departments, query = query, navController = navController)
             } else if (selectedTab == "Sinh viên") {
@@ -217,6 +225,7 @@ fun Directoryscreen(
         }
     }
 }
+
 
 @Composable
 fun StudentList(students: List<Student>, query: String, navController: NavController) {
@@ -402,27 +411,35 @@ fun Staffitem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(8.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Avatar tròn, nhỏ
             AsyncImage(
                 model = staff.avatarURL,
                 contentDescription = "Avatar",
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(36.dp)
+                    .clip(CircleShape)
                     .background(Color.LightGray, CircleShape)
             )
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
-            Column {
-                Text(text = staff.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                Text(text = staff.position, fontSize = 14.sp, color = Color.Gray)
-                Divider(
-                    color = Color.LightGray.copy(alpha = 0.5f),
-                    modifier = Modifier.wrapContentWidth(Alignment.Start) // Giới hạn chiều rộng theo nội dung và căn trái
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = staff.name,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = staff.position,
+                    fontSize = 14.sp,
+                    color = Color.Gray
                 )
             }
         }
@@ -434,53 +451,86 @@ fun Staffitem(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-//        Divider(color = Color.LightGray.copy(alpha = 0.5f))
+        // Divider dưới mỗi item
+        Divider(color = Color.LightGray.copy(alpha = 0.3f))
     }
 }
 
+
 @Composable
-fun Stafflist(staffs: List<Staff>, query: String, navController: NavController) {
+fun Stafflist(
+    staffs: List<Staff>,
+    query: String,
+    navController: NavController,
+    isFilterActive: Boolean,
+    selectedDepartment: String
+
+) {
     var sortAscending by remember { mutableStateOf(true) } // Trạng thái sắp xếp
 
-    val filteredStaffs = staffs.filter { it.name.contains(query, ignoreCase = true) }
+    val filteredStaffs = if (isFilterActive) {
+        staffs.filter {
+            it.name.contains(query, ignoreCase = true) &&
+                    it.department.contains(selectedDepartment, ignoreCase = true)
+        }
+    } else {
+        staffs.filter { it.name.contains(query, ignoreCase = true) }
+    }
+
     val sortedStaffs = if (sortAscending) {
         filteredStaffs.sortedBy { it.name.lowercase() } // A-Z
     } else {
         filteredStaffs.sortedByDescending { it.name.lowercase() } // Z-A
     }
 
-    val groupedStaffs = ('A'..'Z').associateWith { letter ->
+    val groupedStaffsByDepartment = sortedStaffs.groupBy { it.department }
+    val groupedStaffsByName = ('A'..'Z').associateWith { letter ->
         sortedStaffs.filter { it.name.firstOrNull()?.uppercaseChar() == letter }
     }
 
     LazyColumn {
-        groupedStaffs.forEach { (letter, staffList) ->
-            item {
-                Text(
-                    text = letter.toString(),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.Gray,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 6.dp, horizontal = 16.dp)
-                )
-            }
-
-            items(staffList) { staff ->
-                Staffitem(
-                    staff = staff,
-                    isSelected = false,
-                    onClick = {
+        if (isFilterActive) {
+            groupedStaffsByDepartment.forEach { (department, staffList) ->
+                item {
+                    Text(
+                        text = department,
+                        style = MaterialTheme.typography.h6,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+                    )
+                }
+                items(staffList) { staff ->
+                    Staffitem(staff = staff, isSelected = false, onClick = {
                         navController.currentBackStackEntry?.savedStateHandle?.set("staff", staff)
                         navController.navigate("DetailContactScreen")
-                    },
-                    navController = navController
-                )
+                    }, navController = navController)
+                }
+            }
+        } else {
+            groupedStaffsByName.forEach { (letter, staffList) ->
+                item {
+                    Text(
+                        text = letter.toString(),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Gray,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp, horizontal = 16.dp)
+                    )
+                }
+                items(staffList) { staff ->
+                    Staffitem(staff = staff, isSelected = false, onClick = {
+                        navController.currentBackStackEntry?.savedStateHandle?.set("staff", staff)
+                        navController.navigate("DetailContactScreen")
+                    }, navController = navController)
+                }
             }
         }
     }
 }
+
 
 @Composable
 fun Topbar(
@@ -503,7 +553,12 @@ fun Topbar(
 }
 
 @Composable
-fun Searchbar(query: String, onQueryChange: (String) -> Unit, selectedTab: String) {
+fun Searchbar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    selectedTab: String,
+    onFilterClick: () -> Unit // Đưa tham số này lên đây
+) {
     var expanded by remember { mutableStateOf(false) }
     var expandedFilter by remember { mutableStateOf(false) }
     val dropdownOffset = DpOffset(0.dp, 10.dp)
@@ -543,40 +598,41 @@ fun Searchbar(query: String, onQueryChange: (String) -> Unit, selectedTab: Strin
                     DropdownMenuItem(onClick = { /* Xử lý sắp xếp */ }) {
                         Text("Sắp xếp")
                     }
-                    DropdownMenuItem(onClick = { expandedFilter = true}) {
+                    DropdownMenuItem(onClick = { expandedFilter = true }) {
                         Text("Lọc")
                     }
-                    if (expandedFilter) { // Hiển thị menu lọc nếu expandedFilter là true
+                    if (expandedFilter) {
                         DropdownMenu(
                             expanded = expandedFilter,
                             onDismissRequest = { expandedFilter = false },
-                            offset = filterMenuOffset // Sử dụng filterMenuOffset
+                            offset = filterMenuOffset
                         ) {
                             when (selectedTab) {
                                 "Sinh viên" -> {
-                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo lớp */ }) {
+                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo lớp */ onFilterClick() }) {
                                         Text("Theo Lớp")
                                     }
-                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo tên */ }) {
+                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo tên */ onFilterClick() }) {
                                         Text("Theo Tên")
                                     }
                                 }
                                 "Giảng viên" -> {
-                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo chức vụ */ }) {
-                                        Text("Theo Chức Vụ")
-                                    }
-                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo tên */ }) {
-                                        Text("Theo Tên")
-                                    }
-                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo đơn vị */ }) {
-                                        Text("Theo Đơn Vị")
+                                    DropdownMenuItem(onClick = {
+                                        // Thực hiện hành động lọc (ví dụ: cập nhật selectedDepartment)
+                                        // Sau đó gọi onFilterClick để kích hoạt hiển thị đã lọc
+                                        // Ví dụ đơn giản:
+                                        // onQueryChange("") // Có thể bạn muốn lọc theo đơn vị cụ thể
+                                        // CẦN THÊM LOGIC CẬP NHẬT selectedDepartment Ở ĐÂY
+                                        onFilterClick()
+                                    }) {
+                                        Text("Theo Đơn vị")
                                     }
                                 }
                                 "Đơn vị" -> {
-                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo khoa */ }) {
+                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo khoa */ onFilterClick() }) {
                                         Text("Theo Khoa")
                                     }
-                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo ngành */ }) {
+                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo ngành */ onFilterClick() }) {
                                         Text("Theo Ngành")
                                     }
                                 }
@@ -588,6 +644,7 @@ fun Searchbar(query: String, onQueryChange: (String) -> Unit, selectedTab: Strin
         }
     }
 }
+
 @Composable
 fun Bottomnavigationbar(selectedTab: String, onTabSelected: (String) -> Unit) {
     BottomNavigation(backgroundColor = Color.White, contentColor = Color.Black) {
