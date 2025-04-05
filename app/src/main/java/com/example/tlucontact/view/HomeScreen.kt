@@ -613,7 +613,7 @@ fun Searchbar(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color.LightGray, CircleShape)
-            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .padding(horizontal = 5.dp, vertical = 2.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
