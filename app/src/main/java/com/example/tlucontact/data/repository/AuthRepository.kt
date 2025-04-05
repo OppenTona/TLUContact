@@ -7,10 +7,12 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.OAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.FirebaseFunctions
 
 class AuthRepository(private val context: Context) {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
+    private val functions = FirebaseFunctions.getInstance()
 
     fun login(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
         val trimmedEmail = email.trim()
@@ -200,6 +202,23 @@ class AuthRepository(private val context: Context) {
                 } else {
                     onResult(false, task.exception?.message)
                 }
+            }
+    }
+
+    fun setUserClassName(uid: String, className: String, onResult: (Boolean, String?) -> Unit) {
+        val data = hashMapOf(
+            "uid" to uid,
+            "className" to className
+        )
+
+        functions
+            .getHttpsCallable("setClassName")
+            .call(data)
+            .addOnSuccessListener { result ->
+                onResult(true, result.data.toString())
+            }
+            .addOnFailureListener { exception ->
+                onResult(false, exception.message)
             }
     }
 }

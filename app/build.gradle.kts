@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.implementation
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -126,6 +128,8 @@ dependencies {
     implementation ("org.apache.poi:poi:5.2.3")
     implementation ("org.apache.poi:poi-ooxml:5.2.3")
     implementation ("androidx.hilt:hilt-navigation-compose:1.0.0")
+
+    implementation ("com.google.firebase:firebase-functions:20.1.2")
 
 
 
