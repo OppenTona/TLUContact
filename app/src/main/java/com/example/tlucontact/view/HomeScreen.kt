@@ -28,13 +28,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavType
@@ -352,7 +356,11 @@ fun Topbar(
 @Composable
 fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
+    var filterExpanded by remember { mutableStateOf(false) }
     val dropdownOffset = DpOffset(0.dp, 10.dp)
+    val density = LocalDensity.current
+    var filterButtonPosition by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+    var filterButtonSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
 
     Box(
         modifier = Modifier
@@ -373,6 +381,7 @@ fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
                 singleLine = true
             )
             Spacer(Modifier.width(8.dp))
+
             Box {
                 IconButton(onClick = { expanded = true }) {
                     Icon(
@@ -388,12 +397,17 @@ fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
                     DropdownMenuItem(onClick = { /* Xử lý sắp xếp */ }) {
                         Text("Sắp xếp")
                     }
-                    DropdownMenuItem(onClick = { /* Xử lý lọc */ }) {
+                    DropdownMenuItem(
+                        onClick = { filterExpanded = true },
+                        modifier = Modifier.onGloballyPositioned { coordinates ->
+                            filterButtonPosition = coordinates.positionInRoot()
+                            filterButtonSize = coordinates.size.toSize()
+                        }
+                    ) {
                         Text("Lọc")
                     }
                 }
             }
-
 
             // Menu lọc, căn về bên phải và xuống dưới của nút lọc
             if (filterExpanded) {
@@ -409,7 +423,7 @@ fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
                     onDismissRequest = { filterExpanded = false },
                     offset = filterMenuOffset
                 ) {
-                    DropdownMenuItem(onClick = {/* Xử lý Lọc Khoa */ }) {
+                    DropdownMenuItem(onClick = { /* Xử lý Lọc Khoa */ }) {
                         Text("Khoa")
                     }
                     DropdownMenuItem(onClick = { /* Xử lý Lọc Viện */ }) {
@@ -423,7 +437,6 @@ fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
                     }
                 }
             }
-
         }
     }
 }
@@ -501,35 +514,4 @@ fun PreviewScreen() {
     val navController = rememberNavController()
     Directoryscreen(navController = navController)
 }
-
-// Danh sách Khoa
-val khoaList = listOf(
-    "Khoa Công trình",
-    "Khoa Kĩ thuật Tài nguyên Nước",
-    "Khoa Hóa & Môi trường",
-    "Khoa Cơ khí",
-    "Khoa Kinh tế và Quản lý",
-    "Khoa Công nghệ Thông tin",
-    "Khoa Lý luận Chính trị"
-)
-
-// Danh sách Viện
-val vienList = listOf(
-    "Viện Đào tạo và Khoa học ứng dụng miền Trung"
-)
-
-// Danh sách Trung tâm
-val trungTamList = listOf(
-    "Trung tâm Khoa học & Triển khai Kỹ thuật Thủy lợi",
-    "Trung tâm Nội trú",
-    "Thư viện"
-)
-
-// Danh sách Phòng
-val phongList = listOf(
-    "Trạm Y tế",
-    "Phòng Hợp tác Quốc tế",
-    "Phòng Khoa học và Công nghệ",
-    "Phòng Chính trị & Công tác Sinh viên"
-)
 
