@@ -14,6 +14,8 @@ class StudentViewModel : ViewModel() {
 
     private val _selectedStudent = MutableStateFlow<Student?>(null)
     val selectedStudent: StateFlow<Student?> = _selectedStudent
+    private val _filterMode = MutableStateFlow("ByName")  // "ByName" hoặc "ByClass"
+    val filterMode: StateFlow<String> = _filterMode
 
     init {
         try {
@@ -25,7 +27,11 @@ class StudentViewModel : ViewModel() {
         }
 
     }
-
+    // Cập nhật chế độ lọc (ByName hoặc ByClass)
+    fun setFilterMode(mode: String) {
+        _filterMode.value = mode
+        // Không cần lấy lại dữ liệu, chỉ thay đổi cách hiển thị trên UI
+    }
     private fun fetchStudents() {
 //        db.collection("student")
 //            .get()

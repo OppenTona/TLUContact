@@ -228,8 +228,14 @@ fun Directoryscreen(
 
 
 @Composable
-fun StudentList(students: List<Student>, query: String, navController: NavController) {
+fun StudentList(
+    students: List<Student>,
+    query: String,
+    navController: NavController,
+    studentViewModel: StudentViewModel = viewModel()
+) {
     var sortAscending by remember { mutableStateOf(true) }
+    val filterMode by studentViewModel.filterMode.collectAsState()
 
     val filteredStudents = students.filter { it.fullNameStudent.contains(query, ignoreCase = true) }
     val sortedStudents = if (sortAscending) {
@@ -238,37 +244,75 @@ fun StudentList(students: List<Student>, query: String, navController: NavContro
         filteredStudents.sortedByDescending { it.fullNameStudent.lowercase() }
     }
 
-    val groupedStudents = sortedStudents.groupBy { it.fullNameStudent.firstOrNull()?.uppercaseChar() ?: '#' }
+    Column {
+        if (filterMode == "ByClass") {
+            // Hiển thị danh sách sinh viên theo lớp
+            val groupedByClass = sortedStudents.groupBy { it.className }
 
+            LazyColumn {
+                groupedByClass.forEach { (className, studentList) ->
+                    // Hiển thị tên lớp làm header
+                    item {
+                        Text(
+                            text = className.ifEmpty { "Không có lớp" },
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Gray,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFFEAEAEA))
+                                .padding(vertical = 8.dp, horizontal = 16.dp)
+                        )
+                    }
 
-    LazyColumn {
-        groupedStudents.forEach { (letter, studentList) ->
-            if (letter != '#') { // Chỉ hiển thị header nếu có sinh viên bắt đầu bằng chữ cái
-                item {
-                    Text(
-                        text = letter.toString(),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.Gray,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 6.dp, horizontal = 16.dp)
-                    )
+                    // Hiển thị danh sách sinh viên thuộc lớp
+                    items(studentList) { student ->
+                        StudentItem(
+                            student = student,
+                            isSelected = false,
+                            onClick = {
+                                navController.navigate("student_detail/${student.fullNameStudent}/${student.studentID}/${student.className}/${student.email}/${student.phone}/${student.address}")
+                            },
+                            navController = navController
+                        )
+                    }
                 }
             }
-            items(studentList) { student ->
-                StudentItem(
-                    student = student,
-                    isSelected = false,
-                    onClick = {
-                        navController.navigate("student_detail/${student.fullNameStudent}/${student.studentID}/${student.className}/${student.email}/${student.phone}/${student.address}")
-                    },
-                    navController = navController
-                )
+        } else {
+            // Hiển thị dạng nhóm theo chữ cái đầu (giữ nguyên code cũ)
+            val groupedStudents = sortedStudents.groupBy { it.fullNameStudent.firstOrNull()?.uppercaseChar() ?: '#' }
+
+            LazyColumn {
+                groupedStudents.forEach { (letter, studentList) ->
+                    if (letter != '#') { // Chỉ hiển thị header nếu có sinh viên bắt đầu bằng chữ cái
+                        item {
+                            Text(
+                                text = letter.toString(),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.Gray,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 6.dp, horizontal = 16.dp)
+                            )
+                        }
+                    }
+                    items(studentList) { student ->
+                        StudentItem(
+                            student = student,
+                            isSelected = false,
+                            onClick = {
+                                navController.navigate("student_detail/${student.fullNameStudent}/${student.studentID}/${student.className}/${student.email}/${student.phone}/${student.address}")
+                            },
+                            navController = navController
+                        )
+                    }
+                }
             }
         }
     }
 }
+
 
 @Composable
 fun StudentItem(
@@ -557,7 +601,8 @@ fun Searchbar(
     query: String,
     onQueryChange: (String) -> Unit,
     selectedTab: String,
-    onFilterClick: () -> Unit // Đưa tham số này lên đây
+    onFilterClick: () -> Unit, // Đưa tham số này lên đây
+    studentViewModel: StudentViewModel = viewModel()
 ) {
     var expanded by remember { mutableStateOf(false) }
     var expandedFilter by remember { mutableStateOf(false) }
@@ -568,7 +613,7 @@ fun Searchbar(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color.LightGray, CircleShape)
-            .padding(horizontal = 5.dp, vertical = 2.dp)
+            .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -613,11 +658,23 @@ fun Searchbar(
                         ) {
                             when (selectedTab) {
                                 "Sinh viên" -> {
-                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo lớp */ onFilterClick() }) {
-                                        Text("Theo Lớp")
+                                    DropdownMenuItem(onClick = {
+                                        // Khi nhấn "Lọc Theo Lớp"
+                                        studentViewModel.setFilterMode("ByClass")
+                                        expanded = false
+                                        expandedFilter = false
+                                        onFilterClick()
+                                    }) {
+                                        Text("Lọc Theo Lớp")
                                     }
-                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo tên */ onFilterClick() }) {
-                                        Text("Theo Tên")
+                                    DropdownMenuItem(onClick = {
+                                        // Khi nhấn "Lọc Theo Tên"
+                                        studentViewModel.setFilterMode("ByName")
+                                        expanded = false
+                                        expandedFilter = false
+                                        onFilterClick()
+                                    }) {
+                                        Text("Lọc Theo Tên")
                                     }
                                 }
                                 "Giảng viên" -> {
