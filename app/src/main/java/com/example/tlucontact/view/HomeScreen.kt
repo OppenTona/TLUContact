@@ -1,9 +1,11 @@
 package com.example.tlucontact.view
 
 import android.content.Intent
+import android.net.Uri
 import com.example.tlucontact.DetailScreen
 import com.example.tlucontact.MainActivity
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -25,6 +27,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -43,14 +46,17 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
 import com.example.tlucontact.R
 import com.example.tlucontact.data.model.Department
 import com.example.tlucontact.data.model.Staff
+import com.example.tlucontact.data.model.Student
 import com.example.tlucontact.data.repository.DepartmentRepository
 import com.example.tlucontact.data.repository.SessionManager
 import com.example.tlucontact.viewmodel.DepartmentViewModel
 import com.example.tlucontact.viewmodel.DepartmentViewModelFactory
 import com.example.tlucontact.viewmodel.StaffViewModel
+import com.example.tlucontact.viewmodel.StudentViewModel
 
 class HomeScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,15 +91,16 @@ class HomeScreen : ComponentActivity() {
                     )
                 ) { backStackEntry ->
                     val args = backStackEntry.arguments!!
-                    DetailScreen(
-                        navController = navController,
-                        screenTitle = args.getString("screenTitle") ?: "sinh viên",
-                        name = args.getString("name") ?: "",
-                        studentId = args.getString("studentId") ?: "",
-                        className = args.getString("className") ?: "",
-                        email = args.getString("email") ?: "",
-                        phone = args.getString("phone") ?: "",
-                        address = args.getString("address") ?: ""
+                    DetailStudentScreen(
+                        student = Student(
+                            fullNameStudent = args.getString("name") ?: "",
+                            studentID = args.getString("studentId") ?: "",
+                            className = args.getString("className") ?: "",
+                            email = args.getString("email") ?: "",
+                            phone = args.getString("phone") ?: "",
+                            address = args.getString("address") ?: ""
+                        ),
+                        onBack = { navController.popBackStack() }
                     )
                 }
 
@@ -109,26 +116,30 @@ class HomeScreen : ComponentActivity() {
                 }
 
                 composable(
-                    route = "department_detail/{name}/{code}/{leader}/{email}/{phone}/{address}",
+                    route = "department_detail/{name}/{id}/{leader}/{email}/{phone}/{address}?screenTitle={screenTitle}",
                     arguments = listOf(
                         navArgument("name") { type = NavType.StringType },
-                        navArgument("code") { type = NavType.StringType },
+                        navArgument("id") { type = NavType.StringType },
                         navArgument("leader") { type = NavType.StringType },
                         navArgument("email") { type = NavType.StringType },
                         navArgument("phone") { type = NavType.StringType },
-                        navArgument("address") { type = NavType.StringType }
+                        navArgument("address") { type = NavType.StringType },
+                        navArgument("screenTitle") { type = NavType.StringType }
                     )
                 ) { backStackEntry ->
                     val args = backStackEntry.arguments!!
-                    DetailScreen(
-                        navController = navController,
-                        screenTitle = args.getString("screenTitle") ?: "đơn vị",
-                        name = args.getString("name") ?: "",
-                        studentId = args.getString("code") ?: "",
-                        className = args.getString("leader") ?: "",
-                        email = args.getString("email") ?: "",
-                        phone = args.getString("phone") ?: "",
-                        address = args.getString("address") ?: ""
+                    val department = Department(
+                        name = Uri.decode(args.getString("name") ?: ""),
+                        id = Uri.decode(args.getString("id") ?: ""),
+                        leader = Uri.decode(args.getString("leader") ?: ""),
+                        email = Uri.decode(args.getString("email") ?: ""),
+                        phone = Uri.decode(args.getString("phone") ?: ""),
+                        address = Uri.decode(args.getString("address") ?: "")
+                    )
+
+                    DepartmentDetailView(
+                        department = department,
+                        onBack = { navController.popBackStack() }
                     )
                 }
             }
@@ -139,12 +150,14 @@ class HomeScreen : ComponentActivity() {
 @Composable
 fun Directoryscreen(
     navController: NavController,
-    viewModel: StaffViewModel = StaffViewModel(),
+    staffViewModel: StaffViewModel = StaffViewModel(),
+    studentViewModel: StudentViewModel = StudentViewModel()
 ) {
     val context = LocalContext.current
     var selectedTab by remember { mutableStateOf("Giảng viên") }
     var query by remember { mutableStateOf("") }
-    val staffs by viewModel.staffList.collectAsState()
+    val staffs by staffViewModel.staffList.collectAsState()
+    val students by studentViewModel.studentList.collectAsState()
 
     val departmentRepository = DepartmentRepository()
     val departmentViewModel: DepartmentViewModel = viewModel(
@@ -177,7 +190,7 @@ fun Directoryscreen(
             )
 
             Spacer(Modifier.height(16.dp))
-            Searchbar(query = query, onQueryChange = { query = it })
+            Searchbar(query = query, onQueryChange = { query = it }, selectedTab = selectedTab)
             Spacer(Modifier.height(8.dp))
 
             Row(
@@ -198,34 +211,169 @@ fun Directoryscreen(
                 Stafflist(staffs = staffs, query = query, navController = navController)
             } else if (selectedTab == "Đơn vị") {
                 DepartmentList(departments = departments, query = query, navController = navController)
+            } else if (selectedTab == "Sinh viên") {
+                StudentList(students = students, query = query, navController = navController)
             }
         }
     }
 }
 
 @Composable
-fun DepartmentList(departments: List<Department>, query: String, navController: NavController) {
-    val filteredDepartments = departments.filter { it.name.contains(query, ignoreCase = true) }
+fun StudentList(students: List<Student>, query: String, navController: NavController) {
+    var sortAscending by remember { mutableStateOf(true) }
+
+    val filteredStudents = students.filter { it.fullNameStudent.contains(query, ignoreCase = true) }
+    val sortedStudents = if (sortAscending) {
+        filteredStudents.sortedBy { it.fullNameStudent.lowercase() }
+    } else {
+        filteredStudents.sortedByDescending { it.fullNameStudent.lowercase() }
+    }
+
+    val groupedStudents = sortedStudents.groupBy { it.fullNameStudent.firstOrNull()?.uppercaseChar() ?: '#' }
 
     LazyColumn {
-        items(filteredDepartments) { department ->
-            DepartmentItem(department = department, navController = navController)
+        groupedStudents.forEach { (letter, studentList) ->
+            if (letter != '#') { // Chỉ hiển thị header nếu có sinh viên bắt đầu bằng chữ cái
+                item {
+                    Text(
+                        text = letter.toString(),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Gray,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp, horizontal = 16.dp)
+                    )
+                }
+            }
+            items(studentList) { student ->
+                StudentItem(
+                    student = student,
+                    isSelected = false,
+                    onClick = {
+                        navController.navigate("student_detail/${student.fullNameStudent}/${student.studentID}/${student.className}/${student.email}/${student.phone}/${student.address}")
+                    },
+                    navController = navController
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun StudentItem(
+    student: Student,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    navController: NavController
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                model = student.photoURL,
+                contentDescription = "Avatar",
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(Color.LightGray, CircleShape)
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Column {
+                Text(text = student.fullNameStudent, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Text(text = student.className, fontSize = 14.sp, color = Color.Gray)
+                Divider(
+                    color = Color.LightGray.copy(alpha = 0.5f),
+                    modifier = Modifier.wrapContentWidth(Alignment.Start) // Giới hạn chiều rộng theo nội dung và căn trái
+                )
+            }
+        }
+
+        if (isSelected) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Email: ${student.email}", fontSize = 14.sp)
+            Text("Số điện thoại: ${student.phone}", fontSize = 14.sp)
+            Text("Địa chỉ: ${student.address}", fontSize = 14.sp)
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+//        Divider(color = Color.LightGray.copy(alpha = 0.5f))
+    }
+}
+
+
+
+@Composable
+fun DepartmentList(departments: List<Department>, query: String, navController: NavController) {
+    val filteredDepartments = departments.filter { it.name.contains(query, ignoreCase = true) }
+    val groupedDepartments = filteredDepartments.groupBy { it.name.first().uppercaseChar() }
+
+    LazyColumn {
+        ('A'..'Z').forEach { letter ->
+            if (groupedDepartments.containsKey(letter)) {
+                item {
+                    Text(
+                        text = letter.toString(),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Gray.copy(alpha = 0.6f), // Màu xám nhạt hơn
+                        modifier = Modifier.padding(5.dp)
+                    )
+                }
+
+                items(groupedDepartments[letter]!!) { department ->
+                    DepartmentItem(department = department, navController = navController)
+                }
+            }
         }
     }
 }
 
 @Composable
 fun DepartmentItem(department: Department, navController: NavController) {
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                navController.navigate("department_detail/${department.name}/${department.id}/${department.leader}/${department.email}/${department.phone}/${department.address}")
+                Log.d("Navigation", "Navigating to department_detail with: ${department.name}, ${department.id}, ${department.phone}")
+                navController.navigate(
+                    "department_detail/" +
+                            "${Uri.encode(department.name)}/" +
+                            "${Uri.encode(department.id)}/" +
+                            "${Uri.encode(department.leader)}/" +
+                            "${Uri.encode(department.email)}/" +
+                            "${Uri.encode(department.phone)}/" +
+                            "${Uri.encode(department.address)}?screenTitle=${Uri.encode(department.name)}"
+                )
             }
-            .padding(8.dp)
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically // Căn chỉnh theo chiều dọc
     ) {
-        Text(text = department.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-        Divider(color = Color.LightGray.copy(alpha = 0.5f))
+        Image(
+            painter = if (department.photoURL.isNullOrEmpty()) {
+                painterResource(id = R.drawable.thuyloi) // Ảnh mặc định nếu không có photoURL
+            } else {
+                rememberAsyncImagePainter(department.photoURL) // Tải ảnh từ URL
+            },
+            contentDescription = "Ảnh đại diện",
+            modifier = Modifier
+                .size(30.dp) // Kích thước ảnh
+                .clip(CircleShape) // Bo tròn ảnh
+        )
+
+        Spacer(modifier = Modifier.width(16.dp)) // Khoảng cách giữa ảnh và text
+
+        Column {
+            Text(text = department.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            Divider(color = Color.LightGray.copy(alpha = 0.5f))
+        }
     }
 }
 
@@ -253,24 +401,36 @@ fun Staffitem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(8.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Avatar tròn, nhỏ
             AsyncImage(
                 model = staff.avatarURL,
                 contentDescription = "Avatar",
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(36.dp)
+                    .clip(CircleShape)
                     .background(Color.LightGray, CircleShape)
             )
 
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
-            Column {
-                Text(text = staff.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                Text(text = staff.position, fontSize = 14.sp, color = Color.Gray)
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = staff.name,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = staff.position,
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
             }
         }
 
@@ -281,9 +441,11 @@ fun Staffitem(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        Divider(color = Color.LightGray.copy(alpha = 0.5f))
+        // Divider dưới mỗi item
+        Divider(color = Color.LightGray.copy(alpha = 0.3f))
     }
 }
+
 
 @Composable
 fun Stafflist(staffs: List<Staff>, query: String, navController: NavController) {
@@ -350,9 +512,11 @@ fun Topbar(
 }
 
 @Composable
-fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
+fun Searchbar(query: String, onQueryChange: (String) -> Unit, selectedTab: String) {
     var expanded by remember { mutableStateOf(false) }
+    var expandedFilter by remember { mutableStateOf(false) }
     val dropdownOffset = DpOffset(0.dp, 10.dp)
+    val filterMenuOffset = DpOffset((105).dp, 145.dp) // Điều chỉnh vị trí của menu lọc
 
     Box(
         modifier = Modifier
@@ -388,15 +552,45 @@ fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
                     DropdownMenuItem(onClick = { /* Xử lý sắp xếp */ }) {
                         Text("Sắp xếp")
                     }
-                    DropdownMenuItem(onClick = { /* Xử lý lọc */ }) {
+                    DropdownMenuItem(onClick = { expandedFilter = true}) {
                         Text("Lọc")
+                    }
+                    if (expandedFilter) { // Hiển thị menu lọc nếu expandedFilter là true
+                        DropdownMenu(
+                            expanded = expandedFilter,
+                            onDismissRequest = { expandedFilter = false },
+                            offset = filterMenuOffset // Sử dụng filterMenuOffset
+                        ) {
+                            when (selectedTab) {
+                                "Sinh viên" -> {
+                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo lớp */ }) {
+                                        Text("Theo Lớp")
+                                    }
+                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo tên */ }) {
+                                        Text("Theo Tên")
+                                    }
+                                }
+                                "Giảng viên" -> {
+                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo tên */ }) {
+                                        Text("Theo Đơn vị")
+                                    }
+                                }
+                                "Đơn vị" -> {
+                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo khoa */ }) {
+                                        Text("Theo Khoa")
+                                    }
+                                    DropdownMenuItem(onClick = { /* Xử lý lọc theo ngành */ }) {
+                                        Text("Theo Ngành")
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
     }
 }
-
 @Composable
 fun Bottomnavigationbar(selectedTab: String, onTabSelected: (String) -> Unit) {
     BottomNavigation(backgroundColor = Color.White, contentColor = Color.Black) {
