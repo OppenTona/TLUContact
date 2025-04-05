@@ -561,20 +561,24 @@ fun Searchbar(
 ) {
     var expanded by remember { mutableStateOf(false) }
     var expandedFilter by remember { mutableStateOf(false) }
-    val dropdownOffset = DpOffset(0.dp, 10.dp)
-    val filterMenuOffset = DpOffset((105).dp, 145.dp) // Điều chỉnh vị trí của menu lọc
+    val dropdownOffset = DpOffset(0.dp, 15.dp)
+    val filterMenuOffset = DpOffset((160).dp, 165.dp) // Điều chỉnh vị trí của menu lọc
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color.LightGray, CircleShape)
-            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .padding(horizontal = 5.dp, vertical = 2.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.Search, contentDescription = null)
+            Icon(
+                Icons.Default.Search,
+                contentDescription = null,
+                modifier = Modifier.size(30.dp).padding(start = 10.dp) // Thêm padding bên trái
+            )
             Spacer(Modifier.width(8.dp))
             BasicTextField(
                 value = query,
