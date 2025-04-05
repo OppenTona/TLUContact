@@ -28,17 +28,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.unit.toSize
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavType
@@ -356,11 +352,7 @@ fun Topbar(
 @Composable
 fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    var filterExpanded by remember { mutableStateOf(false) }
     val dropdownOffset = DpOffset(0.dp, 10.dp)
-    val density = LocalDensity.current
-    var filterButtonPosition by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
-    var filterButtonSize by remember { mutableStateOf(androidx.compose.ui.geometry.Size.Zero) }
 
     Box(
         modifier = Modifier
@@ -381,7 +373,6 @@ fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
                 singleLine = true
             )
             Spacer(Modifier.width(8.dp))
-
             Box {
                 IconButton(onClick = { expanded = true }) {
                     Icon(
@@ -397,43 +388,8 @@ fun Searchbar(query: String, onQueryChange: (String) -> Unit) {
                     DropdownMenuItem(onClick = { /* Xử lý sắp xếp */ }) {
                         Text("Sắp xếp")
                     }
-                    DropdownMenuItem(
-                        onClick = { filterExpanded = true },
-                        modifier = Modifier.onGloballyPositioned { coordinates ->
-                            filterButtonPosition = coordinates.positionInRoot()
-                            filterButtonSize = coordinates.size.toSize()
-                        }
-                    ) {
+                    DropdownMenuItem(onClick = { /* Xử lý lọc */ }) {
                         Text("Lọc")
-                    }
-                }
-            }
-
-            // Menu lọc, căn về bên phải và xuống dưới của nút lọc
-            if (filterExpanded) {
-                val filterMenuOffset = with(density) {
-                    DpOffset(
-                        filterButtonPosition.x.toDp() + filterButtonSize.width.toDp(),
-                        filterButtonPosition.y.toDp() + filterButtonSize.height.toDp() // Dịch xuống dưới
-                    )
-                }
-
-                DropdownMenu(
-                    expanded = filterExpanded,
-                    onDismissRequest = { filterExpanded = false },
-                    offset = filterMenuOffset
-                ) {
-                    DropdownMenuItem(onClick = { /* Xử lý Lọc Khoa */ }) {
-                        Text("Khoa")
-                    }
-                    DropdownMenuItem(onClick = { /* Xử lý Lọc Viện */ }) {
-                        Text("Viện")
-                    }
-                    DropdownMenuItem(onClick = { /* Xử lý Lọc Phòng */ }) {
-                        Text("Phòng")
-                    }
-                    DropdownMenuItem(onClick = { /* Xử lý Lọc Trung tâm */ }) {
-                        Text("Trung tâm")
                     }
                 }
             }
@@ -514,4 +470,3 @@ fun PreviewScreen() {
     val navController = rememberNavController()
     Directoryscreen(navController = navController)
 }
-

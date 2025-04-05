@@ -16,22 +16,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.tlucontact.R // Nhập R để truy cập tài nguyên drawable
-import com.example.tlucontact.data.model.Department
+import coil.compose.rememberAsyncImagePainter
+import com.example.tlucontact.data.model.Student
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DepartmentDetailView(department: Department, onBack: () -> Unit) {
+fun DetailStudentScreen(student: Student, onBack: () -> Unit) {
     val scrollState = rememberScrollState()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Thông tin đơn vị", color = Color.Black) },
+                title = { Text("Thông tin sinh viên", color = Color.Black) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Quay lại", tint = Color.Black)
@@ -51,16 +51,17 @@ fun DepartmentDetailView(department: Department, onBack: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
-                painter = painterResource(id = R.drawable.thuyloi), // Sử dụng painterResource
-                contentDescription = "Ảnh đơn vị",
+                painter = rememberAsyncImagePainter(student.photoURL.ifEmpty { "https://i.pravatar.cc/150?u=${student.email}" }),
+                contentDescription = "Avatar",
                 modifier = Modifier
                     .size(100.dp)
-                    .clip(CircleShape)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(text = department.name, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+            Text(text = student.fullNameStudent, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.Black)
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -68,27 +69,25 @@ fun DepartmentDetailView(department: Department, onBack: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                DepartmentActionButton(icon = Icons.Filled.Chat, label = "tin nhắn")
-                DepartmentActionButton(icon = Icons.Filled.Phone, label = "gọi")
-                DepartmentActionButton(icon = Icons.Filled.VideoCall, label = "gọi video")
-                DepartmentActionButton(icon = Icons.Filled.Email, label = "mail")
+                StudentActionButton(icon = Icons.Filled.Chat, label = "tin nhắn")
+                StudentActionButton(icon = Icons.Filled.Phone, label = "gọi")
+                ActionButton(icon = Icons.Filled.VideoCall, label = "gọi video")
+                StudentActionButton(icon = Icons.Filled.Email, label = "mail")
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            DepartmentInfoField(label = "Tên đơn vị", value = department.name)
-            DepartmentInfoField(label = "Mã đơn vị", value = department.id)
-            DepartmentInfoField(label = "Trưởng đơn vị", value = department.leader)
-            DepartmentInfoField(label = "Email", value = department.email)
-            DepartmentInfoField(label = "Số điện thoại", value = department.phone)
-            DepartmentInfoField(label = "Địa chỉ", value = department.address)
-            DepartmentInfoField(label = "Ghi chú", value = "-")
+            StudentInfoField(label = "Mã sinh viên", value = student.studentID)
+            StudentInfoField(label = "Lớp", value = student.className)
+            StudentInfoField(label = "Địa chỉ", value = student.address)
+            StudentInfoField(label = "Số điện thoại", value = student.phone)
+            StudentInfoField(label = "Email", value = student.email)
         }
     }
 }
 
 @Composable
-fun DepartmentActionButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String) {
+fun StudentActionButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         IconButton(onClick = { /* Xử lý sự kiện */ }) {
             Icon(icon, contentDescription = label, tint = Color(0xFF007AFF))
@@ -104,7 +103,7 @@ fun DepartmentActionButton(icon: androidx.compose.ui.graphics.vector.ImageVector
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DepartmentInfoField(label: String, value: String) {
+fun StudentInfoField(label: String, value: String) {
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         OutlinedTextField(
             value = value,

@@ -46,7 +46,7 @@ fun LoginScreen(navController: NavController) {
     LaunchedEffect(loginState) {
         if (loginState.first) {
             Toast.makeText(context, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show()
-            context.startActivity(Intent(context, HomeScreen::class.java))
+            navController.navigate("Home screen")
         } else if (loginState.second != null) {
             Toast.makeText(context, "Lỗi: ${loginState.second}", Toast.LENGTH_SHORT).show()
         }

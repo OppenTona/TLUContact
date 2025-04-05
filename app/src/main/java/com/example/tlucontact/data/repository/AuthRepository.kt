@@ -2,7 +2,7 @@ package com.example.tlucontact.data.repository
 
 import android.app.Activity
 import android.content.Context
-import com.example.tlucontact.data.model.User
+import com.example.tlucontact.data.model.Guest
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.OAuthProvider
@@ -50,8 +50,8 @@ class AuthRepository(private val context: Context) {
             }
     }
 
-    fun signup(user: User, password: String, confirmPassword: String, onResult: (Boolean, String?) -> Unit) {
-        val email = user.email.trim()
+    fun signup(guest: Guest, password: String, confirmPassword: String, onResult: (Boolean, String?) -> Unit) {
+        val email = guest.email.trim()
 
         val error = validateSignupInput(email, password, confirmPassword)
         if (error != null) {
@@ -64,7 +64,7 @@ class AuthRepository(private val context: Context) {
                 if (task.isSuccessful) {
                     val firebaseUser = auth.currentUser
                     firebaseUser?.let { fbUser ->
-                        saveUserData(fbUser.uid, user) { success, saveError ->
+                        saveUserData(fbUser.uid, guest) { success, saveError ->
                             if (success) {
                                 sendEmailVerification(fbUser) { emailSuccess, emailError ->
                                     onResult(emailSuccess, emailError)
@@ -96,20 +96,20 @@ class AuthRepository(private val context: Context) {
         val basicError = validateCredentials(email, password)
         if (basicError != null) return basicError
         if (password != confirmPassword) return "Mật khẩu không khớp"
-        //if (!(isValidSchoolEmail(email))) return "Email không hợp lệ. Vui lòng sử dụng email của trường."
+        if (isValidSchoolEmail(email)) return "Hãy đăng nhập bằng outlook."
         return null
     }
 
-    private fun saveUserData(uid: String, user: User, onResult: (Boolean, String?) -> Unit) {
-        val userType = if (user.email.endsWith("@tlu.edu.vn")) "lecturer" else "student"
+    private fun saveUserData(uid: String, guest: Guest, onResult: (Boolean, String?) -> Unit) {
+        val userType = "guest"
         val userData = hashMapOf(
-            "uid" to uid,
-            "email" to user.email,
-            "phone" to user.phone,
+            "name" to guest.name,
+            "email" to guest.email,
+            "phone" to guest.phone,
             "userType" to userType
         )
 
-        firestore.collection("users").document(uid).set(userData)
+        firestore.collection("guests").document(uid).set(userData)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     onResult(true, null)
