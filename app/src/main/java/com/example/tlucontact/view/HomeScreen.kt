@@ -234,7 +234,8 @@ fun StudentList(
     navController: NavController,
     studentViewModel: StudentViewModel = viewModel()
 ) {
-    var sortAscending by remember { mutableStateOf(true) }
+    // Sử dụng trạng thái sắp xếp từ ViewModel thay vì biến local
+    val sortAscending by studentViewModel.sortAscending.collectAsState()
     val filterMode by studentViewModel.filterMode.collectAsState()
 
     val filteredStudents = students.filter { it.fullNameStudent.contains(query, ignoreCase = true) }
@@ -609,6 +610,13 @@ fun Searchbar(
     val dropdownOffset = DpOffset(0.dp, 15.dp)
     val filterMenuOffset = DpOffset((160).dp, 165.dp) // Điều chỉnh vị trí của menu lọc
 
+    // Lấy trạng thái sắp xếp hiện tại
+    val studentSortAscending by studentViewModel.sortAscending.collectAsState()
+    // Xác định trạng thái sắp xếp dựa trên tab đang chọn
+    val currentSortAscending = when (selectedTab) {
+        "Sinh viên" -> studentSortAscending
+        else -> true
+    }
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -644,8 +652,14 @@ fun Searchbar(
                     onDismissRequest = { expanded = false },
                     offset = dropdownOffset
                 ) {
-                    DropdownMenuItem(onClick = { /* Xử lý sắp xếp */ }) {
-                        Text("Sắp xếp")
+                    DropdownMenuItem(onClick = {
+                        // Xử lý sắp xếp dựa trên tab đang chọn
+                        when (selectedTab) {
+                            "Sinh viên" -> studentViewModel.toggleSortOrder()
+                        }
+                        expanded = false
+                    }) {
+                        Text(if (currentSortAscending) "Sắp xếp Z-A" else "Sắp xếp A-Z")
                     }
                     DropdownMenuItem(onClick = { expandedFilter = true }) {
                         Text("Lọc")
