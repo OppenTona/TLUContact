@@ -44,7 +44,7 @@ class StudentViewModel : ViewModel() {
             .addOnSuccessListener { result ->
                 val studentItems = result.map { doc ->
                     Student(
-                        studentID = doc.id,
+                        studentID = doc.getString("studentID") ?: "",
                         fullNameStudent = doc.getString("fullNameStudent") ?: "Không có tên",
                         photoURL = doc.getString("photoURL") ?: "",
                         email = doc.getString("email") ?: "",
