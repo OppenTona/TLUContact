@@ -33,7 +33,7 @@ class DepartmentRepository {
         val result = db.collection("department").get().await()
         return result.map { doc ->
             Department(
-                id = doc.id,
+                id = doc.getString ("id") ?: "",
                 name = doc.getString("name") ?: "Không có tên",
                 leader = doc.getString("leader") ?: "",
                 email = doc.getString("email") ?: "",

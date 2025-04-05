@@ -18,6 +18,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.tlucontact.R // Nhập R để truy cập tài nguyên drawable
@@ -31,7 +32,7 @@ fun DepartmentDetailView(department: Department, onBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Thông tin đơn vị", color = Color.Black) },
+                title = { Text("Chi tiết đơn vị", color = Color.Black) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Quay lại", tint = Color.Black)
@@ -60,7 +61,14 @@ fun DepartmentDetailView(department: Department, onBack: () -> Unit) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Text(text = department.name, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+            Text(
+                text = department.name,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black,
+                textAlign = TextAlign.Center, // Căn giữa văn bản
+                modifier = Modifier.fillMaxWidth() // Cho phép Text chiếm toàn bộ chiều rộng
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 

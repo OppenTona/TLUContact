@@ -322,10 +322,10 @@ fun DepartmentList(departments: List<Department>, query: String, navController: 
                 item {
                     Text(
                         text = letter.toString(),
-                        fontSize = 15.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Gray.copy(alpha = 0.6f), // Màu xám nhạt hơn
-                        modifier = Modifier.padding(5.dp)
+                        modifier = Modifier.padding(3.dp)
                     )
                 }
 
@@ -354,7 +354,7 @@ fun DepartmentItem(department: Department, navController: NavController) {
                             "${Uri.encode(department.address)}?screenTitle=${Uri.encode(department.name)}"
                 )
             }
-            .padding(8.dp),
+            .padding(6.dp),
         verticalAlignment = Alignment.CenterVertically // Căn chỉnh theo chiều dọc
     ) {
         Image(
@@ -365,14 +365,14 @@ fun DepartmentItem(department: Department, navController: NavController) {
             },
             contentDescription = "Ảnh đại diện",
             modifier = Modifier
-                .size(30.dp) // Kích thước ảnh
+                .size(32.dp) // Kích thước ảnh
                 .clip(CircleShape) // Bo tròn ảnh
         )
 
-        Spacer(modifier = Modifier.width(16.dp)) // Khoảng cách giữa ảnh và text
+        Spacer(modifier = Modifier.width(12.dp)) // Khoảng cách giữa ảnh và text
 
         Column {
-            Text(text = department.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            Text(text = department.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
             Divider(color = Color.LightGray.copy(alpha = 0.5f))
         }
     }
