@@ -16,6 +16,9 @@ class StudentViewModel : ViewModel() {
     val selectedStudent: StateFlow<Student?> = _selectedStudent
     private val _filterMode = MutableStateFlow("ByName")  // "ByName" hoặc "ByClass"
     val filterMode: StateFlow<String> = _filterMode
+    // Thêm trạng thái sắp xếp
+    private val _sortAscending = MutableStateFlow(true)
+    val sortAscending: StateFlow<Boolean> = _sortAscending
 
     init {
         try {
@@ -26,6 +29,10 @@ class StudentViewModel : ViewModel() {
             println("Lỗi lấy dữ liệu sinh viên: ${e.message}")
         }
 
+    }
+    // Thêm hàm để thay đổi trạng thái sắp xếp
+    fun toggleSortOrder() {
+        _sortAscending.value = !_sortAscending.value
     }
     // Cập nhật chế độ lọc (ByName hoặc ByClass)
     fun setFilterMode(mode: String) {
