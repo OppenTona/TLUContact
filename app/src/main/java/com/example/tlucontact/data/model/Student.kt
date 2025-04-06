@@ -9,4 +9,4 @@ data class Student(
     val address : String = "",
     val className : String = "",
     val userID : String = ""
-) : User(email, phone)
+) : User(email, phone, fullNameStudent, userID)

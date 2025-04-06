@@ -52,9 +52,7 @@ class AuthRepository(private val context: Context) {
             }
     }
 
-    fun signup(guest: Guest, password: String, confirmPassword: String, onResult: (Boolean, String?) -> Unit) {
-        val email = guest.email.trim()
-
+    fun signup(email: String, password: String, confirmPassword: String, name: String, phone: String, onResult: (Boolean, String?) -> Unit) {
         val error = validateSignupInput(email, password, confirmPassword)
         if (error != null) {
             onResult(false, error)
@@ -64,22 +62,59 @@ class AuthRepository(private val context: Context) {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    val firebaseUser = auth.currentUser
-                    firebaseUser?.let { fbUser ->
-                        saveUserData(fbUser.uid, guest) { success, saveError ->
-                            if (success) {
-                                sendEmailVerification(fbUser) { emailSuccess, emailError ->
-                                    onResult(emailSuccess, emailError)
-                                }
-                            } else {
-                                onResult(false, saveError)
-                            }
+                    val uid = auth.currentUser?.uid ?: return@addOnCompleteListener
+                    saveUserData(uid, email, name, phone) { success, error ->
+                        if (success) {
+                            // Gửi email xác thực
+                            auth.currentUser?.sendEmailVerification()
+                            onResult(true, null)
+                        } else {
+                            onResult(false, error)
                         }
                     }
                 } else {
                     onResult(false, task.exception?.message)
                 }
             }
+    }
+
+    // Hàm xác định loại tài khoản
+    private fun detectUserType(email: String): String {
+        return when {
+            email.endsWith("@tlu.edu.vn") -> "staff"
+            email.endsWith("@e.tlu.edu.vn") -> "student"
+            else -> "guest"
+        }
+    }
+
+    // Lưu dữ liệu người dùng dựa trên loại tài khoản
+    private fun saveUserData(uid: String, email: String, name: String, phone: String, onResult: (Boolean, String?) -> Unit) {
+        val userType = detectUserType(email)
+
+        if (userType == "staff" || userType == "student") {
+            // Không cập nhật thông tin khi là staff hoặc student
+            onResult(true, null)
+        } else {
+            val guest = Guest(email, phone, name, userType)
+            // Thực hiện lưu thông tin nếu là guest
+            val userData = mapOf(
+                "uid" to guest.uid,
+                "name" to guest.name,
+                "email" to guest.email,
+                "phone" to guest.phone,
+                "userType" to "guest"
+            )
+            firestore.collection("guests")
+                .document(email)
+                .set(userData)
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        onResult(true, null)
+                    } else {
+                        onResult(false, task.exception?.message)
+                    }
+                }
+        }
     }
 
     private fun validateCredentials(email: String, password: String): String? {
@@ -102,24 +137,31 @@ class AuthRepository(private val context: Context) {
         return null
     }
 
-    private fun saveUserData(uid: String, guest: Guest, onResult: (Boolean, String?) -> Unit) {
-        val userType = "guest"
-        val userData = hashMapOf(
-            "name" to guest.name,
-            "email" to guest.email,
-            "phone" to guest.phone,
-            "userType" to userType
-        )
-
-        firestore.collection("guests").document(uid).set(userData)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    onResult(true, null)
-                } else {
-                    onResult(false, task.exception?.message)
-                }
-            }
-    }
+//    private fun saveUserData(uid: String, guest: Guest, onResult: (Boolean, String?) -> Unit) {
+//        val userEmail = guest.email.trim()
+//        val (collectionName, userType) = when {
+//            userEmail.endsWith("@tlu.edu.vn") -> "staff" to "staff"
+//            userEmail.endsWith("@e.tlu.edu.vn") -> "student" to "student"
+//            else -> "guests" to "guest"
+//        }
+//
+//        val userData = hashMapOf(
+//            "name" to guest.name,
+//            "email" to userEmail,
+//            "phone" to guest.phone,
+//            "userType" to userType
+//        )
+//
+//        // Sử dụng email làm document ID như yêu cầu
+//        firestore.collection(collectionName).document(userEmail).set(userData)
+//            .addOnCompleteListener { task ->
+//                if (task.isSuccessful) {
+//                    onResult(true, null)
+//                } else {
+//                    onResult(false, task.exception?.message)
+//                }
+//            }
+//    }
 
     private fun sendEmailVerification(user: FirebaseUser, onResult: (Boolean, String?) -> Unit) {
         user.sendEmailVerification()
@@ -202,23 +244,6 @@ class AuthRepository(private val context: Context) {
                 } else {
                     onResult(false, task.exception?.message)
                 }
-            }
-    }
-
-    fun setUserClassName(uid: String, className: String, onResult: (Boolean, String?) -> Unit) {
-        val data = hashMapOf(
-            "uid" to uid,
-            "className" to className
-        )
-
-        functions
-            .getHttpsCallable("setClassName")
-            .call(data)
-            .addOnSuccessListener { result ->
-                onResult(true, result.data.toString())
-            }
-            .addOnFailureListener { exception ->
-                onResult(false, exception.message)
             }
     }
 }

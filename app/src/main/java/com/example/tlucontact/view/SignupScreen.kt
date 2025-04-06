@@ -95,7 +95,7 @@ fun SignupForm(navController: NavController, viewModel: SignupViewModel) {
     val email by viewModel.email.collectAsState()
     val password by viewModel.password.collectAsState()
     val confirmPassword by viewModel.confirmPassword.collectAsState()
-
+    val isEmailInvalid by viewModel.isEmailInvalid.collectAsState()
     val signupState by viewModel.signupState.collectAsState()
     LaunchedEffect(signupState) {
         if (signupState.first) {
@@ -107,26 +107,6 @@ fun SignupForm(navController: NavController, viewModel: SignupViewModel) {
     }
 
     Column {
-        TextField(
-            value = name,
-            onValueChange = { viewModel.onNameChange(it) },
-            label = { Text("Họ và tên") },
-            colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        TextField(
-            value = phone,
-            onValueChange = { viewModel.onPhoneChange(it) },
-            label = { Text("Số điện thoại") },
-            colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
         TextField(
             value = email,
             onValueChange = { viewModel.onEmailChange(it) },
@@ -154,6 +134,29 @@ fun SignupForm(navController: NavController, viewModel: SignupViewModel) {
             passwordVisible = confirmPasswordVisible,
             onVisibilityChange = { confirmPasswordVisible = it }
         )
+
+        if (isEmailInvalid) {
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            TextField(
+                value = name,
+                onValueChange = { viewModel.onNameChange(it) },
+                label = { Text("Họ và tên") },
+                colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            TextField(
+                value = phone,
+                onValueChange = { viewModel.onPhoneChange(it) },
+                label = { Text("Số điện thoại") },
+                colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 

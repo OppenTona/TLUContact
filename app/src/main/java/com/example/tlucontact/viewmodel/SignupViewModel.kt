@@ -17,6 +17,8 @@ class SignupViewModel(application: Application, private val state: SavedStateHan
     private val _signupState = MutableStateFlow<Pair<Boolean, String?>>(Pair(false, null))
     val signupState = _signupState.asStateFlow()
 
+    private val _isEmailInvalid = MutableStateFlow(true)
+    val isEmailInvalid = _isEmailInvalid.asStateFlow()
 
     var name = state.getStateFlow("name", "")
     var phone = state.getStateFlow("phone", "")
@@ -24,10 +26,10 @@ class SignupViewModel(application: Application, private val state: SavedStateHan
     var password = state.getStateFlow("password", "")
     var confirmPassword = state.getStateFlow("confirmPassword", "")
 
+
     fun signup() {
-        val guest = Guest(email.value, phone.value,name.value)
         viewModelScope.launch {
-            repository.signup(guest, password.value, confirmPassword.value) { success, error ->
+            repository.signup(email.value, password.value, confirmPassword.value, name.value, phone.value) { success, error ->
                 _signupState.value = Pair(success, error)
                 if (!success) {
                     Toast.makeText(getApplication(), "Signup Error: $error", Toast.LENGTH_SHORT).show()
@@ -48,6 +50,7 @@ class SignupViewModel(application: Application, private val state: SavedStateHan
 
     fun onEmailChange(newEmail: String) {
         state["email"] = newEmail
+        _isEmailInvalid.value = !newEmail.endsWith("@tlu.edu.vn") && !newEmail.endsWith("@e.tlu.edu.vn")
     }
 
     fun onPasswordChange(newPassword: String) {
