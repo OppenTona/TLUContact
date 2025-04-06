@@ -156,7 +156,7 @@ fun SignupForm(navController: NavController, viewModel: SignupViewModel) {
                 onValueChange = { viewModel.onNameChange(it) },
                 label = { Text("Họ và tên") },
                 colors = TextFieldDefaults.textFieldColors(
-                    backgroundColor = if (nameError) Color.Red else Color.Transparent,
+                    backgroundColor = Color.Transparent,
                     unfocusedIndicatorColor = if (nameError) Color.Red else Color.Gray,
                     focusedIndicatorColor = if (nameError) Color.Red else Color.Gray,
                     focusedLabelColor = if (nameError) Color.Red else Color.Gray
