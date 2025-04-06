@@ -29,6 +29,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.tlucontact.R
 import com.example.tlucontact.viewmodel.SignupViewModel
+import io.reactivex.internal.util.NotificationLite.isError
 
 @Composable
 fun SignupScreen(navController: NavController, viewModel: SignupViewModel = viewModel()) {
@@ -97,6 +98,11 @@ fun SignupForm(navController: NavController, viewModel: SignupViewModel) {
     val confirmPassword by viewModel.confirmPassword.collectAsState()
     val isEmailInvalid by viewModel.isEmailInvalid.collectAsState()
     val signupState by viewModel.signupState.collectAsState()
+    val emailError by viewModel.emailError.collectAsState()
+    val passwordError by viewModel.passwordError.collectAsState()
+    val confirmPasswordError by viewModel.confirmPasswordError.collectAsState()
+    val nameError by viewModel.nameError.collectAsState()
+    val phoneError by viewModel.phoneError.collectAsState()
     LaunchedEffect(signupState) {
         if (signupState.first) {
             Toast.makeText(context, "Vui lòng kiểm tra email để xác minh", Toast.LENGTH_SHORT).show()
@@ -111,7 +117,11 @@ fun SignupForm(navController: NavController, viewModel: SignupViewModel) {
             value = email,
             onValueChange = { viewModel.onEmailChange(it) },
             label = { Text("Email") },
-            colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent),
+            colors = TextFieldDefaults.textFieldColors(
+                backgroundColor = Color.Transparent,
+                unfocusedIndicatorColor = if (emailError) Color.Red else Color.Gray,
+                focusedIndicatorColor = if (emailError) Color.Red else Color.Gray,
+                focusedLabelColor = if (emailError) Color.Red else Color.Gray),
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -122,7 +132,8 @@ fun SignupForm(navController: NavController, viewModel: SignupViewModel) {
             onValueChange = { viewModel.onPasswordChange(it) },
             label = "Mật khẩu",
             passwordVisible = passwordVisible,
-            onVisibilityChange = { passwordVisible = it }
+            onVisibilityChange = {passwordVisible = it },
+            isError = passwordError
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -132,7 +143,8 @@ fun SignupForm(navController: NavController, viewModel: SignupViewModel) {
             onValueChange = { viewModel.onConfirmPasswordChange(it) },
             label = "Nhập lại mật khẩu",
             passwordVisible = confirmPasswordVisible,
-            onVisibilityChange = { confirmPasswordVisible = it }
+            onVisibilityChange = { confirmPasswordVisible = it },
+            isError = confirmPasswordError
         )
 
         if (isEmailInvalid) {
@@ -143,7 +155,12 @@ fun SignupForm(navController: NavController, viewModel: SignupViewModel) {
                 value = name,
                 onValueChange = { viewModel.onNameChange(it) },
                 label = { Text("Họ và tên") },
-                colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent),
+                colors = TextFieldDefaults.textFieldColors(
+                    backgroundColor = if (nameError) Color.Red else Color.Transparent,
+                    unfocusedIndicatorColor = if (nameError) Color.Red else Color.Gray,
+                    focusedIndicatorColor = if (nameError) Color.Red else Color.Gray,
+                    focusedLabelColor = if (nameError) Color.Red else Color.Gray
+                 ),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -153,7 +170,12 @@ fun SignupForm(navController: NavController, viewModel: SignupViewModel) {
                 value = phone,
                 onValueChange = { viewModel.onPhoneChange(it) },
                 label = { Text("Số điện thoại") },
-                colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent),
+                colors = TextFieldDefaults.textFieldColors(
+                    backgroundColor = Color.Transparent,
+                    unfocusedIndicatorColor = if (phoneError) Color.Red else Color.Gray,
+                    focusedIndicatorColor = if (phoneError) Color.Red else Color.Gray,
+                    focusedLabelColor = if (phoneError) Color.Red else Color.Gray
+                ),
                 modifier = Modifier.fillMaxWidth()
             )
         }
@@ -192,7 +214,8 @@ fun PasswordField(
     onValueChange: (String) -> Unit,
     label: String,
     passwordVisible: Boolean,
-    onVisibilityChange: (Boolean) -> Unit
+    onVisibilityChange: (Boolean) -> Unit,
+    isError: Boolean
 ) {
     TextField(
         value = value,
@@ -208,7 +231,11 @@ fun PasswordField(
         },
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        colors = TextFieldDefaults.textFieldColors(backgroundColor = Color.Transparent),
+        colors = TextFieldDefaults.textFieldColors(
+            backgroundColor = Color.Transparent,
+            unfocusedIndicatorColor = if (isError) Color.Red else Color.Gray,
+            focusedIndicatorColor = if (isError) Color.Red else Color.Gray,
+            focusedLabelColor = if (isError) Color.Red else Color.Gray),
         modifier = Modifier.fillMaxWidth()
     )
 }

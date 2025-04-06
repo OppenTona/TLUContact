@@ -52,13 +52,7 @@ class AuthRepository(private val context: Context) {
             }
     }
 
-    fun signup(email: String, password: String, confirmPassword: String, name: String, phone: String, onResult: (Boolean, String?) -> Unit) {
-        val error = validateSignupInput(email, password, confirmPassword, name, phone)
-        if (error != null) {
-            onResult(false, error)
-            return
-        }
-
+    fun signup(email: String, password: String, name: String, phone: String, onResult: (Boolean, String?) -> Unit) {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
@@ -129,13 +123,13 @@ class AuthRepository(private val context: Context) {
         return email.endsWith("@tlu.edu.vn") || email.endsWith("@e.tlu.edu.vn")
     }
 
-    private fun validateSignupInput(email: String, password: String, confirmPassword: String, name: String, phone: String): String? {
-        val basicError = validateCredentials(email, password)
-        if (basicError != null) return basicError
-        if (password != confirmPassword) return "Mật khẩu không khớp"
-        if (!isValidSchoolEmail(email) && name == null && phone == null ) return "Hãy nhập thông tin đẩy đủ"
-        return null
-    }
+//    private fun validateSignupInput(email: String, password: String, confirmPassword: String, name: String, phone: String): String? {
+//        val basicError = validateCredentials(email, password)
+//        if (basicError != null) return basicError
+//        if (password != confirmPassword) return "Mật khẩu không khớp"
+//        if (!isValidSchoolEmail(email) && name == null && phone == null ) return "Hãy nhập thông tin đẩy đủ"
+//        return null
+//    }
 
 //    private fun saveUserData(uid: String, guest: Guest, onResult: (Boolean, String?) -> Unit) {
 //        val userEmail = guest.email.trim()
