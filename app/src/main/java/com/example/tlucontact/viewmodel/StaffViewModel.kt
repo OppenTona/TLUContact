@@ -98,4 +98,27 @@ class StaffViewModel : ViewModel() {
                 println("Lỗi lấy dữ liệu: ${exception.message}")
             }
     }
+    fun updateStaffInfo(updatedStaff: Staff) {
+        // Cập nhật thông tin nhân viên vào Firestore theo email
+        db.collection("staffs").document(updatedStaff.email)
+            .set(
+                mapOf(
+                    "fullName" to updatedStaff.name,
+                    "phone" to updatedStaff.phone,
+                    "unit" to updatedStaff.department,
+                    "position" to updatedStaff.position,
+                    "photoURL" to updatedStaff.avatarURL
+                )
+            )
+            .addOnSuccessListener {
+                // Cập nhật thành công
+                _selectedStaff.value = updatedStaff // Cập nhật giá trị mới vào _selectedStaff
+                println("Cập nhật thông tin thành công")
+            }
+            .addOnFailureListener { exception ->
+                // Lỗi cập nhật
+                println("Lỗi cập nhật thông tin: ${exception.message}")
+            }
+    }
+
 }

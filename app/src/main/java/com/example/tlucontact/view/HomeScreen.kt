@@ -75,12 +75,18 @@ class HomeScreen : ComponentActivity() {
                 startDestination = "directory"
             ) {
                 composable(route = "update_detail") {
+                    val staffViewModel: StaffViewModel = viewModel()  // Lấy ViewModel
                     UpdateDetailScreen(
                         staff = selectedStaff,
                         onBack = { navController.popBackStack() },
-                        onSave = { /* Xử lý lưu thông tin */ }
+                        onSave = { updatedStaff ->
+                            staffViewModel.updateStaffInfo(updatedStaff)  // Gọi hàm update trong ViewModel
+                            navController.popBackStack()  // Quay lại sau khi lưu
+                        }
                     )
                 }
+
+
 
                 composable("directory") {
                     Directoryscreen(

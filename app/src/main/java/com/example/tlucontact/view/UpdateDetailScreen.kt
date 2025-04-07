@@ -28,12 +28,16 @@ import com.example.tlucontact.data.model.Staff
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+
 fun UpdateDetailScreen(
     staff: Staff?,
     onBack: () -> Unit,
-    onSave: () -> Unit
+    onSave: (Staff) -> Unit
 ) {
     val scrollState = rememberScrollState()
+    var name by remember { mutableStateOf(staff?.name ?: "") }
+    var phone by remember { mutableStateOf(staff?.phone ?: "") }
+    var department by remember { mutableStateOf(staff?.department ?: "") }
 
     Scaffold(
         topBar = {
@@ -78,13 +82,12 @@ fun UpdateDetailScreen(
                 Text(text = staff.name, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Các trường thông tin có thể chỉnh sửa
                 EditableField(label = "Mã giảng viên", value = staff.staffIdFB, editable = false)
                 EditableField(label = "Chức vụ", value = staff.position, editable = false)
-                EditableField(label = "Số điện thoại", value = staff.phone, editable = true)
+                EditableField(label = "Số điện thoại", value = phone, editable = true)
                 EditableField(label = "Email", value = staff.staffId, editable = false)
-                EditableField(label = "Đơn vị trực thuộc", value = staff.department, editable = true)
-
-
+                EditableField(label = "Đơn vị trực thuộc", value = department, editable = true)
 
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -95,7 +98,10 @@ fun UpdateDetailScreen(
                     Button(onClick = onBack, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF74B7FF))) {
                         Text("Hủy", color = Color.White)
                     }
-                    Button(onClick = onSave, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF74B7FF))) {
+                    Button(onClick = {
+                        // Gửi thông tin đã chỉnh sửa để lưu vào Firestore
+                        onSave(staff.copy(phone = phone, department = department))
+                    }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF74B7FF))) {
                         Text("Lưu", color = Color.White)
                     }
                 }
@@ -107,29 +113,33 @@ fun UpdateDetailScreen(
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditableField(label: String, value: String, editable: Boolean) {
+fun EditableField(label: String, value: String, editable: Boolean, onValueChanged: (String) -> Unit = {}) {
     var text by remember { mutableStateOf(value) }
 
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         OutlinedTextField(
             value = text,
-            onValueChange = { if (editable) text = it },
+            onValueChange = {
+                if (editable) {
+                    text = it
+                    onValueChanged(it)  // Truyền giá trị thay đổi ra ngoài
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             readOnly = !editable,
             shape = RoundedCornerShape(16.dp),
-            label = { Text(label, color = Color.Gray) }, // Nhãn nằm bên trong
+            label = { Text(label, color = Color.Gray) },
             colors = TextFieldDefaults.colors(
                 focusedTextColor = Color.Black,
                 unfocusedTextColor = Color.Black,
                 disabledTextColor = Color.Black,
                 focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White, // Làm nền tối hơn
+                unfocusedContainerColor = Color.White,
                 disabledContainerColor = Color(0xFFE0E0E0),
-                focusedIndicatorColor = Color(0xFF007AFF), // Màu viền khi focus
-                unfocusedIndicatorColor = Color(0xFFE0E0E0), // Viền xám nhạt khi chưa focus
+                focusedIndicatorColor = Color(0xFF007AFF),
+                unfocusedIndicatorColor = Color(0xFFE0E0E0),
                 disabledIndicatorColor = Color.Transparent
             )
         )
