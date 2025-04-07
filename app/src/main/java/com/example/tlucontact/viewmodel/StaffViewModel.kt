@@ -76,8 +76,8 @@ class StaffViewModel : ViewModel() {
             }
     }
 
-    fun setSelectedStaff(staffId: String) {
-        db.collection("staffs").document(staffId).get()
+    fun setSelectedStaff(emailUser: String) {
+        db.collection("staffs").document(emailUser).get()
             .addOnSuccessListener { doc ->
                 if (doc.exists()) {
                     _selectedStaff.value = Staff(

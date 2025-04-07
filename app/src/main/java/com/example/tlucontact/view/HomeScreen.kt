@@ -168,6 +168,11 @@ fun Directoryscreen(
     val departments by departmentViewModel.departmentList.collectAsState()
 
     val userLoginEmail = SessionManager(context).getUserLoginEmail()
+    val user = Staff()
+    LaunchedEffect(Unit) {
+        //logic get user infor from database
+    }
+
     Scaffold(
         bottomBar = {
             Bottomnavigationbar(selectedTab) { newTab ->
