@@ -51,7 +51,7 @@ fun DetailContactScreen(staff: Staff, onBack: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
-                painter = rememberAsyncImagePainter("https://i.pravatar.cc/150?u=${staff.email}"),
+                painter = rememberAsyncImagePainter(model = staff.avatarURL),
                 contentDescription = "Avatar",
                 modifier = Modifier
                     .size(100.dp)
