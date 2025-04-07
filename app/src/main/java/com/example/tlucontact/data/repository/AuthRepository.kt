@@ -12,19 +12,11 @@ import com.google.firebase.functions.FirebaseFunctions
 class AuthRepository(private val context: Context) {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
-    private val functions = FirebaseFunctions.getInstance()
 
     fun login(email: String, password: String, onResult: (Boolean, String?) -> Unit) {
         val trimmedEmail = email.trim()
-        val trimmedPassword = password.trim()
 
-        val error = validateCredentials(trimmedEmail, trimmedPassword)
-        if (error != null) {
-            onResult(false, error)
-            return
-        }
-
-        auth.signInWithEmailAndPassword(trimmedEmail, trimmedPassword)
+        auth.signInWithEmailAndPassword(trimmedEmail, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     val firebaseUser = auth.currentUser
@@ -111,61 +103,8 @@ class AuthRepository(private val context: Context) {
         }
     }
 
-    private fun validateCredentials(email: String, password: String): String? {
-        if (email.isEmpty() || password.isEmpty()) return "Vui lòng nhập email và mật khẩu"
-        if (password.length < 6) return "Mật khẩu phải có ít nhất 6 ký tự"
-        if (password.contains(email)) return "Mật khẩu không được chứa email"
-        if (password.contains(" ")) return "Mật khẩu không được chứa khoảng trắng"
-        return null
-    }
-
     private fun isValidSchoolEmail(email: String): Boolean {
         return email.endsWith("@tlu.edu.vn") || email.endsWith("@e.tlu.edu.vn")
-    }
-
-//    private fun validateSignupInput(email: String, password: String, confirmPassword: String, name: String, phone: String): String? {
-//        val basicError = validateCredentials(email, password)
-//        if (basicError != null) return basicError
-//        if (password != confirmPassword) return "Mật khẩu không khớp"
-//        if (!isValidSchoolEmail(email) && name == null && phone == null ) return "Hãy nhập thông tin đẩy đủ"
-//        return null
-//    }
-
-//    private fun saveUserData(uid: String, guest: Guest, onResult: (Boolean, String?) -> Unit) {
-//        val userEmail = guest.email.trim()
-//        val (collectionName, userType) = when {
-//            userEmail.endsWith("@tlu.edu.vn") -> "staff" to "staff"
-//            userEmail.endsWith("@e.tlu.edu.vn") -> "student" to "student"
-//            else -> "guests" to "guest"
-//        }
-//
-//        val userData = hashMapOf(
-//            "name" to guest.name,
-//            "email" to userEmail,
-//            "phone" to guest.phone,
-//            "userType" to userType
-//        )
-//
-//        // Sử dụng email làm document ID như yêu cầu
-//        firestore.collection(collectionName).document(userEmail).set(userData)
-//            .addOnCompleteListener { task ->
-//                if (task.isSuccessful) {
-//                    onResult(true, null)
-//                } else {
-//                    onResult(false, task.exception?.message)
-//                }
-//            }
-//    }
-
-    private fun sendEmailVerification(user: FirebaseUser, onResult: (Boolean, String?) -> Unit) {
-        user.sendEmailVerification()
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    onResult(true, null)
-                } else {
-                    onResult(false, task.exception?.message)
-                }
-            }
     }
 
     // Login bằng tài khoản Microsoft (Outlook)

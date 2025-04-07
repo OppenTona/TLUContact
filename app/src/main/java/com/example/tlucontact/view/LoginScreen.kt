@@ -122,6 +122,8 @@ fun LoginForm(
 ) {
     val email by viewModel.email.collectAsState()
     val password by viewModel.password.collectAsState()
+    val emailError by viewModel.emailError.collectAsState()
+    val passwordError by viewModel.passwordError.collectAsState()
     val context = LocalContext.current
     val activity = context as? Activity
 
@@ -132,9 +134,9 @@ fun LoginForm(
             label = { Text("Email") },
             colors = TextFieldDefaults.textFieldColors(
                 backgroundColor = Color.Transparent,
-                focusedIndicatorColor = Color.Black,
-                unfocusedIndicatorColor = Color.Gray,
-                disabledIndicatorColor = Color.Gray
+                unfocusedIndicatorColor = if (emailError) Color.Red else Color.Gray,
+                focusedIndicatorColor = if (emailError) Color.Red else Color.Gray,
+                focusedLabelColor = if (emailError) Color.Red else Color.Gray
             ),
             modifier = Modifier.fillMaxWidth()
         )
@@ -157,9 +159,9 @@ fun LoginForm(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             colors = TextFieldDefaults.textFieldColors(
                 backgroundColor = Color.Transparent,
-                focusedIndicatorColor = Color.Black,
-                unfocusedIndicatorColor = Color.Gray,
-                disabledIndicatorColor = Color.Gray
+                unfocusedIndicatorColor = if (passwordError) Color.Red else Color.Gray,
+                focusedIndicatorColor = if (passwordError) Color.Red else Color.Gray,
+                focusedLabelColor = if (passwordError) Color.Red else Color.Gray
             ),
             modifier = Modifier.fillMaxWidth()
         )
