@@ -25,10 +25,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.tlucontact.R
 import com.example.tlucontact.home
 import com.example.tlucontact.viewmodel.LoginViewModel
@@ -131,7 +133,7 @@ fun LoginForm(
         TextField(
             value = email,
             onValueChange = { viewModel.email.value = it },
-            label = { Text("Email") },
+            label = { Text("Email", color = if (emailError) Color.Red else Color.Gray)  },
             colors = TextFieldDefaults.textFieldColors(
                 backgroundColor = Color.Transparent,
                 unfocusedIndicatorColor = if (emailError) Color.Red else Color.Gray,
@@ -146,7 +148,7 @@ fun LoginForm(
         TextField(
             value = password,
             onValueChange = { viewModel.password.value = it },
-            label = { Text("Mật khẩu") },
+            label = { Text("Mật khẩu", color = if (passwordError) Color.Red else Color.Gray) },
             trailingIcon = {
                 IconButton(onClick = { onPasswordVisibilityChange(!passwordVisible) }) {
                     Icon(
@@ -216,7 +218,7 @@ fun LoginForm(
                     }
                 } ?: Toast.makeText(context, "Không xác định được Activity", Toast.LENGTH_SHORT).show()
             },
-            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF2899F5)), // Màu xanh Microsoft
+            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF004578)), // Màu xanh Microsoft
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(8.dp)
         ) {
@@ -257,4 +259,11 @@ fun DividerWithText(text: String) {
                 .height(1.dp)
         )
     }
+}
+
+@Preview(showBackground = true, showSystemUi = false)
+@Composable
+fun LoginSreenPreview() {
+    val navController = rememberNavController()
+    LoginScreen(navController)
 }

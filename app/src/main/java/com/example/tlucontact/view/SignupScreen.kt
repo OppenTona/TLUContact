@@ -115,7 +115,7 @@ fun SignupForm(navController: NavController, viewModel: SignupViewModel) {
         TextField(
             value = email,
             onValueChange = { viewModel.onEmailChange(it) },
-            label = { Text("Email") },
+            label = { Text("Email", color = if (emailError) Color.Red else Color.Gray) },
             colors = TextFieldDefaults.textFieldColors(
                 backgroundColor = Color.Transparent,
                 unfocusedIndicatorColor = if (emailError) Color.Red else Color.Gray,
@@ -153,7 +153,7 @@ fun SignupForm(navController: NavController, viewModel: SignupViewModel) {
             TextField(
                 value = name,
                 onValueChange = { viewModel.onNameChange(it) },
-                label = { Text("Họ và tên") },
+                label = { Text("Họ và tên", color = if (nameError) Color.Red else Color.Gray) },
                 colors = TextFieldDefaults.textFieldColors(
                     backgroundColor = Color.Transparent,
                     unfocusedIndicatorColor = if (nameError) Color.Red else Color.Gray,
@@ -168,7 +168,7 @@ fun SignupForm(navController: NavController, viewModel: SignupViewModel) {
             TextField(
                 value = phone,
                 onValueChange = { viewModel.onPhoneChange(it) },
-                label = { Text("Số điện thoại") },
+                label = { Text("Số điện thoại", color = if (phoneError) Color.Red else Color.Gray) },
                 colors = TextFieldDefaults.textFieldColors(
                     backgroundColor = Color.Transparent,
                     unfocusedIndicatorColor = if (phoneError) Color.Red else Color.Gray,
