@@ -2,6 +2,7 @@ package com.example.tlucontact.data.repository
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 
 class SessionManager(context: Context) {
 
@@ -26,5 +27,10 @@ class SessionManager(context: Context) {
     // Hàm xóa phiên làm việc của người dùng, tức là xóa hết các dữ liệu lưu trong SharedPreferences.
     fun clearSession() {
         prefs.edit().clear().apply()
+    }
+
+    // luu user login email
+    fun saveUserLoginEmail(email: String) {
+        prefs.edit() { putString("user_email", email) }
     }
 }
