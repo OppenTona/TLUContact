@@ -167,6 +167,7 @@ fun Directoryscreen(
     )
     val departments by departmentViewModel.departmentList.collectAsState()
 
+    val userLoginEmail = SessionManager(context).getUserLoginEmail()
     Scaffold(
         bottomBar = {
             Bottomnavigationbar(selectedTab) { newTab ->
