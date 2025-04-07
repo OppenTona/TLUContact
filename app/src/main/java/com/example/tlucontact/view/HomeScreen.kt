@@ -75,16 +75,19 @@ class HomeScreen : ComponentActivity() {
                 startDestination = "directory"
             ) {
                 composable(route = "update_detail") {
-                    val staffViewModel: StaffViewModel = viewModel()  // Lấy ViewModel
+                    val staffViewModel: StaffViewModel = viewModel()
+                    val selectedStaff by staffViewModel.selectedStaff.collectAsState() // 👈 lấy đúng state
+
                     UpdateDetailScreen(
                         staff = selectedStaff,
                         onBack = { navController.popBackStack() },
                         onSave = { updatedStaff ->
-                            staffViewModel.updateStaffInfo(updatedStaff)  // Gọi hàm update trong ViewModel
-                            navController.popBackStack()  // Quay lại sau khi lưu
+                            staffViewModel.updateStaffInfo(updatedStaff)
+                            navController.popBackStack()
                         }
                     )
                 }
+
 
 
 
