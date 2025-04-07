@@ -33,4 +33,8 @@ class SessionManager(context: Context) {
     fun saveUserLoginEmail(email: String) {
         prefs.edit() { putString("user_email", email) }
     }
+
+    fun getUserLoginEmail(): String? {
+        return prefs.getString("user_email", null)
+    }
 }
