@@ -12,6 +12,7 @@ data class Staff(
     val avatarURL: String = "",
     val department: String = "", // Đổi unit thành department
     val userId: String = "" ,
+    val staffIdFB: String = "",
     override val email: String = "",  // Phải khai báo email trong constructor
     override val phone: String = ""   // Phải khai báo phone trong constructor
 ) : User(email,phone, name, userId), Parcelable

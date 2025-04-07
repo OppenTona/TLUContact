@@ -38,6 +38,7 @@ class StaffViewModel : ViewModel() {
                 val staffItems = result.map { doc ->
                     Staff(
                         staffId = doc.getString("staffid") ?: "",
+                        staffIdFB = doc.getString("staffid")?:"",
                         name = doc.getString("fullName") ?: "Không có tên",
                         email = doc.id,
                         phone = doc.getString("phone") ?: "",
@@ -84,6 +85,7 @@ class StaffViewModel : ViewModel() {
                     _selectedStaff.value = Staff(
                         staffId = doc.id,
                         name = doc.getString("fullName") ?: "Không có tên",
+                        staffIdFB = doc.getString("staffid")?:"",
                         email = doc.getString("email") ?: "",
                         phone = doc.getString("phone") ?: "",
                         department = doc.getString("unit") ?: "",

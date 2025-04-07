@@ -22,6 +22,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
 import com.example.tlucontact.R
 import com.example.tlucontact.data.model.Staff
 
@@ -58,7 +59,7 @@ fun UpdateDetailScreen(
                 // Ảnh đại diện và tên
                 Box(contentAlignment = Alignment.BottomEnd) {
                     Image(
-                        painter = painterResource(id = R.drawable.teacher), // hoặc dùng rememberImagePainter(staff.avatarURL)
+                        painter = rememberAsyncImagePainter(model = staff.avatarURL),
                         contentDescription = "Ảnh đại diện",
                         modifier = Modifier
                             .size(100.dp)
@@ -77,11 +78,13 @@ fun UpdateDetailScreen(
                 Text(text = staff.name, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
 
-                EditableField(label = "Mã giảng viên", value = staff.staffId, editable = false)
+                EditableField(label = "Mã giảng viên", value = staff.staffIdFB, editable = false)
                 EditableField(label = "Chức vụ", value = staff.position, editable = false)
                 EditableField(label = "Số điện thoại", value = staff.phone, editable = true)
-                EditableField(label = "Email", value = staff.email, editable = false)
+                EditableField(label = "Email", value = staff.staffId, editable = false)
                 EditableField(label = "Đơn vị trực thuộc", value = staff.department, editable = true)
+
+
 
                 Spacer(modifier = Modifier.height(32.dp))
 
