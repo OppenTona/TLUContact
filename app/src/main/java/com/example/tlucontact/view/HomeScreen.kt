@@ -76,7 +76,7 @@ class HomeScreen : ComponentActivity() {
             ) {
                 composable(route = "update_detail") {
                     val staffViewModel: StaffViewModel = viewModel()
-                    val selectedStaff by staffViewModel.selectedStaff.collectAsState() // 👈 lấy đúng state
+
 
                     UpdateDetailScreen(
                         staff = selectedStaff,
