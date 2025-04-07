@@ -216,11 +216,20 @@ fun LoginForm(
                     }
                 } ?: Toast.makeText(context, "Không xác định được Activity", Toast.LENGTH_SHORT).show()
             },
-            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF0078D4)), // Màu xanh Microsoft
+            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF2899F5)), // Màu xanh Microsoft
             modifier = Modifier.fillMaxWidth().height(50.dp),
             shape = RoundedCornerShape(8.dp)
         ) {
-            Text("Đăng nhập bằng Outlook", color = Color.White, fontSize = 16.sp)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    painter = painterResource(id = R.drawable.logo_outlook),
+                    contentDescription = "Outlook Logo",
+                    modifier = Modifier
+                        .size(24.dp)
+                        .padding(end = 8.dp)
+                )
+                Text("Đăng nhập bằng Outlook", color = Color.White, fontSize = 16.sp)
+            }
         }
     }
 }
