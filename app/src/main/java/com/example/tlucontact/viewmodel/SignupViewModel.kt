@@ -179,6 +179,7 @@ class SignupViewModel(application: Application, private val state: SavedStateHan
 
     fun onEmailChange(newEmail: String) {
         state["email"] = newEmail
+        _isEmailInvalid.value = !newEmail.endsWith("@tlu.edu.vn") && !newEmail.endsWith("@e.tlu.edu.vn")
     }
 
     fun onPasswordChange(newPassword: String) {

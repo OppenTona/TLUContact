@@ -203,7 +203,7 @@ fun LoginForm(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        DividerWithText(text = "hoặc nhập với")
+        DividerWithText(text = "hoặc đăng nhập với")
 
         Spacer(modifier = Modifier.height(16.dp))
 
