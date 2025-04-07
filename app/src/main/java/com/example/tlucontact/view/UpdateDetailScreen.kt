@@ -23,10 +23,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.tlucontact.R
+import com.example.tlucontact.data.model.Staff
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UpdateDetailScreen(onBack: () -> Unit, onSave: () -> Unit) {
+fun UpdateDetailScreen(
+    staff: Staff?,
+    onBack: () -> Unit,
+    onSave: () -> Unit
+) {
     val scrollState = rememberScrollState()
 
     Scaffold(
@@ -41,59 +46,60 @@ fun UpdateDetailScreen(onBack: () -> Unit, onSave: () -> Unit) {
             )
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(paddingValues)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Ảnh đại diện
-            Box(contentAlignment = Alignment.BottomEnd) {
-                Image(
-                    painter = painterResource(id = R.drawable.teacher),
-                    contentDescription = "Ảnh đại diện",
-                    modifier = Modifier
-                        .size(100.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-                IconButton(
-                    onClick = { /* Xử lý chọn ảnh */ },
-                    modifier = Modifier.size(24.dp)
+        if (staff != null) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(paddingValues)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Ảnh đại diện và tên
+                Box(contentAlignment = Alignment.BottomEnd) {
+                    Image(
+                        painter = painterResource(id = R.drawable.teacher), // hoặc dùng rememberImagePainter(staff.avatarURL)
+                        contentDescription = "Ảnh đại diện",
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                    IconButton(
+                        onClick = { /* Xử lý chọn ảnh */ },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(Icons.Filled.Edit, contentDescription = "Chỉnh sửa ảnh")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = staff.name, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                EditableField(label = "Mã giảng viên", value = staff.staffId, editable = false)
+                EditableField(label = "Chức vụ", value = staff.position, editable = false)
+                EditableField(label = "Số điện thoại", value = staff.phone, editable = true)
+                EditableField(label = "Email", value = staff.email, editable = false)
+                EditableField(label = "Đơn vị trực thuộc", value = staff.department, editable = true)
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Icon(Icons.Filled.Edit, contentDescription = "Chỉnh sửa ảnh")
+                    Button(onClick = onBack, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF74B7FF))) {
+                        Text("Hủy", color = Color.White)
+                    }
+                    Button(onClick = onSave, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF74B7FF))) {
+                        Text("Lưu", color = Color.White)
+                    }
                 }
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Tên
-            Text(text = "Nguyễn Thị Mai Hương", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Các trường thông tin
-            EditableField(label = "Mã giảng viên", value = "22510611111", editable = false)
-            EditableField(label = "Chức vụ", value = "Giảng viên", editable = false)
-            EditableField(label = "Số điện thoại", value = "03947646732", editable = true)
-            EditableField(label = "Email", value = "phuongtuan@example.com", editable = false)
-            EditableField(label = "Đơn vị trực thuộc", value = "https://www.sdhgjfgfsdfds.com", editable = true)
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Nút Hủy và Lưu
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Button(onClick = onBack, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF74B7FF))) {
-                    Text("Hủy", color = Color.White)
-                }
-                Button(onClick = onSave, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF74B7FF))) {
-                    Text("Lưu", color = Color.White)
-                }
+        } else {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
         }
     }

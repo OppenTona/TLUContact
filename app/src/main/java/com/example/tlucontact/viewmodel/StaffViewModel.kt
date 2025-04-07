@@ -27,6 +27,7 @@ class StaffViewModel : ViewModel() {
     private val _selectedStaff = MutableStateFlow<Staff?>(null)
     val selectedStaff: StateFlow<Staff?> = _selectedStaff
 
+
     init {
         fetchStaffs() // Lấy tất cả nhân viên ban đầu
     }
@@ -76,7 +77,7 @@ class StaffViewModel : ViewModel() {
             }
     }
 
-    fun setSelectedStaff(emailUser: String) {
+    fun setStaffByEmail(emailUser: String) {
         db.collection("staffs").document(emailUser).get()
             .addOnSuccessListener { doc ->
                 if (doc.exists()) {

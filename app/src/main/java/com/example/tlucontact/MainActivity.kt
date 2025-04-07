@@ -37,12 +37,12 @@ class MainActivity : ComponentActivity() {
         NavHost(navController = navController, startDestination = startDestination) {
 
 
-            composable(route = "update_detail") {
-                UpdateDetailScreen(
-                    onBack = { navController.popBackStack() },  // Quay lại màn hình trước
-                    onSave = { /* Xử lý lưu thông tin */ }
-                )
-            }
+//            composable(route = "update_detail") {
+//                UpdateDetailScreen(
+//                    onBack = { navController.popBackStack() },  // Quay lại màn hình trước
+//                    onSave = { /* Xử lý lưu thông tin */ }
+//                )
+//            }
             composable("login") {
                 LoginScreen(navController)
             }

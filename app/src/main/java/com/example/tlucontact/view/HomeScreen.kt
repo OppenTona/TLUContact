@@ -61,8 +61,14 @@ import com.example.tlucontact.viewmodel.StudentViewModel
 class HomeScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             val navController = rememberNavController()
+            // ViewModel dùng chung
+            val staffViewModel: StaffViewModel = viewModel()
+
+            // 👉 THÊM DÒNG NÀY
+            val selectedStaff by staffViewModel.selectedStaff.collectAsState()
 
             NavHost(
                 navController = navController,
@@ -70,14 +76,19 @@ class HomeScreen : ComponentActivity() {
             ) {
                 composable(route = "update_detail") {
                     UpdateDetailScreen(
+                        staff = selectedStaff,
                         onBack = { navController.popBackStack() },
                         onSave = { /* Xử lý lưu thông tin */ }
                     )
                 }
 
                 composable("directory") {
-                    Directoryscreen(navController = navController)
+                    Directoryscreen(
+                        navController = navController,
+                        staffViewModel = staffViewModel
+                    )
                 }
+
 
                 composable(
                     route = "student_detail/{name}/{studentId}/{className}/{email}/{phone}/{address}",
@@ -150,7 +161,7 @@ class HomeScreen : ComponentActivity() {
 @Composable
 fun Directoryscreen(
     navController: NavController,
-    staffViewModel: StaffViewModel = StaffViewModel(),
+    staffViewModel: StaffViewModel, // 👈 không khởi tạo ở đây nữa
     studentViewModel: StudentViewModel = StudentViewModel()
 ) {
     val context = LocalContext.current
@@ -167,11 +178,18 @@ fun Directoryscreen(
     )
     val departments by departmentViewModel.departmentList.collectAsState()
 
+
+
+    val conText = LocalContext.current
     val userLoginEmail = SessionManager(context).getUserLoginEmail()
-    val user = Staff()
-    LaunchedEffect(Unit) {
-        //logic get user infor from database
+    val selectedStaff by staffViewModel.selectedStaff.collectAsState()
+
+    LaunchedEffect(userLoginEmail) {
+        if (!userLoginEmail.isNullOrBlank()) {
+            staffViewModel.setStaffByEmail(userLoginEmail)
+        }
     }
+
 
     Scaffold(
         bottomBar = {
@@ -209,7 +227,12 @@ fun Directoryscreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
                     Text("Hồ sơ của bạn", fontSize = 14.sp, color = Color.Gray)
-                    Text("Nguyễn Thị Mai Hương", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        text = selectedStaff?.name ?: "Chưa có tên",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    //Text("Nguyễn Thị Mai Hương", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
 
@@ -797,5 +820,7 @@ fun Bottomnavigationbar(selectedTab: String, onTabSelected: (String) -> Unit) {
 @Composable
 fun PreviewScreen() {
     val navController = rememberNavController()
-    Directoryscreen(navController = navController)
+    val staffViewModel = StaffViewModel() // giả lập trong preview
+    Directoryscreen(navController = navController, staffViewModel = staffViewModel)
 }
+
