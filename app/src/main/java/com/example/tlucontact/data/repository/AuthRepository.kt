@@ -32,6 +32,7 @@ class AuthRepository(private val context: Context) {
                                 tokenTask.result?.token?.let { firebaseToken ->
                                     // Lưu token bằng SessionManager
                                     SessionManager(context).saveUserToken(firebaseToken)
+                                    SessionManager(context).saveUserLoginEmail(trimmedEmail)
                                     onResult(true, firebaseToken)
                                 } ?: onResult(false, "Token is null")
                             } else {
