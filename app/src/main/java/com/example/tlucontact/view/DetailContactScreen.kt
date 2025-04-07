@@ -1,5 +1,12 @@
 package com.example.tlucontact.view
 
+import android.Manifest
+
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,9 +24,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import coil.compose.rememberAsyncImagePainter
 import com.example.tlucontact.data.model.Staff
 
@@ -68,10 +78,10 @@ fun DetailContactScreen(staff: Staff, onBack: () -> Unit) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                ActionButton(icon = Icons.Filled.Chat, label = "tin nhắn")
-                ActionButton(icon = Icons.Filled.Phone, label = "gọi")
-                ActionButton(icon = Icons.Filled.VideoCall, label = "gọi video")
-                ActionButton(icon = Icons.Filled.Email, label = "mail")
+                ActionButton(icon = Icons.Filled.Chat, label = "Tin nhắn", phoneNumber = staff.phone) // Assuming you might want to handle messaging later
+                ActionButton(icon = Icons.Filled.Phone, label = "Gọi", phoneNumber = staff.phone)
+                ActionButton(icon = Icons.Filled.VideoCall, label = "Gọi video") // You'll need to implement video call logic
+                ActionButton(icon = Icons.Filled.Email, label = "Mail", phoneNumber = staff.email) // Assuming you might want to handle email later
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -87,20 +97,29 @@ fun DetailContactScreen(staff: Staff, onBack: () -> Unit) {
 }
 
 @Composable
-fun ActionButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String) {
+fun ActionButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, phoneNumber: String? = null) {
+    val context = LocalContext.current // Lấy context từ LocalContext
+
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        IconButton(onClick = { /* Xử lý sự kiện */ }) {
+        IconButton(onClick = {
+            if (label == "Gọi" && phoneNumber != null) {
+                makePhoneCall(context, phoneNumber) // Sử dụng context
+            }
+        }) {
             Icon(icon, contentDescription = label, tint = Color(0xFF007AFF))
         }
         Text(
             text = label,
             fontSize = 12.sp,
             color = Color(0xFF007AFF),
-            modifier = Modifier.clickable { /* Xử lý sự kiện */ }
+            modifier = Modifier.clickable {
+                if (label == "Gọi" && phoneNumber != null) {
+                    makePhoneCall(context, phoneNumber) // Sử dụng context
+                }
+            }
         )
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InfoField(label: String, value: String) {
@@ -124,5 +143,20 @@ fun InfoField(label: String, value: String) {
                 disabledIndicatorColor = Color.Transparent
             )
         )
+    }
+}
+fun makePhoneCall(context: Context, phoneNumber: String) {
+    if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+        // Yêu cầu quyền nếu chưa được cấp
+        ActivityCompat.requestPermissions(
+            (context as Activity),
+            arrayOf(Manifest.permission.CALL_PHONE),
+            1
+        )
+    } else {
+        // Nếu đã có quyền, thực hiện cuộc gọi
+        val intent = Intent(Intent.ACTION_CALL)
+        intent.data = Uri.parse("tel:$phoneNumber")
+        context.startActivity(intent)
     }
 }
