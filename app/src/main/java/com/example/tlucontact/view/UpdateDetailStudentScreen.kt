@@ -38,7 +38,7 @@ fun UpdateDetailStudentScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Edit Student Details") },
+                title = { Text("Chỉnh sửa thông tin") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
@@ -80,10 +80,10 @@ fun UpdateDetailStudentScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Editable fields
-                StudentEditableField(label = "Full Name", value = student.fullNameStudent, editable = true)
-                StudentEditableField(label = "Phone", value = student.phone, editable = true)
-                StudentEditableField(label = "Address", value = student.address, editable = true)
-                StudentEditableField(label = "Class", value = student.className, editable = false)
+                StudentEditableField(label = "Họ và tên", value = student.fullNameStudent, editable = true)
+                StudentEditableField(label = "Số điện thoại", value = student.phone, editable = true)
+                StudentEditableField(label = "Địa chỉ", value = student.address, editable = true)
+                StudentEditableField(label = "Lớp", value = student.className, editable = false)
 
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -92,13 +92,13 @@ fun UpdateDetailStudentScreen(
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     Button(onClick = onBack, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF74B7FF))) {
-                        Text("Cancel", color = Color.White)
+                        Text("Hủy", color = Color.White)
                     }
                     Button(onClick = {
                         // Save updated student details
                         onSave(student.copy(fullNameStudent = fullName, phone = phone, address = address))
                     }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF74B7FF))) {
-                        Text("Save", color = Color.White)
+                        Text("Lưu", color = Color.White)
                     }
                 }
             }
