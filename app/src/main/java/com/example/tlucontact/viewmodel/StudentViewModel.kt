@@ -40,19 +40,6 @@ class StudentViewModel : ViewModel() {
         // Không cần lấy lại dữ liệu, chỉ thay đổi cách hiển thị trên UI
     }
     private fun fetchStudents() {
-//        db.collection("student")
-//            .get()
-//        .addOnSuccessListener { result ->
-//            for (document in result) {
-//                println("${document.id} => ${document.data}") // In dữ liệu
-//            }
-//        }
-//            .addOnFailureListener { exception ->
-//                println("Lỗi khi lấy dữ liệu: ${exception.message}")
-//            }
-
-
-
         db.collection("student").get()
             .addOnSuccessListener { result ->
                 val studentItems = result.map { doc ->
