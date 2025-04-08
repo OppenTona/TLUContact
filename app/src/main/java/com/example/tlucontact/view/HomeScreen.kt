@@ -66,18 +66,28 @@ class HomeScreen : ComponentActivity() {
             val navController = rememberNavController()
             // ViewModel dùng chung
             val staffViewModel: StaffViewModel = viewModel()
-
+            val studentViewModel: StudentViewModel = viewModel()
             // 👉 THÊM DÒNG NÀY
             val selectedStaff by staffViewModel.selectedStaff.collectAsState()
-
+            val selectedStudent by studentViewModel.selectedStudent.collectAsState()
             NavHost(
                 navController = navController,
                 startDestination = "directory"
             ) {
+                composable(route = "update_detail_student") {
+                    val studentViewModel: StudentViewModel = viewModel()
+                    UpdateDetailStudentScreen(
+                        student = selectedStudent, // selectedStudent
+                        onBack = { navController.popBackStack() },
+                        onSave = { updatedStudent ->
+                            studentViewModel.updateStudentInfo(updatedStudent) // Sử dụng studentViewModel và phương thức phù hợp
+                            navController.popBackStack()
+                        }
+                    )
+                }
                 composable(route = "update_detail") {
+
                     val staffViewModel: StaffViewModel = viewModel()
-
-
                     UpdateDetailScreen(
                         staff = selectedStaff,
                         onBack = { navController.popBackStack() },
@@ -90,11 +100,11 @@ class HomeScreen : ComponentActivity() {
 
 
 
-
                 composable("directory") {
                     Directoryscreen(
                         navController = navController,
-                        staffViewModel = staffViewModel
+                        staffViewModel = staffViewModel,
+                        studentViewModel = studentViewModel
                     )
                 }
 
@@ -171,7 +181,7 @@ class HomeScreen : ComponentActivity() {
 fun Directoryscreen(
     navController: NavController,
     staffViewModel: StaffViewModel, // 👈 không khởi tạo ở đây nữa
-    studentViewModel: StudentViewModel = StudentViewModel()
+    studentViewModel: StudentViewModel
 ) {
     val context = LocalContext.current
     var selectedTab by remember { mutableStateOf("Giảng viên") }
@@ -192,10 +202,16 @@ fun Directoryscreen(
     val conText = LocalContext.current
     val userLoginEmail = SessionManager(context).getUserLoginEmail()
     val selectedStaff by staffViewModel.selectedStaff.collectAsState()
-
+    val selectedStudent by studentViewModel.selectedStudent.collectAsState()
     LaunchedEffect(userLoginEmail) {
         if (!userLoginEmail.isNullOrBlank()) {
-            staffViewModel.setStaffByEmail(userLoginEmail)
+            if (userLoginEmail.endsWith("@e.tlu.edu.vn")) {
+                Log.d("Navigation", "Navigating to update_detail")
+                studentViewModel.setStudentByEmail(userLoginEmail)
+            } else {
+                Log.d("Navigation", "Navigating to update_detail_staff")
+                staffViewModel.setStaffByEmail(userLoginEmail)
+            }
         }
     }
 
@@ -237,7 +253,7 @@ fun Directoryscreen(
                 Column {
                     Text("Hồ sơ của bạn", fontSize = 14.sp, color = Color.Gray)
                     Text(
-                        text = selectedStaff?.name ?: "Chưa có tên",
+                        text = selectedStaff?.name ?: selectedStudent?.fullNameStudent ?: "Chưa có tên",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -435,7 +451,10 @@ fun DepartmentItem(department: Department, navController: NavController) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                Log.d("Navigation", "Navigating to department_detail with: ${department.name}, ${department.id}, ${department.phone}")
+                Log.d(
+                    "Navigation",
+                    "Navigating to department_detail with: ${department.name}, ${department.id}, ${department.phone}"
+                )
                 navController.navigate(
                     "department_detail/" +
                             "${Uri.encode(department.name)}/" +
@@ -472,13 +491,20 @@ fun DepartmentItem(department: Department, navController: NavController) {
 
 @Composable
 fun Useravatar(navController: NavController) {
+    val conText = LocalContext.current
+    val userLoginEmail = SessionManager(conText).getUserLoginEmail()
+    //TODO: Bổ sung thêm trường hợp user = null hoặc email = null
     Icon(
         imageVector = Icons.Default.AccountCircle,
         contentDescription = "Avatar",
         modifier = Modifier
             .size(32.dp)
             .clickable {
-                navController.navigate("update_detail")
+                if (userLoginEmail.toString().endsWith("@e.tlu.edu.vn")) {
+                    navController.navigate("update_detail_student")
+                } else {
+                    navController.navigate("update_detail")
+                }
             }
     )
 }
@@ -668,7 +694,9 @@ fun Searchbar(
             Icon(
                 Icons.Default.Search,
                 contentDescription = null,
-                modifier = Modifier.size(30.dp).padding(start = 10.dp) // Thêm padding bên trái
+                modifier = Modifier
+                    .size(30.dp)
+                    .padding(start = 10.dp) // Thêm padding bên trái
             )
             Spacer(Modifier.width(8.dp))
             BasicTextField(
@@ -830,6 +858,7 @@ fun Bottomnavigationbar(selectedTab: String, onTabSelected: (String) -> Unit) {
 fun PreviewScreen() {
     val navController = rememberNavController()
     val staffViewModel = StaffViewModel() // giả lập trong preview
-    Directoryscreen(navController = navController, staffViewModel = staffViewModel)
+    val studentViewModel = StudentViewModel() // giả lập trong preview
+    Directoryscreen(navController = navController, staffViewModel = staffViewModel, studentViewModel = studentViewModel)
 }
 

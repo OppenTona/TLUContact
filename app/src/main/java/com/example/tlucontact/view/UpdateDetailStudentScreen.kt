@@ -1,5 +1,6 @@
 package com.example.tlucontact.view
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -16,82 +17,94 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.tlucontact.R
+import coil.compose.rememberAsyncImagePainter
+import com.example.tlucontact.data.model.Student
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UpdateDetailStudentScreen(onBack: () -> Unit, onSave: () -> Unit) {
+fun UpdateDetailStudentScreen(
+    student: Student?,
+    onBack: () -> Unit,
+    onSave: (Student) -> Unit
+) {
     val scrollState = rememberScrollState()
+    var fullName by remember { mutableStateOf(student?.fullNameStudent ?: "") }
+    var phone by remember { mutableStateOf(student?.phone ?: "") }
+    var address by remember { mutableStateOf(student?.address ?: "") }
+    var className by remember { mutableStateOf(student?.className ?: "") }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Chỉnh sửa thông tin sinh viên") },
+                title = { Text("Edit Student Details") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Quay lại")
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(paddingValues)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Ảnh đại diện
-            Box(contentAlignment = Alignment.BottomEnd) {
-                Image(
-                    painter = painterResource(id = R.drawable.student),
-                    contentDescription = "Ảnh đại diện",
-                    modifier = Modifier
-                        .size(100.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-                IconButton(
-                    onClick = { /* Xử lý chọn ảnh */ },
-                    modifier = Modifier.size(24.dp)
+        if (student != null) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(scrollState)
+                    .padding(paddingValues)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Profile picture and name
+                Box(contentAlignment = Alignment.BottomEnd) {
+                    Log.d("UpdateDetailScreen", "Image URL: ${student.photoURL}")
+                    Image(
+                        painter = rememberAsyncImagePainter(model = student.photoURL),
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                    IconButton(
+                        onClick = { /* Handle image selection */ },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(Icons.Filled.Edit, contentDescription = "Edit Picture")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = student.fullNameStudent, fontSize = 20.sp)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Editable fields
+                StudentEditableField(label = "Full Name", value = student.fullNameStudent, editable = true)
+                StudentEditableField(label = "Phone", value = student.phone, editable = true)
+                StudentEditableField(label = "Address", value = student.address, editable = true)
+                StudentEditableField(label = "Class", value = student.className, editable = false)
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Icon(Icons.Filled.Edit, contentDescription = "Chỉnh sửa ảnh")
+                    Button(onClick = onBack, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF74B7FF))) {
+                        Text("Cancel", color = Color.White)
+                    }
+                    Button(onClick = {
+                        // Save updated student details
+                        onSave(student.copy(fullNameStudent = fullName, phone = phone, address = address))
+                    }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF74B7FF))) {
+                        Text("Save", color = Color.White)
+                    }
                 }
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Tên
-            Text(text = "Nguyễn Văn An", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Các trường thông tin
-            StudentEditableField(label = "Mã sinh viên", value = "22510611111", editable = false)
-            StudentEditableField(label = "Lớp", value = "61TH1", editable = false)
-            StudentEditableField(label = "Số điện thoại", value = "03947646732", editable = true)
-            StudentEditableField(label = "Email", value = "annguyen@example.com", editable = false)
-            StudentEditableField(label = "Địa chỉ", value = "Hà Nội", editable = true)
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Nút Hủy và Lưu
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Button(onClick = onBack, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF74B7FF))) {
-                    Text("Hủy", color = Color.White)
-                }
-                Button(onClick = onSave, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF74B7FF))) {
-                    Text("Lưu", color = Color.White)
-                }
+        } else {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
         }
     }
@@ -102,7 +115,9 @@ fun UpdateDetailStudentScreen(onBack: () -> Unit, onSave: () -> Unit) {
 fun StudentEditableField(label: String, value: String, editable: Boolean) {
     var text by remember { mutableStateOf(value) }
 
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .padding(vertical = 4.dp)) {
         OutlinedTextField(
             value = text,
             onValueChange = { if (editable) text = it },
