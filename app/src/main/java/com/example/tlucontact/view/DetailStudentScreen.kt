@@ -1,7 +1,9 @@
 package com.example.tlucontact.view
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -90,11 +92,16 @@ fun DetailStudentScreen(student: Student, onBack: () -> Unit) {
                 }
 
                 StudentActionButton(icon = Icons.Filled.VideoCall, label = "Gọi video") {
-                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                        data = Uri.parse("tel:${student.phone}")
+                    try {
+                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                            data = Uri.parse("tel:${student.phone}")
+                        }
+                        context.startActivity(intent)
+                    } catch (e: ActivityNotFoundException) {
+                        Toast.makeText(context, "Thiết bị không hỗ trợ gọi video", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Không thể thực hiện cuộc gọi video", Toast.LENGTH_SHORT).show()
                     }
-                    // Gợi ý: bạn có thể tích hợp với app như Google Meet nếu muốn
-                    context.startActivity(intent)
                 }
 
                 StudentActionButton(icon = Icons.Filled.Email, label = "Mail") {
