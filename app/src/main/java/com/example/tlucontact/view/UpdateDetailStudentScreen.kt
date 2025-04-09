@@ -17,25 +17,33 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.tlucontact.data.model.Student
+import com.example.tlucontact.viewmodel.StudentViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpdateDetailStudentScreen(
     student: Student?,
     onBack: () -> Unit,
-    onSave: (Student) -> Unit
+    onSave: (Student) -> Unit,
+    viewModel: StudentViewModel
 ) {
     val scrollState = rememberScrollState()
     var fullName by remember { mutableStateOf(student?.fullNameStudent ?: "") }
     var phone by remember { mutableStateOf(student?.phone ?: "") }
     var address by remember { mutableStateOf(student?.address ?: "") }
-
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Chỉnh sửa thông tin") },
@@ -80,11 +88,11 @@ fun UpdateDetailStudentScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Editable fields
-                StudentEditableField(label = "Mã sinh viên", value = student.studentID, editable = false)
-                StudentEditableField(label = "Lớp", value = student.className, editable = false)
-                StudentEditableField(label = "Số điện thoại", value = student.phone, editable = true)
-                StudentEditableField(label = "Email", value = student.email, editable = false)
-                StudentEditableField(label = "Địa chỉ nơi ở", value = student.address, editable = true)
+                StudentEditableField(label = "Mã sinh viên", value = student.studentID, onValueChange = {}, editable = false)
+                StudentEditableField(label = "Lớp", value = student.className, onValueChange = {}, editable = false)
+                StudentEditableField(label = "Số điện thoại", value = phone, onValueChange = { phone = it }, editable = true)
+                StudentEditableField(label = "Email", value = student.email, onValueChange = {}, editable = false)
+                StudentEditableField(label = "Địa chỉ nơi ở", value = address, onValueChange = { address = it }, editable = true)
 
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -96,11 +104,20 @@ fun UpdateDetailStudentScreen(
                         Text("Hủy", color = Color.White)
                     }
                     Button(onClick = {
-                        // Save updated student details
-                        onSave(student.copy(fullNameStudent = fullName, phone = phone, address = address))
+                        val updatedStudent = student.copy(
+                            fullNameStudent = fullName,
+                            phone = phone,
+                            address = address
+                        )
+                        viewModel.updateStudentInfo(updatedStudent)
+                        // Hiển thị thông báo
+                        CoroutineScope(Dispatchers.Main).launch {
+                            snackbarHostState.showSnackbar("Cập nhật thông tin thành công")
+                        }
                     }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF74B7FF))) {
                         Text("Lưu", color = Color.White)
                     }
+
                 }
             }
         } else {
@@ -113,15 +130,18 @@ fun UpdateDetailStudentScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StudentEditableField(label: String, value: String, editable: Boolean) {
-    var text by remember { mutableStateOf(value) }
-
+fun StudentEditableField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    editable: Boolean
+) {
     Column(modifier = Modifier
         .fillMaxWidth()
         .padding(vertical = 4.dp)) {
         OutlinedTextField(
-            value = text,
-            onValueChange = { if (editable) text = it },
+            value = value,
+            onValueChange = { if (editable) onValueChange(it) },
             modifier = Modifier.fillMaxWidth(),
             readOnly = !editable,
             shape = RoundedCornerShape(16.dp),

@@ -82,7 +82,8 @@ class HomeScreen : ComponentActivity() {
                         onSave = { updatedStudent ->
                             studentViewModel.updateStudentInfo(updatedStudent) // Sử dụng studentViewModel và phương thức phù hợp
                             navController.popBackStack()
-                        }
+                        },
+                        viewModel = studentViewModel
                     )
                 }
                 composable(route = "update_detail") {

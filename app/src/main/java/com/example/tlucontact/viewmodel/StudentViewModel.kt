@@ -124,6 +124,9 @@ class StudentViewModel : ViewModel() {
                 mapOf(
                     "fullNameStudent" to updatedStudent.fullNameStudent,
                     "phone" to updatedStudent.phone,
+                    "studentID" to updatedStudent.studentID,
+                    "userID" to updatedStudent.userID,
+                    "email" to updatedStudent.email,
                     "address" to updatedStudent.address,
                     "className" to updatedStudent.className,
                     "photoURL" to updatedStudent.photoURL
