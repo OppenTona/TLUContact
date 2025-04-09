@@ -226,9 +226,11 @@ fun Directoryscreen(
             if (userLoginEmail.endsWith("@e.tlu.edu.vn")) {
                 Log.d("Navigation", "Navigating to update_detail")
                 studentViewModel.setStudentByEmail(userLoginEmail)
+                studentViewModel.fetchStudents(userLoginEmail)
             } else {
                 Log.d("Navigation", "Navigating to update_detail_staff")
                 staffViewModel.setStaffByEmail(userLoginEmail)
+                studentViewModel.fetchStudents(userLoginEmail)
             }
         }
     }
