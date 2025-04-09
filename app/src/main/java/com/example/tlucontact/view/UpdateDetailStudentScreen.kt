@@ -33,9 +33,7 @@ fun UpdateDetailStudentScreen(
     var fullName by remember { mutableStateOf(student?.fullNameStudent ?: "") }
     var phone by remember { mutableStateOf(student?.phone ?: "") }
     var address by remember { mutableStateOf(student?.address ?: "") }
-    var className by remember { mutableStateOf(student?.className ?: "") }
-    var studentID by remember { mutableStateOf(student?.studentID ?: "") }
-    var email by remember { mutableStateOf(student?.email ?: "") }
+
 
     Scaffold(
         topBar = {
