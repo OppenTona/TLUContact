@@ -1,5 +1,7 @@
 package com.example.tlucontact.view
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,7 +18,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -65,14 +69,40 @@ fun DetailStudentScreen(student: Student, onBack: () -> Unit) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            val context = LocalContext.current
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                StudentActionButton(icon = Icons.Filled.Chat, label = "tin nhắn")
-                StudentActionButton(icon = Icons.Filled.Phone, label = "gọi")
-                StudentActionButton(icon = Icons.Filled.VideoCall, label = "gọi video")
-                StudentActionButton(icon = Icons.Filled.Email, label = "mail")
+                StudentActionButton(icon = Icons.Filled.Chat, label = "Tin nhắn") {
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        data = Uri.parse("sms:${student.phone}")
+                    }
+                    context.startActivity(intent)
+                }
+
+                StudentActionButton(icon = Icons.Filled.Phone, label = "Gọi") {
+                    val intent = Intent(Intent.ACTION_DIAL).apply {
+                        data = Uri.parse("tel:${student.phone}")
+                    }
+                    context.startActivity(intent)
+                }
+
+                StudentActionButton(icon = Icons.Filled.VideoCall, label = "Gọi video") {
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        data = Uri.parse("tel:${student.phone}")
+                    }
+                    // Gợi ý: bạn có thể tích hợp với app như Google Meet nếu muốn
+                    context.startActivity(intent)
+                }
+
+                StudentActionButton(icon = Icons.Filled.Email, label = "Mail") {
+                    val intent = Intent(Intent.ACTION_SENDTO).apply {
+                        data = Uri.parse("mailto:${student.email}")
+                    }
+                    context.startActivity(intent)
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -87,19 +117,20 @@ fun DetailStudentScreen(student: Student, onBack: () -> Unit) {
 }
 
 @Composable
-fun StudentActionButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String) {
+fun StudentActionButton(icon: ImageVector, label: String, onClick: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        IconButton(onClick = { /* Xử lý sự kiện */ }) {
+        IconButton(onClick = onClick) {
             Icon(icon, contentDescription = label, tint = Color(0xFF007AFF))
         }
         Text(
             text = label,
             fontSize = 12.sp,
             color = Color(0xFF007AFF),
-            modifier = Modifier.clickable { /* Xử lý sự kiện */ }
+            modifier = Modifier.clickable(onClick = onClick)
         )
     }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
