@@ -34,6 +34,8 @@ fun UpdateDetailStudentScreen(
     var phone by remember { mutableStateOf(student?.phone ?: "") }
     var address by remember { mutableStateOf(student?.address ?: "") }
     var className by remember { mutableStateOf(student?.className ?: "") }
+    var studentID by remember { mutableStateOf(student?.studentID ?: "") }
+    var email by remember { mutableStateOf(student?.email ?: "") }
 
     Scaffold(
         topBar = {
@@ -80,10 +82,11 @@ fun UpdateDetailStudentScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Editable fields
-                StudentEditableField(label = "Họ và tên", value = student.fullNameStudent, editable = true)
-                StudentEditableField(label = "Số điện thoại", value = student.phone, editable = true)
-                StudentEditableField(label = "Địa chỉ", value = student.address, editable = true)
+                StudentEditableField(label = "Mã sinh viên", value = student.studentID, editable = false)
                 StudentEditableField(label = "Lớp", value = student.className, editable = false)
+                StudentEditableField(label = "Số điện thoại", value = student.phone, editable = true)
+                StudentEditableField(label = "Email", value = student.email, editable = false)
+                StudentEditableField(label = "Địa chỉ nơi ở", value = student.address, editable = true)
 
                 Spacer(modifier = Modifier.height(32.dp))
 
