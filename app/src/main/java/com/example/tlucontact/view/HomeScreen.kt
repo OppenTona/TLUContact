@@ -6,6 +6,7 @@ import com.example.tlucontact.DetailScreen
 import com.example.tlucontact.MainActivity
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -48,7 +49,9 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
+import com.example.tlucontact.DepartmentItem
 import com.example.tlucontact.R
+import com.example.tlucontact.StudentItem
 import com.example.tlucontact.data.model.Department
 import com.example.tlucontact.data.model.Staff
 import com.example.tlucontact.data.model.Student
@@ -56,21 +59,34 @@ import com.example.tlucontact.data.repository.DepartmentRepository
 import com.example.tlucontact.data.repository.SessionManager
 import com.example.tlucontact.viewmodel.DepartmentViewModel
 import com.example.tlucontact.viewmodel.DepartmentViewModelFactory
+import com.example.tlucontact.viewmodel.LogoutViewModel
 import com.example.tlucontact.viewmodel.StaffViewModel
 import com.example.tlucontact.viewmodel.StudentViewModel
 
-class HomeScreen : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        setContent {
+@Composable
+fun HomeScreen(
+    navControllerLogout: NavController,
+) {
             val navController = rememberNavController()
             // ViewModel dùng chung
             val staffViewModel: StaffViewModel = viewModel()
             val studentViewModel: StudentViewModel = viewModel()
+            val logoutViewModel: LogoutViewModel = viewModel() // Sử dụng ViewModel
+            val logoutState by logoutViewModel.logoutState.collectAsState() // Theo dõi trạng thái đăng xuất
             // 👉 THÊM DÒNG NÀY
             val selectedStaff by staffViewModel.selectedStaff.collectAsState()
             val selectedStudent by studentViewModel.selectedStudent.collectAsState()
+            LaunchedEffect(logoutState) {
+                if (logoutState.first) {
+                    navControllerLogout.navigate("login") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                } else if (logoutState.second != null) {
+                    // Hiển thị lỗi nếu có
+                    Toast.makeText(navController.context, "Lỗi: ${logoutState.second}", Toast.LENGTH_SHORT).show()
+                }
+            }
+
             NavHost(
                 navController = navController,
                 startDestination = "directory"
@@ -106,7 +122,8 @@ class HomeScreen : ComponentActivity() {
                     Directoryscreen(
                         navController = navController,
                         staffViewModel = staffViewModel,
-                        studentViewModel = studentViewModel
+                        studentViewModel = studentViewModel,
+                        logoutViewModel = logoutViewModel
                     )
                 }
 
@@ -176,14 +193,13 @@ class HomeScreen : ComponentActivity() {
                 }
             }
         }
-    }
-}
 
 @Composable
 fun Directoryscreen(
     navController: NavController,
     staffViewModel: StaffViewModel, // 👈 không khởi tạo ở đây nữa
-    studentViewModel: StudentViewModel
+    studentViewModel: StudentViewModel,
+    logoutViewModel : LogoutViewModel = viewModel() // Sử dụng ViewModel
 ) {
     val context = LocalContext.current
     var selectedTab by remember { mutableStateOf("Giảng viên") }
@@ -233,13 +249,7 @@ fun Directoryscreen(
         ) {
             Topbar(
                 title = "Danh bạ $selectedTab",
-                onLogoutClick = {
-                    val sessionManager = SessionManager(context)
-                    sessionManager.clearSession()
-                    val intent = Intent(context, MainActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    context.startActivity(intent)
-                }
+                onLogoutClick = { logoutViewModel.logout() }
             )
 
             Spacer(Modifier.height(16.dp))

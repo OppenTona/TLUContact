@@ -58,8 +58,7 @@ class MainActivity : ComponentActivity() {
             }
 
             composable("Home screen") {
-                val context = LocalContext.current
-                context.startActivity(Intent(context, HomeScreen::class.java))
+                    HomeScreen(navController) // Sử dụng HomeScreen dưới dạng hàm
             }
 
         }

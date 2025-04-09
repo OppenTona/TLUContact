@@ -182,4 +182,14 @@ class AuthRepository(private val context: Context) {
                 }
             }
     }
+    // Hàm xử lý đăng xuất
+    fun logout(onComplete: (Boolean, String?) -> Unit) {
+        try {
+            auth.signOut() // Đăng xuất khỏi Firebase
+            SessionManager(context).clearSession() // Xóa dữ liệu phiên làm việc
+            onComplete(true, null) // Thành công
+        } catch (e: Exception) {
+            onComplete(false, e.message) // Thất bại
+        }
+    }
 }
