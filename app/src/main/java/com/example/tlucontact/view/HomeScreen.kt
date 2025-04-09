@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -685,8 +686,10 @@ fun Searchbar(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.LightGray, CircleShape)
-            .padding(horizontal = 5.dp, vertical = 2.dp)
+            .height(36.dp)
+            .background(Color(0xFFF0F0F0), RoundedCornerShape(10.dp)) // Nền sáng, bo nhẹ
+            .padding(horizontal = 8.dp),
+        contentAlignment = Alignment.CenterStart
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -697,7 +700,7 @@ fun Searchbar(
                 contentDescription = null,
                 modifier = Modifier
                     .size(30.dp)
-                    .padding(start = 10.dp) // Thêm padding bên trái
+                    .padding(start = 3.dp) // Thêm padding bên trái
             )
             Spacer(Modifier.width(8.dp))
             BasicTextField(
@@ -711,7 +714,9 @@ fun Searchbar(
                 IconButton(onClick = { expanded = true }) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
-                        contentDescription = "More Options"
+                        contentDescription = "More Options",
+                        modifier = Modifier
+                            .size(30.dp)
                     )
                 }
                 DropdownMenu(
