@@ -1,5 +1,7 @@
+// Khai báo package của lớp
 package com.example.tlucontact.view
 
+// Import các thư viện cần thiết
 import android.app.Activity
 import android.content.Intent
 import android.widget.Toast
@@ -35,235 +37,255 @@ import com.example.tlucontact.R
 import com.example.tlucontact.home
 import com.example.tlucontact.viewmodel.LoginViewModel
 
+// Hàm giao diện chính LoginScreen, được gọi để hiển thị màn hình đăng nhập
 @Composable
 fun LoginScreen(navController: NavController) {
-    val context = LocalContext.current
-    val viewModel: LoginViewModel = viewModel()
-    var passwordVisible by remember { mutableStateOf(false) }
+    val context = LocalContext.current // Lấy context hiện tại để sử dụng trong giao diện
+    val viewModel: LoginViewModel = viewModel() // Tạo hoặc lấy ViewModel để quản lý logic và trạng thái
+    var passwordVisible by remember { mutableStateOf(false) } // Biến trạng thái để theo dõi việc hiển thị mật khẩu
 
-    val loginState by viewModel.loginState.collectAsState()
-    val configuration = LocalConfiguration.current
+    val loginState by viewModel.loginState.collectAsState() // Lấy trạng thái đăng nhập từ ViewModel
+    val configuration = LocalConfiguration.current // Lấy thông tin cấu hình hiện tại của thiết bị (như chế độ ngang/dọc)
 
-    // Lắng nghe kết quả đăng nhập
+    // Lắng nghe trạng thái đăng nhập để hiển thị thông báo hoặc điều hướng
     LaunchedEffect(loginState) {
         if (loginState.first) {
-            Toast.makeText(context, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show()
-            navController.navigate("Home screen")
+            // Nếu đăng nhập thành công
+            Toast.makeText(context, "Đăng nhập thành công!", Toast.LENGTH_SHORT).show() // Hiển thị thông báo thành công
+            navController.navigate("Home screen") // Điều hướng tới màn hình chính
         } else if (loginState.second != null) {
-            Toast.makeText(context, "Lỗi: ${loginState.second}", Toast.LENGTH_SHORT).show()
+            // Nếu có lỗi xảy ra
+            Toast.makeText(context, "Lỗi: ${loginState.second}", Toast.LENGTH_SHORT).show() // Hiển thị thông báo lỗi
         }
     }
 
+    // Kiểm tra thiết bị đang ở chế độ màn hình ngang hay dọc
     if (configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
-        // Chế độ ngang (ảnh bên trái, form bên phải)
+        // Chế độ ngang: hiển thị giao diện chia làm hai phần (ảnh bên trái, form bên phải)
         Row(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxSize().padding(16.dp), // Căn chỉnh và thêm khoảng cách
+            verticalAlignment = Alignment.CenterVertically // Căn giữa theo chiều dọc
         ) {
+            // Phần ảnh/logo nằm bên trái
             Box(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .verticalScroll(rememberScrollState()),
-                contentAlignment = Alignment.Center
+                    .weight(1f) // Chiếm 1 phần trọng số
+                    .fillMaxHeight() // Chiều cao đầy đủ
+                    .verticalScroll(rememberScrollState()), // Cho phép cuộn dọc nếu nội dung vượt quá
+                contentAlignment = Alignment.Center // Căn giữa nội dung
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Đăng nhập", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(8.dp))
+                Column(horizontalAlignment = Alignment.CenterHorizontally) { // Sắp xếp nội dung theo cột
+                    Text("Đăng nhập", fontSize = 24.sp, fontWeight = FontWeight.Bold) // Tiêu đề chính
+                    Spacer(modifier = Modifier.height(8.dp)) // Khoảng cách giữa các phần tử
 
                     Image(
-                        painter = painterResource(id = R.drawable.thuyloi),
-                        contentDescription = "Logo",
-                        modifier = Modifier.size(100.dp)
+                        painter = painterResource(id = R.drawable.thuyloi), // Ảnh logo
+                        contentDescription = "Logo", // Mô tả cho ảnh
+                        modifier = Modifier.size(100.dp) // Kích thước của logo
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("Chào mừng đến với TLUContract", fontSize = 14.sp, color = Color.Gray)
+                    Spacer(modifier = Modifier.height(8.dp)) // Khoảng cách giữa logo và mô tả
+                    Text("Chào mừng đến với TLUContract", fontSize = 14.sp, color = Color.Gray) // Mô tả chào mừng
                 }
             }
 
-            Spacer(modifier = Modifier.width(32.dp))
+            Spacer(modifier = Modifier.width(32.dp)) // Khoảng cách giữa phần logo và form
 
+            // Phần form đăng nhập nằm bên phải
             Box(modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight()
-                .verticalScroll(rememberScrollState()) ) {
+                .weight(1f) // Chiếm 1 phần trọng số
+                .fillMaxHeight() // Chiều cao đầy đủ
+                .verticalScroll(rememberScrollState()) // Cho phép cuộn dọc
+            ) {
+                // Gọi hàm hiển thị form đăng nhập
                 LoginForm(viewModel, passwordVisible, navController) { passwordVisible = it }
             }
         }
     } else {
+        // Chế độ dọc: hiển thị giao diện theo chiều cột
         Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier.fillMaxSize().padding(16.dp), // Căn chỉnh và thêm khoảng cách
+            horizontalAlignment = Alignment.CenterHorizontally // Căn giữa theo chiều ngang
         ) {
-            Spacer(modifier = Modifier.height(40.dp))
-            Text("Đăng nhập", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(40.dp)) // Khoảng cách trên cùng
+            Text("Đăng nhập", fontSize = 24.sp, fontWeight = FontWeight.Bold) // Tiêu đề chính
+            Spacer(modifier = Modifier.height(8.dp)) // Khoảng cách giữa các phần tử
 
             Image(
-                painter = painterResource(id = R.drawable.thuyloi),
-                contentDescription = "Logo",
-                modifier = Modifier.size(80.dp)
+                painter = painterResource(id = R.drawable.thuyloi), // Ảnh logo
+                contentDescription = "Logo", // Mô tả cho ảnh
+                modifier = Modifier.size(80.dp) // Kích thước của logo
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Chào mừng đến với TLUContract", fontSize = 14.sp, color = Color.Gray)
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp)) // Khoảng cách giữa logo và mô tả
+            Text("Chào mừng đến với TLUContract", fontSize = 14.sp, color = Color.Gray) // Mô tả chào mừng
+            Spacer(modifier = Modifier.height(16.dp)) // Khoảng cách trước form
 
+            // Gọi hàm hiển thị form đăng nhập
             LoginForm(viewModel, passwordVisible, navController) { passwordVisible = it }
         }
     }
 }
 
+// Hàm hiển thị form đăng nhập
 @Composable
 fun LoginForm(
-    viewModel: LoginViewModel,
-    passwordVisible: Boolean,
-    navController: NavController,
-    onPasswordVisibilityChange: (Boolean) -> Unit
+    viewModel: LoginViewModel, // ViewModel để quản lý dữ liệu và logic
+    passwordVisible: Boolean, // Biến trạng thái hiển thị mật khẩu
+    navController: NavController, // Đối tượng điều hướng
+    onPasswordVisibilityChange: (Boolean) -> Unit // Hàm callback để thay đổi trạng thái hiển thị mật khẩu
 ) {
-    val email by viewModel.email.collectAsState()
-    val password by viewModel.password.collectAsState()
-    val emailError by viewModel.emailError.collectAsState()
-    val passwordError by viewModel.passwordError.collectAsState()
-    val context = LocalContext.current
-    val activity = context as? Activity
+    val email by viewModel.email.collectAsState() // Lấy giá trị email từ ViewModel
+    val password by viewModel.password.collectAsState() // Lấy giá trị mật khẩu từ ViewModel
+    val emailError by viewModel.emailError.collectAsState() // Lấy trạng thái lỗi của email
+    val passwordError by viewModel.passwordError.collectAsState() // Lấy trạng thái lỗi của mật khẩu
+    val context = LocalContext.current // Lấy context hiện tại
+    val activity = context as? Activity // Ép kiểu context sang Activity (nếu có)
 
-    Column {
+    Column { // Sắp xếp các thành phần trong form theo cột
+        // Trường nhập email
         TextField(
-            value = email,
-            onValueChange = { viewModel.email.value = it },
-            label = { Text("Email", color = if (emailError) Color.Red else Color.Gray)  },
+            value = email, // Giá trị email
+            onValueChange = { viewModel.email.value = it }, // Cập nhật giá trị email trong ViewModel
+            label = { Text("Email", color = if (emailError) Color.Red else Color.Gray) }, // Hiển thị nhãn và màu sắc tùy thuộc vào trạng thái lỗi
             colors = TextFieldDefaults.textFieldColors(
-                backgroundColor = Color.Transparent,
-                unfocusedIndicatorColor = if (emailError) Color.Red else Color.Gray,
-                focusedIndicatorColor = if (emailError) Color.Red else Color.Gray,
-                focusedLabelColor = if (emailError) Color.Red else Color.Gray
+                backgroundColor = Color.Transparent, // Nền trong suốt
+                unfocusedIndicatorColor = if (emailError) Color.Red else Color.Gray, // Màu khi không được chọn
+                focusedIndicatorColor = if (emailError) Color.Red else Color.Gray, // Màu khi được chọn
+                focusedLabelColor = if (emailError) Color.Red else Color.Gray // Màu của nhãn khi được chọn
             ),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth() // Chiều rộng đầy đủ
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(8.dp)) // Khoảng cách giữa các trường nhập
 
+        // Trường nhập mật khẩu
         TextField(
-            value = password,
-            onValueChange = { viewModel.password.value = it },
-            label = { Text("Mật khẩu", color = if (passwordError) Color.Red else Color.Gray) },
-            trailingIcon = {
-                IconButton(onClick = { onPasswordVisibilityChange(!passwordVisible) }) {
+            value = password, // Giá trị mật khẩu
+            onValueChange = { viewModel.password.value = it }, // Cập nhật giá trị mật khẩu trong ViewModel
+            label = { Text("Mật khẩu", color = if (passwordError) Color.Red else Color.Gray) }, // Hiển thị nhãn và màu sắc tùy thuộc vào trạng thái lỗi
+            trailingIcon = { // Biểu tượng ở cuối trường nhập
+                IconButton(onClick = { onPasswordVisibilityChange(!passwordVisible) }) { // Nút hiển thị/ẩn mật khẩu
                     Icon(
-                        imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                        contentDescription = "Toggle Password"
+                        imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff, // Biểu tượng thay đổi tùy thuộc vào trạng thái
+                        contentDescription = "Toggle Password" // Mô tả cho biểu tượng
                     )
                 }
             },
-            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(), // Hiển thị hoặc ẩn mật khẩu
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password), // Tùy chọn bàn phím là mật khẩu
             colors = TextFieldDefaults.textFieldColors(
-                backgroundColor = Color.Transparent,
-                unfocusedIndicatorColor = if (passwordError) Color.Red else Color.Gray,
-                focusedIndicatorColor = if (passwordError) Color.Red else Color.Gray,
-                focusedLabelColor = if (passwordError) Color.Red else Color.Gray
+                backgroundColor = Color.Transparent, // Nền trong suốt
+                unfocusedIndicatorColor = if (passwordError) Color.Red else Color.Gray, // Màu khi không được chọn
+                focusedIndicatorColor = if (passwordError) Color.Red else Color.Gray, // Màu khi được chọn
+                focusedLabelColor = if (passwordError) Color.Red else Color.Gray // Màu của nhãn khi được chọn
             ),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth() // Chiều rộng đầy đủ
         )
 
-        Spacer(modifier = Modifier.height(4.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        Spacer(modifier = Modifier.height(4.dp)) // Khoảng cách giữa các thành phần
+
+        // Nút "Quên mật khẩu"
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { // Sắp xếp nút ở góc phải
             Text(
-                "Quên mật khẩu?",
-                color = Color.Blue,
-                modifier = Modifier.clickable { navController.navigate("forgotpassword") }
+                "Quên mật khẩu?", // Văn bản của nút
+                color = Color.Blue, // Màu sắc
+                modifier = Modifier.clickable { navController.navigate("forgotpassword") } // Điều hướng tới màn hình "Quên mật khẩu"
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp)) // Khoảng cách trước nút đăng nhập
+
+        // Nút "Đăng nhập"
         Button(
-            onClick = { viewModel.login(email, password) },
-            colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black),
-            modifier = Modifier.fillMaxWidth().height(50.dp),
-            shape = RoundedCornerShape(8.dp)
+            onClick = { viewModel.login(email, password) }, // Gọi hàm đăng nhập khi nhấn nút
+            colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black), // Màu nền của nút
+            modifier = Modifier.fillMaxWidth().height(50.dp), // Chiều rộng đầy đủ và chiều cao 50dp
+            shape = RoundedCornerShape(8.dp) // Bo góc nút
         ) {
-            Text("Đăng nhập", color = Color.White, fontSize = 16.sp)
+            Text("Đăng nhập", color = Color.White, fontSize = 16.sp) // Văn bản của nút
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-        val context = LocalContext.current
+        Spacer(modifier = Modifier.height(16.dp)) // Khoảng cách trước dòng "Không có tài khoản?"
+
+        // Văn bản điều hướng tới màn hình "Đăng ký"
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
+            modifier = Modifier.fillMaxWidth(), // Chiều rộng đầy đủ
+            horizontalArrangement = Arrangement.Center // Căn giữa
         ) {
-            Text("Không có tài khoản? ")
+            Text("Không có tài khoản? ") // Văn bản mô tả
             Text(
-                "Đăng ký",
-                color = Color.Blue,
+                "Đăng ký", // Văn bản liên kết
+                color = Color.Blue, // Màu xanh
                 modifier = Modifier.clickable {
-                    navController.navigate("signup")
+                    navController.navigate("signup") // Điều hướng tới màn hình "Đăng ký"
                 }
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(32.dp)) // Khoảng cách trước Divider
 
-        DividerWithText(text = "hoặc đăng nhập với")
+        DividerWithText(text = "hoặc đăng nhập với") // Dòng ngăn cách có văn bản "hoặc đăng nhập với"
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(16.dp)) // Khoảng cách trước nút Outlook
 
-        // Nút đăng nhập bằng Outlook (Microsoft)
+        // Nút "Đăng nhập bằng Outlook"
         Button(
             onClick = {
-                activity?.let { act ->
-                    viewModel.loginWithMicrosoft(act) { success, error ->
-                        // Kết quả sẽ được xử lý bởi loginState thông qua ViewModel
+                activity?.let { act -> // Kiểm tra nếu Activity không null
+                    viewModel.loginWithMicrosoft(act) { success, error -> // Gọi hàm đăng nhập bằng Microsoft
+                        // Kết quả được xử lý bởi trạng thái loginState trong ViewModel
                     }
-                } ?: Toast.makeText(context, "Không xác định được Activity", Toast.LENGTH_SHORT).show()
+                } ?: Toast.makeText(context, "Không xác định được Activity", Toast.LENGTH_SHORT).show() // Thông báo lỗi nếu không có Activity
             },
-            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF004578)), // Màu xanh Microsoft
-            modifier = Modifier.fillMaxWidth().height(50.dp),
-            shape = RoundedCornerShape(8.dp)
+            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF004578)), // Màu nền xanh Microsoft
+            modifier = Modifier.fillMaxWidth().height(50.dp), // Chiều rộng đầy đủ và chiều cao 50dp
+            shape = RoundedCornerShape(8.dp) // Bo góc nút
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.CenterVertically) { // Sắp xếp nội dung của nút theo hàng
                 Image(
-                    painter = painterResource(id = R.drawable.logo_outlook),
-                    contentDescription = "Outlook Logo",
+                    painter = painterResource(id = R.drawable.logo_outlook), // Ảnh logo Outlook
+                    contentDescription = "Outlook Logo", // Mô tả cho ảnh
                     modifier = Modifier
-                        .size(24.dp)
-                        .padding(end = 8.dp)
+                        .size(24.dp) // Kích thước ảnh
+                        .padding(end = 8.dp) // Khoảng cách giữa ảnh và văn bản
                 )
-                Text("Đăng nhập bằng Outlook", color = Color.White, fontSize = 16.sp)
+                Text("Đăng nhập bằng Outlook", color = Color.White, fontSize = 16.sp) // Văn bản của nút
             }
         }
     }
 }
 
+// Hàm hiển thị Divider có văn bản ở giữa
 @Composable
 fun DividerWithText(text: String) {
     Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
+        verticalAlignment = Alignment.CenterVertically, // Căn giữa theo chiều dọc
+        modifier = Modifier.fillMaxWidth() // Chiều rộng đầy đủ
     ) {
         Divider(
-            color = Color.Gray,
+            color = Color.Gray, // Màu xám
             modifier = Modifier
-                .weight(1f)
-                .height(1.dp)
+                .weight(1f) // Chiếm 1 phần trọng số
+                .height(1.dp) // Chiều cao 1dp
         )
         Text(
-            text = text,
-            modifier = Modifier.padding(horizontal = 8.dp)
+            text = text, // Văn bản được hiển thị
+            modifier = Modifier.padding(horizontal = 8.dp) // Khoảng cách ngang
         )
         Divider(
-            color = Color.Gray,
+            color = Color.Gray, // Màu xám
             modifier = Modifier
-                .weight(1f)
-                .height(1.dp)
+                .weight(1f) // Chiếm 1 phần trọng số
+                .height(1.dp) // Chiều cao 1dp
         )
     }
 }
 
+// Hàm xem trước giao diện màn hình đăng nhập
 @Preview(showBackground = true, showSystemUi = false)
 @Composable
 fun LoginSreenPreview() {
-    val navController = rememberNavController()
-    LoginScreen(navController)
+    val navController = rememberNavController() // Tạo NavController giả để xem trước
+    LoginScreen(navController) // Hiển thị màn hình đăng nhập
 }
