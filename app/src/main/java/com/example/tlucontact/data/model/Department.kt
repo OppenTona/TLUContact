@@ -7,5 +7,6 @@ data class Department(
     val photoURL: String = "",
     val email: String = "",
     val phone: String = "",
-    val address: String = ""
+    val address: String = "",
+    val type: String = ""
 )

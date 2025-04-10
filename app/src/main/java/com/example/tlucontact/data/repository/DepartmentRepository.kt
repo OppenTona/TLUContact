@@ -39,7 +39,8 @@ class DepartmentRepository {
                 email = doc.getString("email") ?: "",
                 phone = doc.getString("phone") ?: "",
                 address = doc.getString("address") ?: "",
-                photoURL = doc.getString("photoURL") ?: ""
+                photoURL = doc.getString("photoURL") ?: "",
+                type = doc.getString("type") ?: ""
             )
         }
     }
