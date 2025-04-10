@@ -30,9 +30,13 @@ class StaffViewModel : ViewModel() {
     private val _updateMessage = MutableStateFlow<String?>(null)
     val updateMessage: StateFlow<String?> = _updateMessage
 
-
-    private val _isUpdateSuccessful = MutableStateFlow<Boolean>(false)
+    private val _isUpdateSuccessful = MutableStateFlow(false)
     val isUpdateSuccessful: StateFlow<Boolean> = _isUpdateSuccessful
+
+    // Trạng thái sắp xếp: true = A-Z, false = Z-A
+    private val _sortAscending = MutableStateFlow(true)
+    val sortAscending: StateFlow<Boolean> = _sortAscending
+
     init {
         fetchStaffs()
     }
@@ -103,12 +107,15 @@ class StaffViewModel : ViewModel() {
                 _isUpdateSuccessful.value = false
             }
     }
+
     fun clearUpdateMessage() {
         _updateMessage.value = null
         _isUpdateSuccessful.value = false
     }
 
-
+    // Toggle thứ tự sắp xếp
+    fun toggleSortOrder() {
+        _sortAscending.value = !_sortAscending.value
     }
-
+}
 
