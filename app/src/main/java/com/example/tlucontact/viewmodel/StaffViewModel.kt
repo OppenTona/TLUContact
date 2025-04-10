@@ -27,9 +27,11 @@ class StaffViewModel : ViewModel() {
     private val _selectedStaff = MutableStateFlow<Staff?>(null)
     val selectedStaff: StateFlow<Staff?> = _selectedStaff
 
+    private val _updateMessage = MutableStateFlow<String?>(null)
+    val updateMessage: StateFlow<String?> = _updateMessage
 
     init {
-        fetchStaffs() // Lấy tất cả nhân viên ban đầu
+        fetchStaffs()
     }
 
     private fun fetchStaffs() {
@@ -38,33 +40,9 @@ class StaffViewModel : ViewModel() {
                 val staffItems = result.map { doc ->
                     Staff(
                         staffId = doc.getString("staffid") ?: "",
-                        staffIdFB = doc.getString("staffid")?:"",
+                        staffIdFB = doc.getString("staffid") ?: "",
                         name = doc.getString("fullName") ?: "Không có tên",
                         email = doc.id,
-                        phone = doc.getString("phone") ?: "",
-                        department = doc.getString("unit") ?: "",
-                        position = doc.getString("position") ?: "",
-                        avatarURL = doc.getString("photoURL") ?: ""
-                    )
-                }
-                _staffList.value = staffItems
-            }
-            .addOnFailureListener { exception ->
-                println("Lỗi lấy dữ liệu: ${exception.message}")
-            }
-    }
-
-    // Phương thức lọc nhân viên theo department (Khoa, Viện, Phòng, Trung tâm)
-    fun filterStaffs(department: String) {
-        db.collection("staffs")
-            .whereEqualTo("unit", department) // Lọc theo department (Khoa, Viện...)
-            .get()
-            .addOnSuccessListener { result ->
-                val staffItems = result.map { doc ->
-                    Staff(
-                        staffId = doc.id,
-                        name = doc.getString("fullName") ?: "Không có tên",
-                        email = doc.getString("email") ?: "",
                         phone = doc.getString("phone") ?: "",
                         department = doc.getString("unit") ?: "",
                         position = doc.getString("position") ?: "",
@@ -85,7 +63,7 @@ class StaffViewModel : ViewModel() {
                     _selectedStaff.value = Staff(
                         staffId = doc.id,
                         name = doc.getString("fullName") ?: "Không có tên",
-                        staffIdFB = doc.getString("staffid")?:"",
+                        staffIdFB = doc.getString("staffid") ?: "",
                         email = doc.getString("email") ?: "",
                         phone = doc.getString("phone") ?: "",
                         department = doc.getString("unit") ?: "",
@@ -98,27 +76,30 @@ class StaffViewModel : ViewModel() {
                 println("Lỗi lấy dữ liệu: ${exception.message}")
             }
     }
+
     fun updateStaffInfo(updatedStaff: Staff) {
-        // Cập nhật thông tin nhân viên vào Firestore theo email
-        db.collection("staffs").document(updatedStaff.email)
+        db.collection("staffs").document(updatedStaff.staffId)
             .set(
                 mapOf(
                     "fullName" to updatedStaff.name,
                     "phone" to updatedStaff.phone,
                     "unit" to updatedStaff.department,
                     "position" to updatedStaff.position,
+                    "staffid" to updatedStaff.staffIdFB,
+                    "userId" to updatedStaff.userId,
                     "photoURL" to updatedStaff.avatarURL
                 )
             )
             .addOnSuccessListener {
-                // Cập nhật thành công
-                _selectedStaff.value = updatedStaff // Cập nhật giá trị mới vào _selectedStaff
-                println("Cập nhật thông tin thành công")
+                _selectedStaff.value = updatedStaff
+                _updateMessage.value = "Cập nhật thông tin thành công"
             }
             .addOnFailureListener { exception ->
-                // Lỗi cập nhật
-                println("Lỗi cập nhật thông tin: ${exception.message}")
+                _updateMessage.value = "Lỗi cập nhật: ${exception.message}"
             }
     }
 
+    fun clearUpdateMessage() {
+        _updateMessage.value = null
+    }
 }
