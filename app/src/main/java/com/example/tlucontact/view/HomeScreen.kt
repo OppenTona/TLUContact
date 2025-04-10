@@ -111,7 +111,7 @@ fun HomeScreen(
                         onBack = { navController.popBackStack() },
                         onSave = { updatedStaff ->
                             staffViewModel.updateStaffInfo(updatedStaff)  // Gọi hàm update trong ViewModel
-                            navController.popBackStack()  // Quay lại sau khi lưu
+                            //navController.popBackStack()  // Quay lại sau khi lưu
                         }
                     )
                 }
