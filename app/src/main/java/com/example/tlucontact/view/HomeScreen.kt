@@ -192,35 +192,35 @@ fun HomeScreen(
                     )
                 }
             }
-        }
+}
 
 @Composable
 fun Directoryscreen(
     navController: NavController,
-    staffViewModel: StaffViewModel, // 👈 không khởi tạo ở đây nữa
+    staffViewModel: StaffViewModel,
     studentViewModel: StudentViewModel,
-    logoutViewModel : LogoutViewModel = viewModel() // Sử dụng ViewModel
+    logoutViewModel: LogoutViewModel = viewModel()
 ) {
     val context = LocalContext.current
     var selectedTab by remember { mutableStateOf("Giảng viên") }
     var query by remember { mutableStateOf("") }
-    var isFilterActive by remember { mutableStateOf(false) } // Thêm trạng thái lọc
-    var selectedDepartment by remember { mutableStateOf("") } // Thêm trạng thái đơn vị đã chọn
-    val staffs by staffViewModel.staffList.collectAsState()
-    val students by studentViewModel.studentList.collectAsState()
+    var isFilterActive by remember { mutableStateOf(false) }
+    var selectedDepartment by remember { mutableStateOf("") }
 
     val departmentRepository = DepartmentRepository()
     val departmentViewModel: DepartmentViewModel = viewModel(
         factory = DepartmentViewModelFactory(departmentRepository)
     )
+    val filteredDepartments by departmentViewModel.filteredDepartments.collectAsState() // Lấy danh sách đã lọc
+
     val departments by departmentViewModel.departmentList.collectAsState()
 
-
-
-    val conText = LocalContext.current
     val userLoginEmail = SessionManager(context).getUserLoginEmail()
     val selectedStaff by staffViewModel.selectedStaff.collectAsState()
     val selectedStudent by studentViewModel.selectedStudent.collectAsState()
+    val staffs by staffViewModel.staffList.collectAsState()
+    val students by studentViewModel.studentList.collectAsState()
+
     LaunchedEffect(userLoginEmail) {
         if (!userLoginEmail.isNullOrBlank()) {
             if (userLoginEmail.endsWith("@e.tlu.edu.vn")) {
@@ -234,7 +234,6 @@ fun Directoryscreen(
             }
         }
     }
-
 
     Scaffold(
         bottomBar = {
@@ -255,7 +254,13 @@ fun Directoryscreen(
             )
 
             Spacer(Modifier.height(16.dp))
-            Searchbar(query = query, onQueryChange = { query = it }, selectedTab = selectedTab, onFilterClick = { isFilterActive = true })
+            Searchbar(
+                query = query,
+                onQueryChange = { query = it },
+                selectedTab = selectedTab,
+                onFilterClick = { isFilterActive = true },
+                departmentViewModel = if (selectedTab == "Đơn vị") departmentViewModel else null
+            )
             Spacer(Modifier.height(8.dp))
 
             Row(
@@ -271,24 +276,29 @@ fun Directoryscreen(
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
-                    //Text("Nguyễn Thị Mai Hương", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
 
             Spacer(Modifier.height(16.dp))
 
-            if (selectedTab == "Giảng viên") {
-                Stafflist(
+            when (selectedTab) {
+                "Giảng viên" -> Stafflist(
                     staffs = staffs,
                     query = query,
                     navController = navController,
                     isFilterActive = isFilterActive,
-                    selectedDepartment = selectedDepartment // Truyền giá trị của selectedDepartment
+                    selectedDepartment = selectedDepartment
                 )
-            } else if (selectedTab == "Đơn vị") {
-                DepartmentList(departments = departments, query = query, navController = navController)
-            } else if (selectedTab == "Sinh viên") {
-                StudentList(students = students, query = query, navController = navController)
+                "Đơn vị" -> DepartmentList(
+                    departments = filteredDepartments, // Sử dụng filteredDepartments
+                    query = query,
+                    navController = navController
+                )
+                "Sinh viên" -> StudentList(
+                    students = students,
+                    query = query,
+                    navController = navController
+                )
             }
         }
     }
@@ -705,18 +715,17 @@ fun Searchbar(
     selectedTab: String,
     onFilterClick: () -> Unit,
     studentViewModel: StudentViewModel = viewModel(),
-    staffViewModel: StaffViewModel = viewModel() // ✅ Thêm viewmodel giảng viên
+    staffViewModel: StaffViewModel = viewModel(),
+    departmentViewModel: DepartmentViewModel? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
     var expandedFilter by remember { mutableStateOf(false) }
     val dropdownOffset = DpOffset(0.dp, 15.dp)
-    val filterMenuOffset = DpOffset((160).dp, 165.dp)
+    val filterMenuOffset = DpOffset(160.dp, 165.dp)
 
-    // Trạng thái sắp xếp
     val studentSortAscending by studentViewModel.sortAscending.collectAsState()
-    val staffSortAscending by staffViewModel.sortAscending.collectAsState() // ✅ Thêm cái này
+    val staffSortAscending by staffViewModel.sortAscending.collectAsState()
 
-    // Xác định trạng thái dựa vào tab
     val currentSortAscending = when (selectedTab) {
         "Sinh viên" -> studentSortAscending
         "Giảng viên" -> staffSortAscending
@@ -735,7 +744,11 @@ fun Searchbar(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(30.dp).padding(start = 3.dp))
+            Icon(
+                Icons.Default.Search,
+                contentDescription = null,
+                modifier = Modifier.size(30.dp).padding(start = 3.dp)
+            )
             Spacer(Modifier.width(8.dp))
             BasicTextField(
                 value = query,
@@ -746,7 +759,11 @@ fun Searchbar(
             Spacer(Modifier.width(8.dp))
             Box {
                 IconButton(onClick = { expanded = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "More Options", modifier = Modifier.size(30.dp))
+                    Icon(
+                        Icons.Default.MoreVert,
+                        contentDescription = "More Options",
+                        modifier = Modifier.size(30.dp)
+                    )
                 }
 
                 DropdownMenu(
@@ -757,7 +774,7 @@ fun Searchbar(
                     DropdownMenuItem(onClick = {
                         when (selectedTab) {
                             "Sinh viên" -> studentViewModel.toggleSortOrder()
-                            "Giảng viên" -> staffViewModel.toggleSortOrder() // ✅ Thêm xử lý cho giảng viên
+                            "Giảng viên" -> staffViewModel.toggleSortOrder()
                         }
                         expanded = false
                     }) {
@@ -796,7 +813,6 @@ fun Searchbar(
 
                                 "Giảng viên" -> {
                                     DropdownMenuItem(onClick = {
-                                        // TODO: Thêm logic lọc theo đơn vị (department)
                                         onFilterClick()
                                         expanded = false
                                         expandedFilter = false
@@ -806,11 +822,22 @@ fun Searchbar(
                                 }
 
                                 "Đơn vị" -> {
-                                    DropdownMenuItem(onClick = { onFilterClick() }) {
-                                        Text("Theo Khoa")
-                                    }
-                                    DropdownMenuItem(onClick = { onFilterClick() }) {
-                                        Text("Theo Ngành")
+                                    if (departmentViewModel != null) {
+                                        DropdownMenuItem(onClick = { departmentViewModel.setFilterType("") }) {
+                                            Text("Tất cả")
+                                        }
+                                        DropdownMenuItem(onClick = { departmentViewModel.setFilterType("Khoa") }) {
+                                            Text("Khoa")
+                                        }
+                                        DropdownMenuItem(onClick = { departmentViewModel.setFilterType("Phòng") }) {
+                                            Text("Phòng")
+                                        }
+                                        DropdownMenuItem(onClick = { departmentViewModel.setFilterType("Trung tâm") }) {
+                                            Text("Trung tâm")
+                                        }
+                                        DropdownMenuItem(onClick = { departmentViewModel.setFilterType("Viện") }) {
+                                            Text("Viện")
+                                        }
                                     }
                                 }
                             }
@@ -823,79 +850,82 @@ fun Searchbar(
 }
 
 
-@Composable
-fun Bottomnavigationbar(selectedTab: String, onTabSelected: (String) -> Unit) {
-    BottomNavigation(backgroundColor = Color.White, contentColor = Color.Black) {
-        BottomNavigationItem(
-            icon = {
-                Image(
-                    painter = painterResource(id = R.drawable.department_icon),
-                    contentDescription = "Đơn vị",
-                    modifier = Modifier.size(24.dp),
-                    colorFilter = ColorFilter.tint(
-                        if (selectedTab == "Đơn vị") Color(0xFF007BFE) else Color.Black,
-                        BlendMode.SrcIn
+    @Composable
+    fun Bottomnavigationbar(selectedTab: String, onTabSelected: (String) -> Unit) {
+        BottomNavigation(backgroundColor = Color.White, contentColor = Color.Black) {
+            BottomNavigationItem(
+                icon = {
+                    Image(
+                        painter = painterResource(id = R.drawable.department_icon),
+                        contentDescription = "Đơn vị",
+                        modifier = Modifier.size(24.dp),
+                        colorFilter = ColorFilter.tint(
+                            if (selectedTab == "Đơn vị") Color(0xFF007BFE) else Color.Black,
+                            BlendMode.SrcIn
+                        )
                     )
-                )
-            },
-            label = {
-                Text(
-                    "Đơn vị",
-                    color = if (selectedTab == "Đơn vị") Color(0xFF007BFE) else Color.Black
-                )
-            },
-            selected = selectedTab == "Đơn vị",
-            onClick = { onTabSelected("Đơn vị") }
-        )
-
-        BottomNavigationItem(
-            icon = {
-                Image(
-                    painter = painterResource(id = R.drawable.staff_icon),
-                    contentDescription = "Giảng viên",
-                    modifier = Modifier.size(24.dp),
-                    colorFilter = ColorFilter.tint(
-                        if (selectedTab == "Giảng viên") Color(0xFF007BFE) else Color.Black,
-                        BlendMode.SrcIn
+                },
+                label = {
+                    Text(
+                        "Đơn vị",
+                        color = if (selectedTab == "Đơn vị") Color(0xFF007BFE) else Color.Black
                     )
-                )
-            },
-            label = {
-                Text(
-                    "Giảng viên",
-                    color = if (selectedTab == "Giảng viên") Color(0xFF007BFE) else Color.Black
-                )
-            },
-            selected = selectedTab == "Giảng viên",
-            onClick = { onTabSelected("Giảng viên") }
-        )
+                },
+                selected = selectedTab == "Đơn vị",
+                onClick = { onTabSelected("Đơn vị") }
+            )
 
-        BottomNavigationItem(
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.School,
-                    contentDescription = "Sinh viên",
-                    tint = if (selectedTab == "Sinh viên") Color(0xFF007BFE) else Color.Black
-                )
-            },
-            label = {
-                Text(
-                    "Sinh viên",
-                    color = if (selectedTab == "Sinh viên") Color(0xFF007BFE) else Color.Black
-                )
-            },
-            selected = selectedTab == "Sinh viên",
-            onClick = { onTabSelected("Sinh viên") }
+            BottomNavigationItem(
+                icon = {
+                    Image(
+                        painter = painterResource(id = R.drawable.staff_icon),
+                        contentDescription = "Giảng viên",
+                        modifier = Modifier.size(24.dp),
+                        colorFilter = ColorFilter.tint(
+                            if (selectedTab == "Giảng viên") Color(0xFF007BFE) else Color.Black,
+                            BlendMode.SrcIn
+                        )
+                    )
+                },
+                label = {
+                    Text(
+                        "Giảng viên",
+                        color = if (selectedTab == "Giảng viên") Color(0xFF007BFE) else Color.Black
+                    )
+                },
+                selected = selectedTab == "Giảng viên",
+                onClick = { onTabSelected("Giảng viên") }
+            )
+
+            BottomNavigationItem(
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.School,
+                        contentDescription = "Sinh viên",
+                        tint = if (selectedTab == "Sinh viên") Color(0xFF007BFE) else Color.Black
+                    )
+                },
+                label = {
+                    Text(
+                        "Sinh viên",
+                        color = if (selectedTab == "Sinh viên") Color(0xFF007BFE) else Color.Black
+                    )
+                },
+                selected = selectedTab == "Sinh viên",
+                onClick = { onTabSelected("Sinh viên") }
+            )
+        }
+    }
+
+    @Preview(showBackground = true)
+    @Composable
+    fun PreviewScreen() {
+        val navController = rememberNavController()
+        val staffViewModel = StaffViewModel() // giả lập trong preview
+        val studentViewModel = StudentViewModel() // giả lập trong preview
+        Directoryscreen(
+            navController = navController,
+            staffViewModel = staffViewModel,
+            studentViewModel = studentViewModel
         )
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewScreen() {
-    val navController = rememberNavController()
-    val staffViewModel = StaffViewModel() // giả lập trong preview
-    val studentViewModel = StudentViewModel() // giả lập trong preview
-    Directoryscreen(navController = navController, staffViewModel = staffViewModel, studentViewModel = studentViewModel)
-}
-
