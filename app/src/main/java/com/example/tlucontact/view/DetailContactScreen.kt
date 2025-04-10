@@ -32,6 +32,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import coil.compose.rememberAsyncImagePainter
 import com.example.tlucontact.data.model.Staff
+import androidx.compose.ui.graphics.vector.ImageVector
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,7 +81,8 @@ fun DetailContactScreen(staff: Staff, onBack: () -> Unit) {
             ) {
                 ActionButton(icon = Icons.Filled.Chat, label = "Tin nhắn", phoneNumber = staff.phone) // Assuming you might want to handle messaging later
                 ActionButton(icon = Icons.Filled.Phone, label = "Gọi", phoneNumber = staff.phone)
-                ActionButton(icon = Icons.Filled.VideoCall, label = "Gọi video") // You'll need to implement video call logic
+                ActionButton(icon = Icons.Filled.VideoCall, label = "Gọi video", phoneNumber = staff.phone)
+
                 ActionButton(icon = Icons.Filled.Email, label = "Mail", phoneNumber = staff.email) // Assuming you might want to handle email later
             }
 
@@ -97,29 +99,58 @@ fun DetailContactScreen(staff: Staff, onBack: () -> Unit) {
 }
 
 @Composable
-fun ActionButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, phoneNumber: String? = null) {
-    val context = LocalContext.current // Lấy context từ LocalContext
+fun ActionButton(icon: ImageVector, label: String, phoneNumber: String? = null) {
+    val context = LocalContext.current
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         IconButton(onClick = {
-            if (label == "Gọi" && phoneNumber != null) {
-                makePhoneCall(context, phoneNumber) // Sử dụng context
+            when (label) {
+                "Gọi" -> phoneNumber?.let { makePhoneCall(context, it) }
+                "Tin nhắn" -> phoneNumber?.let { sendSMS(context, it) }
+                "Mail" -> phoneNumber?.let { sendEmail(context, it) }
+                "Gọi video" -> phoneNumber?.let { openVideoCallApp(context, it) }
             }
         }) {
-            Icon(icon, contentDescription = label, tint = Color(0xFF007AFF))
+            Icon(imageVector = icon, contentDescription = label, tint = Color(0xFF007AFF))
         }
         Text(
             text = label,
             fontSize = 12.sp,
             color = Color(0xFF007AFF),
             modifier = Modifier.clickable {
-                if (label == "Gọi" && phoneNumber != null) {
-                    makePhoneCall(context, phoneNumber) // Sử dụng context
+                when (label) {
+                    "Gọi" -> phoneNumber?.let { makePhoneCall(context, it) }
+                    "Tin nhắn" -> phoneNumber?.let { sendSMS(context, it) }
+                    "Mail" -> phoneNumber?.let { sendEmail(context, it) }
+                    "Gọi video" -> phoneNumber?.let { openVideoCallApp(context, it) }
                 }
             }
         )
     }
 }
+
+fun sendSMS(context: Context, phoneNumber: String) {
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("sms:$phoneNumber"))
+    context.startActivity(intent)
+}
+fun sendEmail(context: Context, email: String) {
+    val intent = Intent(Intent.ACTION_SENDTO).apply {
+        data = Uri.parse("mailto:$email")
+    }
+    context.startActivity(intent)
+}
+fun openVideoCallApp(context: Context, phoneNumber: String) {
+    // Mặc định mở Google Meet (có thể thay package name tùy app gọi video bạn hỗ trợ)
+    val intent = context.packageManager.getLaunchIntentForPackage("com.google.android.apps.meetings")
+    if (intent != null) {
+        context.startActivity(intent)
+    } else {
+        // Nếu không có app, mở Play Store để cài
+        val playStoreIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.apps.meetings"))
+        context.startActivity(playStoreIntent)
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InfoField(label: String, value: String) {
