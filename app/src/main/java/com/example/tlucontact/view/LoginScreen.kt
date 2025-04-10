@@ -3,7 +3,6 @@ package com.example.tlucontact.view
 
 // Import các thư viện cần thiết
 import android.app.Activity
-import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -34,7 +33,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.tlucontact.R
-import com.example.tlucontact.home
 import com.example.tlucontact.viewmodel.LoginViewModel
 
 // Hàm giao diện chính LoginScreen, được gọi để hiển thị màn hình đăng nhập

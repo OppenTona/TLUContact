@@ -1,6 +1,7 @@
 package com.example.tlucontact.view
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -18,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
@@ -26,6 +28,11 @@ import com.example.tlucontact.viewmodel.StudentViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import android.app.Activity
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.example.tlucontact.R
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,7 +40,8 @@ fun UpdateDetailStudentScreen(
     student: Student?,
     onBack: () -> Unit,
     onSave: (Student) -> Unit,
-    viewModel: StudentViewModel
+    viewModel: StudentViewModel,
+    navController: NavController
 ) {
     val scrollState = rememberScrollState()
     var fullName by remember { mutableStateOf(student?.fullNameStudent ?: "") }
@@ -41,6 +49,13 @@ fun UpdateDetailStudentScreen(
     var address by remember { mutableStateOf(student?.address ?: "") }
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val activity = context as? Activity
+    val accountLinkViewModel : AccountLinkViewModel = viewModel()
+    val isAccountLinked by accountLinkViewModel.isAccountLinked.collectAsState()
+
+    LaunchedEffect(Unit) {
+        accountLinkViewModel.checkAccountLinkStatus()
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -87,6 +102,38 @@ fun UpdateDetailStudentScreen(
                 Text(text = student.fullNameStudent, fontSize = 20.sp)
                 Spacer(modifier = Modifier.height(16.dp))
 
+                if (!isAccountLinked) {
+                    var showConfirmPasswordView by remember { mutableStateOf(false) }
+
+                    if (showConfirmPasswordView) {
+                        ConfirmPasswordView(navController) // Hiển thị ConfirmPasswordView khi cần
+                    } else {
+                        Button(
+                            onClick = { showConfirmPasswordView = true },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF004578)),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.logo_outlook),
+                                    contentDescription = "Outlook Logo",
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .padding(end = 8.dp)
+                                )
+                                Text(
+                                    "Link tài khoản Outlook",
+                                    color = Color.White,
+                                    fontSize = 16.sp
+                                )
+                            }
+                        }
+                    }
+                }
+
                 // Editable fields
                 StudentEditableField(label = "Mã sinh viên", value = student.studentID, onValueChange = {}, editable = false)
                 StudentEditableField(label = "Lớp", value = student.className, onValueChange = {}, editable = false)
@@ -94,7 +141,7 @@ fun UpdateDetailStudentScreen(
                 StudentEditableField(label = "Email", value = student.email, onValueChange = {}, editable = false)
                 StudentEditableField(label = "Địa chỉ nơi ở", value = address, onValueChange = { address = it }, editable = true)
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(15.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),

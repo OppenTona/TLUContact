@@ -7,6 +7,7 @@ import com.google.firebase.auth.FirebaseAuth // Import FirebaseAuth để xử l
 import com.google.firebase.auth.FirebaseUser // Import FirebaseUser để sử dụng đối tượng người dùng Firebase
 import com.google.firebase.auth.OAuthProvider // Import OAuthProvider để xử lý đăng nhập bằng Microsoft
 import com.google.firebase.firestore.FirebaseFirestore // Import FirebaseFirestore để tương tác với Firestore Database
+import android.util.Log
 
 // Lớp AuthRepository chịu trách nhiệm xử lý xác thực và lưu dữ liệu người dùng
 class AuthRepository(private val context: Context) {
@@ -116,18 +117,20 @@ class AuthRepository(private val context: Context) {
     fun loginWithMicrosoft(activity: Activity, callback: (Result<FirebaseUser>) -> Unit) {
         val provider = OAuthProvider.newBuilder("microsoft.com").apply { // Tạo provider OAuth cho Microsoft
             addCustomParameter("tenant", "tlu.edu.vn") // Thêm tham số tenant domain
-            scopes = listOf("openid", "profile", "User.Read") // Thêm các scope cần thiết
+            scopes = listOf("openid", "profile", "User.Read", "email") // Thêm các scope cần thiết
         }
 
         if (auth.pendingAuthResult != null) { // Kiểm tra nếu có phiên đăng nhập Microsoft đang chờ xử lý
-            auth.pendingAuthResult?.addOnSuccessListener { authResult -> // Xử lý thành công
+            auth.pendingAuthResult?.addOnSuccessListener { authResult ->
+                Log.d("PROFILE_RAW", "Raw profile: ${authResult.additionalUserInfo?.profile ?: "null"}") // Xử lý thành công
                 handleMicrosoftAuthResult(authResult.user, callback) // Gọi hàm xử lý kết quả
             }?.addOnFailureListener { exception -> // Xử lý thất bại
                 callback(Result.failure(exception)) // Trả về lỗi
             }
         } else {
             auth.startActivityForSignInWithProvider(activity, provider.build()) // Bắt đầu đăng nhập với provider Microsoft
-                .addOnSuccessListener { authResult -> // Xử lý thành công
+                .addOnSuccessListener { authResult ->
+                    Log.d("PROFILE_RAW", "Raw profile: ${authResult.additionalUserInfo?.profile ?: "null"}") // Xử lý thành công
                     handleMicrosoftAuthResult(authResult.user, callback) // Gọi hàm xử lý kết quả
                 }
                 .addOnFailureListener { exception -> // Xử lý thất bại
@@ -146,7 +149,9 @@ class AuthRepository(private val context: Context) {
             return // Thoát khỏi hàm
         }
         val userEmail = firebaseUser.email?.trim() ?: "" // Lấy email người dùng và xóa khoảng trắng
+        Log.d("USEREMAIL", "❌ UserMEail laf: ${userEmail}")
         if (!isValidSchoolEmail(userEmail)) { // Kiểm tra nếu email không hợp lệ với định dạng trường
+            Log.d("USEREMAIL", "❌ UserMEail laf: ${userEmail}")
             firebaseUser.delete() // Xóa tài khoản người dùng
             callback(Result.failure(Exception("Email không hợp lệ. Vui lòng sử dụng email của trường."))) // Trả về lỗi email không hợp lệ
             return // Thoát khỏi hàm

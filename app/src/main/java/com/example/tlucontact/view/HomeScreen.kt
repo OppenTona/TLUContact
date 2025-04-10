@@ -100,7 +100,8 @@ fun HomeScreen(
                             studentViewModel.updateStudentInfo(updatedStudent) // Sử dụng studentViewModel và phương thức phù hợp
                             navController.popBackStack()
                         },
-                        viewModel = studentViewModel
+                        viewModel = studentViewModel,
+                        navController = navController
                     )
                 }
                 composable(route = "update_detail") {
@@ -514,7 +515,8 @@ fun Useravatar(navController: NavController) {
             .clickable {
                 if (userLoginEmail.toString().endsWith("@e.tlu.edu.vn")) {
                     navController.navigate("update_detail_student")
-                } else {
+                }
+                else {
                     navController.navigate("update_detail")
                 }
             }
