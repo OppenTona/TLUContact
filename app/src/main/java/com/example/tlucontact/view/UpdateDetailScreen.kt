@@ -1,5 +1,6 @@
 package com.example.tlucontact.view
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,6 +27,7 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.tlucontact.data.model.Staff
 import com.example.tlucontact.viewmodel.StaffViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,6 +47,7 @@ fun UpdateDetailScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     val updateMessage by staffViewModel.updateMessage.collectAsState()
+    val context = LocalContext.current
 
 
     Scaffold(
@@ -121,6 +125,7 @@ fun UpdateDetailScreen(
                                 position = position
                             )
                             staffViewModel.updateStaffInfo(updatedStaff)
+
                             onSave(updatedStaff)
 
                         },
@@ -138,7 +143,7 @@ fun UpdateDetailScreen(
     }
     LaunchedEffect(updateMessage) {
         updateMessage?.let {
-            snackbarHostState.showSnackbar(it)
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
             staffViewModel.clearUpdateMessage()
         }
     }

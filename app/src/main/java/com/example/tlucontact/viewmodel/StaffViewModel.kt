@@ -30,6 +30,9 @@ class StaffViewModel : ViewModel() {
     private val _updateMessage = MutableStateFlow<String?>(null)
     val updateMessage: StateFlow<String?> = _updateMessage
 
+
+    private val _isUpdateSuccessful = MutableStateFlow<Boolean>(false)
+    val isUpdateSuccessful: StateFlow<Boolean> = _isUpdateSuccessful
     init {
         fetchStaffs()
     }
@@ -93,13 +96,19 @@ class StaffViewModel : ViewModel() {
             .addOnSuccessListener {
                 _selectedStaff.value = updatedStaff
                 _updateMessage.value = "Cập nhật thông tin thành công"
+                _isUpdateSuccessful.value = true
             }
             .addOnFailureListener { exception ->
                 _updateMessage.value = "Lỗi cập nhật: ${exception.message}"
+                _isUpdateSuccessful.value = false
             }
     }
-
     fun clearUpdateMessage() {
         _updateMessage.value = null
+        _isUpdateSuccessful.value = false
     }
-}
+
+
+    }
+
+

@@ -1,11 +1,15 @@
 package com.example.tlucontact.viewmodel
 
 import android.util.Log
+import androidx.compose.material3.SnackbarHostState
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import com.example.tlucontact.data.model.Student
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class StudentViewModel : ViewModel() {
     private val db = FirebaseFirestore.getInstance()
@@ -20,6 +24,8 @@ class StudentViewModel : ViewModel() {
     // Thêm trạng thái sắp xếp
     private val _sortAscending = MutableStateFlow(true)
     val sortAscending: StateFlow<Boolean> = _sortAscending
+    private val _snackbarMessage = MutableStateFlow<String?>(null)
+    val snackbarMessage: StateFlow<String?> = _snackbarMessage
 
 //    init {
 //        try {
@@ -99,30 +105,6 @@ class StudentViewModel : ViewModel() {
         }
     }
 
-    // Phương thức lọc sinh viên theo className (Lớp)
-    fun filterStudents(className: String) {
-        db.collection("students")
-            .whereEqualTo("className", className) // Lọc theo lớp
-            .get()
-            .addOnSuccessListener { result ->
-                val studentItems = result.map { doc ->
-                    Student(
-                        studentID = doc.id,
-                        fullNameStudent = doc.getString("fullNameStudent") ?: "Không có tên",
-                        photoURL = doc.getString("photoURL") ?: "",
-                        email = doc.getString("email") ?: "",
-                        phone = doc.getString("phone") ?: "",
-                        address = doc.getString("address") ?: "",
-                        className = doc.getString("className") ?: "",
-                        userID = doc.getString("userID") ?: ""
-                    )
-                }
-                _studentList.value = studentItems
-            }
-            .addOnFailureListener { exception ->
-                println("Lỗi lấy dữ liệu filterStudents: ${exception.message}")
-            }
-    }
 
     fun setStudentByEmail(emailUser: String) {
         Log.d("setStudentByEmail", "Bat dau vao ham: $emailUser")
@@ -155,7 +137,6 @@ class StudentViewModel : ViewModel() {
             }
     }
     fun updateStudentInfo(updatedStudent: Student) {
-        // Cập nhật thông tin sinh viên vào Firestore theo email
         db.collection("student").document(updatedStudent.email)
             .set(
                 mapOf(
@@ -170,13 +151,11 @@ class StudentViewModel : ViewModel() {
                 )
             )
             .addOnSuccessListener {
-                // Cập nhật thành công
-                _selectedStudent.value = updatedStudent // Cập nhật giá trị mới vào _selectedStudent
-                println("Cập nhật thông tin sinh viên thành công")
+                _selectedStudent.value = updatedStudent
+                _snackbarMessage.value = "Cập nhật thông tin thành công"
             }
             .addOnFailureListener { exception ->
-                // Lỗi cập nhật
-                println("Lỗi cập nhật thông tin sinh viên: ${exception.message}")
+                _snackbarMessage.value = "Lỗi cập nhật: ${exception.message}"
             }
     }
 }
