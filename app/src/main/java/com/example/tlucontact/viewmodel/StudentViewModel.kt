@@ -21,16 +21,16 @@ class StudentViewModel : ViewModel() {
     private val _sortAscending = MutableStateFlow(true)
     val sortAscending: StateFlow<Boolean> = _sortAscending
 
-    init {
-        try {
-            fetchStudents() // Lấy tất cả sinh viên ban đầu
-        }
-        catch (
-            e: Exception) {
-            println("Lỗi lấy dữ liệu sinh viên: ${e.message}")
-        }
-
-    }
+//    init {
+//        try {
+//            fetchStudents() // Lấy tất cả sinh viên ban đầu
+//        }
+//        catch (
+//            e: Exception) {
+//            println("Lỗi lấy dữ liệu sinh viên: ${e.message}")
+//        }
+//
+//    }
     // Thêm hàm để thay đổi trạng thái sắp xếp
     fun toggleSortOrder() {
         _sortAscending.value = !_sortAscending.value
@@ -40,26 +40,63 @@ class StudentViewModel : ViewModel() {
         _filterMode.value = mode
         // Không cần lấy lại dữ liệu, chỉ thay đổi cách hiển thị trên UI
     }
-    private fun fetchStudents() {
-        db.collection("student").get()
-            .addOnSuccessListener { result ->
-                val studentItems = result.map { doc ->
-                    Student(
-                        studentID = doc.getString("studentID") ?: "",
-                        fullNameStudent = doc.getString("fullNameStudent") ?: "Không có tên",
-                        photoURL = doc.getString("photoURL") ?: "",
-                        email = doc.getString("email") ?: "",
-                        phone = doc.getString("phone") ?: "",
-                        address = doc.getString("address") ?: "",
-                        className = doc.getString("className") ?: "",
-                        userID = doc.getString("userID") ?: ""
-                    )
+    public fun fetchStudents(currentUserEmail: String) {
+        if (currentUserEmail.endsWith("@e.tlu.edu.vn")) {
+            // Nếu là sinh viên → truy xuất className trước từ chính bản thân
+            db.collection("student").document(currentUserEmail).get()
+                .addOnSuccessListener { doc ->
+                    val className = doc.getString("className") ?: ""
+                    if (className.isNotEmpty()) {
+                        db.collection("student")
+                            .whereEqualTo("className", className)
+                            .get()
+                            .addOnSuccessListener { result ->
+                                val studentItems = result.map { studentDoc ->
+                                    Student(
+                                        studentID = studentDoc.getString("studentID") ?: "",
+                                        fullNameStudent = studentDoc.getString("fullNameStudent") ?: "Không có tên",
+                                        photoURL = studentDoc.getString("photoURL") ?: "",
+                                        email = studentDoc.getString("email") ?: "",
+                                        phone = studentDoc.getString("phone") ?: "",
+                                        address = studentDoc.getString("address") ?: "",
+                                        className = studentDoc.getString("className") ?: "",
+                                        userID = studentDoc.getString("userID") ?: ""
+                                    )
+                                }
+                                _studentList.value = studentItems
+                            }
+                            .addOnFailureListener { e ->
+                                println("Lỗi lấy danh sách theo lớp: ${e.message}")
+                            }
+                    } else {
+                        println("Không tìm thấy className của sinh viên $currentUserEmail")
+                    }
                 }
-                _studentList.value = studentItems
-            }
-            .addOnFailureListener { exception ->
-                println("Lỗi lấy dữ liệu fetchStudents: ${exception.message}")
-            }
+                .addOnFailureListener { e ->
+                    println("Lỗi lấy thông tin sinh viên hiện tại: ${e.message}")
+                }
+        } else {
+            // Nếu là staff → lấy toàn bộ sinh viên
+            db.collection("student").get()
+                .addOnSuccessListener { result ->
+                    val studentItems = result.map { doc ->
+                        Student(
+                            studentID = doc.getString("studentID") ?: "",
+                            fullNameStudent = doc.getString("fullNameStudent") ?: "Không có tên",
+                            photoURL = doc.getString("photoURL") ?: "",
+                            email = doc.getString("email") ?: "",
+                            phone = doc.getString("phone") ?: "",
+                            address = doc.getString("address") ?: "",
+                            className = doc.getString("className") ?: "",
+                            userID = doc.getString("userID") ?: ""
+                        )
+                    }
+                    _studentList.value = studentItems
+                }
+                .addOnFailureListener { e ->
+                    println("Lỗi lấy toàn bộ sinh viên: ${e.message}")
+                }
+        }
     }
 
     // Phương thức lọc sinh viên theo className (Lớp)

@@ -105,15 +105,14 @@ fun HomeScreen(
                     )
                 }
                 composable(route = "update_detail") {
-
-                    val staffViewModel: StaffViewModel = viewModel()
-                    UpdateDetailScreen(
+                    UpdateDetailScreen<Any>(
                         staff = selectedStaff,
                         onBack = { navController.popBackStack() },
                         onSave = { updatedStaff ->
-                            staffViewModel.updateStaffInfo(updatedStaff)
+                            staffViewModel.updateStaffInfo(updatedStaff) // dùng ViewModel bên ngoài
                             navController.popBackStack()
-                        }
+                        },
+                        viewModel = staffViewModel // nếu bạn cần truyền vào ViewModel
                     )
                 }
 
@@ -227,9 +226,11 @@ fun Directoryscreen(
             if (userLoginEmail.endsWith("@e.tlu.edu.vn")) {
                 Log.d("Navigation", "Navigating to update_detail")
                 studentViewModel.setStudentByEmail(userLoginEmail)
+                studentViewModel.fetchStudents(userLoginEmail)
             } else {
                 Log.d("Navigation", "Navigating to update_detail_staff")
                 staffViewModel.setStaffByEmail(userLoginEmail)
+                studentViewModel.fetchStudents(userLoginEmail)
             }
         }
     }
