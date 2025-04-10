@@ -50,12 +50,6 @@ fun UpdateDetailStudentScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val activity = context as? Activity
-    val accountLinkViewModel : AccountLinkViewModel = viewModel()
-    val isAccountLinked by accountLinkViewModel.isAccountLinked.collectAsState()
-
-    LaunchedEffect(Unit) {
-        accountLinkViewModel.checkAccountLinkStatus()
-    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -102,38 +96,6 @@ fun UpdateDetailStudentScreen(
                 Text(text = student.fullNameStudent, fontSize = 20.sp)
                 Spacer(modifier = Modifier.height(16.dp))
 
-                if (!isAccountLinked) {
-                    var showConfirmPasswordView by remember { mutableStateOf(false) }
-
-                    if (showConfirmPasswordView) {
-                        ConfirmPasswordView(navController) // Hiển thị ConfirmPasswordView khi cần
-                    } else {
-                        Button(
-                            onClick = { showConfirmPasswordView = true },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF004578)),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp),
-                            shape = RoundedCornerShape(8.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Image(
-                                    painter = painterResource(id = R.drawable.logo_outlook),
-                                    contentDescription = "Outlook Logo",
-                                    modifier = Modifier
-                                        .size(24.dp)
-                                        .padding(end = 8.dp)
-                                )
-                                Text(
-                                    "Link tài khoản Outlook",
-                                    color = Color.White,
-                                    fontSize = 16.sp
-                                )
-                            }
-                        }
-                    }
-                }
-
                 // Editable fields
                 StudentEditableField(label = "Mã sinh viên", value = student.studentID, onValueChange = {}, editable = false)
                 StudentEditableField(label = "Lớp", value = student.className, onValueChange = {}, editable = false)
@@ -141,7 +103,7 @@ fun UpdateDetailStudentScreen(
                 StudentEditableField(label = "Email", value = student.email, onValueChange = {}, editable = false)
                 StudentEditableField(label = "Địa chỉ nơi ở", value = address, onValueChange = { address = it }, editable = true)
 
-                Spacer(modifier = Modifier.height(15.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
