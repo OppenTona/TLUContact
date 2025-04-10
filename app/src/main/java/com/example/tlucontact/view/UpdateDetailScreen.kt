@@ -1,5 +1,5 @@
 package com.example.tlucontact.view
-import com.example.tlucontact.viewmodel.StaffViewModel
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -25,27 +25,21 @@ import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.tlucontact.R
 import com.example.tlucontact.data.model.Staff
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun <T> UpdateDetailScreen(
+
+fun UpdateDetailScreen(
     staff: Staff?,
     onBack: () -> Unit,
-    onSave: (Staff) -> Unit,
-    viewModel: StaffViewModel
+    onSave: (Staff) -> Unit
 ) {
     val scrollState = rememberScrollState()
     var name by remember { mutableStateOf(staff?.name ?: "") }
     var phone by remember { mutableStateOf(staff?.phone ?: "") }
     var department by remember { mutableStateOf(staff?.department ?: "") }
 
-    val snackbarHostState = remember { SnackbarHostState() }
-
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Chỉnh sửa thông tin") },
@@ -77,7 +71,7 @@ fun <T> UpdateDetailScreen(
                         contentScale = ContentScale.Crop
                     )
                     IconButton(
-                        onClick = { /* Xử lý chọn ảnh mới */ },
+                        onClick = { /* Xử lý chọn ảnh */ },
                         modifier = Modifier.size(24.dp)
                     ) {
                         Icon(Icons.Filled.Edit, contentDescription = "Chỉnh sửa ảnh")
@@ -85,33 +79,32 @@ fun <T> UpdateDetailScreen(
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(text = name, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text(text = staff.name, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Các trường thông tin có thể chỉnh sửa
                 EditableField(label = "Mã giảng viên", value = staff.staffIdFB, editable = false)
                 EditableField(label = "Chức vụ", value = staff.position, editable = false)
-                EditableField(label = "Số điện thoại", value = phone, onValueChanged = { phone = it }, editable = true)
+                EditableField(label = "Số điện thoại", value = phone, editable = true)
                 EditableField(label = "Email", value = staff.staffId, editable = false)
-                EditableField(label = "Đơn vị trực thuộc", value = department, onValueChanged = { department = it }, editable = true)
+                EditableField(label = "Đơn vị trực thuộc", value = department, editable = true)
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                SaveCancelButtons(
-                    onBack = onBack,
-                    onSave = {
-                        val updatedStaff = staff.copy(
-                            name = name,
-                            phone = phone,
-                            department = department
-                        )
-                        viewModel.updateStaffInfo(updatedStaff)
-                        onSave(updatedStaff)
-                        CoroutineScope(Dispatchers.Main).launch {
-                            snackbarHostState.showSnackbar("Cập nhật thông tin thành công")
-                        }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Button(onClick = onBack, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF74B7FF))) {
+                        Text("Hủy", color = Color.White)
                     }
-                )
+                    Button(onClick = {
+                        // Gửi thông tin đã chỉnh sửa để lưu vào Firestore
+                        onSave(staff.copy(phone = phone, department = department))
+                    }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF74B7FF))) {
+                        Text("Lưu", color = Color.White)
+                    }
+                }
             }
         } else {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -120,28 +113,18 @@ fun <T> UpdateDetailScreen(
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditableField(
-    label: String,
-    value: String,
-    editable: Boolean,
-    onValueChanged: (String) -> Unit = {}
-) {
+fun EditableField(label: String, value: String, editable: Boolean, onValueChanged: (String) -> Unit = {}) {
     var text by remember { mutableStateOf(value) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-    ) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         OutlinedTextField(
             value = text,
             onValueChange = {
                 if (editable) {
                     text = it
-                    onValueChanged(it)
+                    onValueChanged(it)  // Truyền giá trị thay đổi ra ngoài
                 }
             },
             modifier = Modifier.fillMaxWidth(),
@@ -171,13 +154,13 @@ fun SaveCancelButtons(onBack: () -> Unit, onSave: () -> Unit) {
     ) {
         Button(
             onClick = onBack,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0x80007AFF))
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0x80007AFF)) // Màu xanh focus 50% opacity
         ) {
             Text("Hủy", color = Color.White)
         }
         Button(
             onClick = onSave,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0x80007AFF))
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0x80007AFF)) // Màu xanh focus 50% opacity
         ) {
             Text("Lưu", color = Color.White)
         }

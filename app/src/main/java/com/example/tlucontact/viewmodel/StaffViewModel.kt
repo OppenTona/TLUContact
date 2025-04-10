@@ -103,25 +103,22 @@ class StaffViewModel : ViewModel() {
         db.collection("staffs").document(updatedStaff.email)
             .set(
                 mapOf(
-                    "name" to updatedStaff.name,
+                    "fullName" to updatedStaff.name,
                     "phone" to updatedStaff.phone,
-                    "department" to updatedStaff.department,
+                    "unit" to updatedStaff.department,
                     "position" to updatedStaff.position,
-                    "email" to updatedStaff.email,
-                    "userID" to updatedStaff.userId,
-                    "avatarURL" to updatedStaff.avatarURL
+                    "photoURL" to updatedStaff.avatarURL
                 )
             )
             .addOnSuccessListener {
                 // Cập nhật thành công
                 _selectedStaff.value = updatedStaff // Cập nhật giá trị mới vào _selectedStaff
-                println("Cập nhật thông tin giảng viên thành công")
+                println("Cập nhật thông tin thành công")
             }
             .addOnFailureListener { exception ->
                 // Lỗi cập nhật
-                println("Lỗi cập nhật thông tin giảng viên: ${exception.message}")
+                println("Lỗi cập nhật thông tin: ${exception.message}")
             }
     }
-
 
 }
