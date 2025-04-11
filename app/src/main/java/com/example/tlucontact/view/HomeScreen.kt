@@ -135,6 +135,7 @@ fun HomeScreen(
                         navController = navController,
                         staffViewModel = staffViewModel,
                         studentViewModel = studentViewModel,
+                        guestViewModel = guestViewModel,
                         logoutViewModel = logoutViewModel
                     )
                 }
@@ -211,6 +212,7 @@ fun Directoryscreen(
     navController: NavController,
     staffViewModel: StaffViewModel,
     studentViewModel: StudentViewModel,
+    guestViewModel: GuestViewModel = viewModel(),
     logoutViewModel: LogoutViewModel = viewModel()
 ) {
     val context = LocalContext.current
@@ -230,22 +232,32 @@ fun Directoryscreen(
     val userLoginEmail = SessionManager(context).getUserLoginEmail()
     val selectedStaff by staffViewModel.selectedStaff.collectAsState()
     val selectedStudent by studentViewModel.selectedStudent.collectAsState()
+    val selectedGuest by guestViewModel.selectedGuest.collectAsState()
     val staffs by staffViewModel.staffList.collectAsState()
     val students by studentViewModel.studentList.collectAsState()
 
+
     LaunchedEffect(userLoginEmail) {
         if (!userLoginEmail.isNullOrBlank()) {
-            if (userLoginEmail.endsWith("@e.tlu.edu.vn")) {
-                Log.d("Navigation", "Navigating to update_detail")
-                studentViewModel.setStudentByEmail(userLoginEmail)
-                studentViewModel.fetchStudents(userLoginEmail)
-            } else {
-                Log.d("Navigation", "Navigating to update_detail_staff")
-                staffViewModel.setStaffByEmail(userLoginEmail)
-                studentViewModel.fetchStudents(userLoginEmail)
+            when {
+                userLoginEmail.endsWith("@e.tlu.edu.vn") -> {
+                    Log.d("Navigation", "Navigating to update_detail_student")
+                    studentViewModel.setStudentByEmail(userLoginEmail)
+                    studentViewModel.fetchStudents(userLoginEmail)
+                }
+                userLoginEmail.endsWith("@tlu.edu.vn") -> {
+                    Log.d("Navigation", "Navigating to update_detail_staff")
+                    staffViewModel.setStaffByEmail(userLoginEmail)
+                    studentViewModel.fetchStudents(userLoginEmail)
+                }
+                else -> {
+                    Log.d("Navigation", "Navigating to update_detail_guest")
+                    guestViewModel.fetchGuestByEmail(userLoginEmail)
+                }
             }
         }
     }
+
 
     Scaffold(
         bottomBar = {
@@ -284,7 +296,7 @@ fun Directoryscreen(
                 Column {
                     Text("Hồ sơ của bạn", fontSize = 14.sp, color = Color.Gray)
                     Text(
-                        text = selectedStaff?.name ?: selectedStudent?.fullNameStudent ?: "Chưa có tên",
+                        text = selectedStaff?.name ?: selectedStudent?.fullNameStudent ?: selectedGuest?.name ?: "Chưa có tên",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
