@@ -1,5 +1,6 @@
 package com.example.tlucontact.view
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
 import com.example.tlucontact.DetailScreen
@@ -272,7 +273,13 @@ fun Directoryscreen(
                 onQueryChange = { query = it },
                 selectedTab = selectedTab,
                 onFilterClick = { isFilterActive = true },
-                departmentViewModel = if (selectedTab == "Đơn vị") departmentViewModel else null
+                departmentViewModel = if (selectedTab == "Đơn vị") departmentViewModel else null,
+                onDepartmentSortOrderChange = { newSortOrder ->
+                    // Cập nhật trạng thái sắp xếp trong DepartmentList
+                    // (nếu cần, bạn có thể truyền nó vào DepartmentList hoặc sử dụng ViewModel)
+                    // Ví dụ:
+                    // departmentViewModel.setSortAscending(newSortOrder)
+                }
             )
             Spacer(Modifier.height(8.dp))
 
@@ -302,11 +309,14 @@ fun Directoryscreen(
                     isFilterActive = isFilterActive,
                     selectedDepartment = selectedDepartment
                 )
-                "Đơn vị" -> DepartmentList(
-                    departmentsFlow = departmentViewModel.filteredDepartments, // Truyền StateFlow
-                    query = query,
-                    navController = navController
-                )
+                "Đơn vị" -> {
+                    DepartmentList(
+                        departmentsFlow = departmentViewModel.filteredDepartments,
+                        query = query,
+                        navController = navController,
+                        departmentViewModel = departmentViewModel
+                    )
+                }
                 "Sinh viên" -> StudentList(
                     students = students,
                     query = query,
@@ -455,17 +465,31 @@ fun StudentItem(
 }
 
 
-
 @Composable
 fun DepartmentList(
-    departmentsFlow: StateFlow<List<Department>>, // Thay đổi kiểu tham số
+    departmentsFlow: StateFlow<List<Department>>,
     query: String,
-    navController: NavController
+    navController: NavController,
+    departmentViewModel: DepartmentViewModel
 ) {
-    val departments by departmentsFlow.collectAsState() // Lấy giá trị từ StateFlow
+    val departments by departmentsFlow.collectAsState()
+    val sortAscending by departmentViewModel.sortAscending.collectAsState()
 
-    val filteredDepartments = departments.filter { it.name.contains(query, ignoreCase = true) }
-    val groupedDepartments = filteredDepartments.groupBy { it.name.first().uppercaseChar() }
+    val filteredDepartments = remember(departments, query) {
+        departments.filter { it.name.contains(query, ignoreCase = true) }
+    }
+
+    val sortedDepartments = remember(filteredDepartments, sortAscending) {
+        if (sortAscending) {
+            filteredDepartments.sortedBy { it.name.lowercase() }
+        } else {
+            filteredDepartments.sortedByDescending { it.name.lowercase() }
+        }
+    }
+
+    val groupedDepartments = remember(sortedDepartments) {
+        sortedDepartments.groupBy { it.name.first().uppercaseChar() }
+    }
 
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         ('A'..'Z').forEach { letter ->
@@ -730,6 +754,7 @@ fun Topbar(
     }
 }
 
+@SuppressLint("UnrememberedMutableState")
 @Composable
 fun Searchbar(
     query: String,
@@ -738,7 +763,8 @@ fun Searchbar(
     onFilterClick: () -> Unit,
     studentViewModel: StudentViewModel = viewModel(),
     staffViewModel: StaffViewModel = viewModel(),
-    departmentViewModel: DepartmentViewModel? = null
+    departmentViewModel: DepartmentViewModel? = null,
+    onDepartmentSortOrderChange: (Boolean) -> Unit = {} // Thêm callback
 ) {
     var expanded by remember { mutableStateOf(false) }
     var expandedFilter by remember { mutableStateOf(false) }
@@ -747,10 +773,12 @@ fun Searchbar(
 
     val studentSortAscending by studentViewModel.sortAscending.collectAsState()
     val staffSortAscending by staffViewModel.sortAscending.collectAsState()
+    val departmentSortAscending by departmentViewModel?.sortAscending?.collectAsState(initial = true) ?: remember { mutableStateOf(true) }
 
     val currentSortAscending = when (selectedTab) {
         "Sinh viên" -> studentSortAscending
         "Giảng viên" -> staffSortAscending
+        "Đơn vị" -> departmentSortAscending
         else -> true
     }
 
@@ -797,10 +825,11 @@ fun Searchbar(
                         when (selectedTab) {
                             "Sinh viên" -> studentViewModel.toggleSortOrder()
                             "Giảng viên" -> staffViewModel.toggleSortOrder()
+                            "Đơn vị" -> departmentViewModel?.toggleSortOrder()
                         }
                         expanded = false
                     }) {
-                        Text(if (currentSortAscending) "Sắp xếp Z-A" else "Sắp xếp A-Z")
+                        Text(if (departmentViewModel?.sortAscending?.collectAsState()?.value == true) "Sắp xếp Z-A" else "Sắp xếp A-Z")
                     }
 
                     DropdownMenuItem(onClick = { expandedFilter = true }) {
