@@ -178,17 +178,3 @@ fun openEmail(context: Context, emailAddress: String) {
     }
     context.startActivity(intent)
 }
-
-//fun checkAdminPermission(context: Context): Boolean {
-//    // Triển khai logic kiểm tra quyền admin ở đây
-//    // Ví dụ: kiểm tra email người dùng, vai trò, v.v.
-//    // Trả về true nếu là admin, false nếu không.
-//    // Lưu ý: Logic này cần phù hợp với cơ chế xác thực của ứng dụng bạn.
-//    // Ví dụ đơn giản:
-//    // return SessionManager(context).getUserLoginEmail() == "admin@example.com"
-//
-//    // Thêm log để kiểm tra giá trị trả về
-//    val isAdmin = false // Thay bằng logic kiểm tra quyền admin thực tế
-//    Log.d("AdminCheck", "Is admin: $isAdmin")
-//    return isAdmin
-//}

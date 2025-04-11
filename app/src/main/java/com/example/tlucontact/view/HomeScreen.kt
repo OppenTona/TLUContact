@@ -450,13 +450,6 @@ fun Directoryscreen(
     }
 }
 
-//private fun checkAdminPermission(context: Context): Boolean {
-//    val userEmail = SessionManager(context).getUserLoginEmail()
-//    val adminEmails = listOf("luukhanh656@gmail.com") // Danh sách email admin
-//    return adminEmails.contains(userEmail)
-//}
-
-
 @Composable
 fun StudentList(
     students: List<Student>,
