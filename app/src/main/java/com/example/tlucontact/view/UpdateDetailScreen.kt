@@ -32,48 +32,47 @@ import com.example.tlucontact.viewmodel.StaffViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class) // Cho phép dùng API đánh dấu là experimental trong Material3
 @Composable
-fun UpdateDetailScreen(
-    staff: Staff?,
-    onBack: () -> Unit,
-    onSave: (Staff) -> Unit
+fun UpdateDetailScreen( // Hàm composable cho màn hình chỉnh sửa thông tin
+    staff: Staff?, // Tham số truyền vào là đối tượng Staff cần chỉnh sửa
+    onBack: () -> Unit, // Hàm callback khi bấm nút quay lại
+    onSave: (Staff) -> Unit // Hàm callback khi bấm nút lưu
 ) {
-    val staffViewModel: StaffViewModel = viewModel()
-    val scrollState = rememberScrollState()
-    var name by remember { mutableStateOf(staff?.name ?: "") }
-    var phone by remember { mutableStateOf(staff?.phone ?: "") }
-    var department by remember { mutableStateOf(staff?.department ?: "") }
-    var position by remember { mutableStateOf(staff?.position ?: "") }
-    var staffidfb by remember { mutableStateOf(staff?.staffIdFB ?: "") }
+    val staffViewModel: StaffViewModel = viewModel() // Lấy ViewModel để xử lý logic
+    val scrollState = rememberScrollState() // Ghi nhớ trạng thái cuộn của màn hình
+    var name by remember { mutableStateOf(staff?.name ?: "") } // Ghi nhớ giá trị tên từ staff
+    var phone by remember { mutableStateOf(staff?.phone ?: "") } // Ghi nhớ số điện thoại
+    var department by remember { mutableStateOf(staff?.department ?: "") } // Ghi nhớ đơn vị
+    var position by remember { mutableStateOf(staff?.position ?: "") } // Ghi nhớ chức vụ
+    var staffidfb by remember { mutableStateOf(staff?.staffIdFB ?: "") } // Ghi nhớ mã giảng viên từ Firestore
 
+    val snackbarHostState = remember { SnackbarHostState() } // Ghi nhớ trạng thái snackbar
+    val updateMessage by staffViewModel.updateMessage.collectAsState() // Lấy thông báo cập nhật từ ViewModel
+    val context = LocalContext.current // Lấy context hiện tại để hiển thị Toast
 
+    val imageUri = remember { mutableStateOf<Uri?>(null) } // Biến để lưu Uri ảnh người dùng chọn
 
-    val snackbarHostState = remember { SnackbarHostState() }
-    val updateMessage by staffViewModel.updateMessage.collectAsState()
-    val context = LocalContext.current
-
-    val imageUri = remember { mutableStateOf<Uri?>(null) }
-
-    val imagePickerLauncher = rememberLauncherForActivityResult(
+    val imagePickerLauncher = rememberLauncherForActivityResult( // Tạo launcher để chọn ảnh từ thiết bị
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        imageUri.value = uri
+        imageUri.value = uri // Khi chọn xong ảnh thì lưu lại Uri vào biến imageUri
     }
-    Scaffold(
+
+    Scaffold( // UI cơ bản gồm top bar và nội dung
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
-            TopAppBar(
+            TopAppBar( // Thanh tiêu đề trên cùng
                 title = { Text("Chỉnh sửa thông tin") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = onBack) { // Nút quay lại
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Quay lại")
                     }
                 }
             )
         }
     ) { paddingValues ->
-        if (staff != null) {
+        if (staff != null) { // Nếu có dữ liệu staff
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -82,8 +81,7 @@ fun UpdateDetailScreen(
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Ảnh đại diện và tên
-                Box(contentAlignment = Alignment.BottomEnd) {
+                Box(contentAlignment = Alignment.BottomEnd) { // Hiển thị ảnh đại diện và nút chỉnh sửa ảnh
                     Image(
                         painter = rememberAsyncImagePainter(model = imageUri.value ?: staff.avatarURL),
                         contentDescription = "Ảnh đại diện",
@@ -95,26 +93,24 @@ fun UpdateDetailScreen(
 
                     IconButton(
                         onClick = {
-                            imagePickerLauncher.launch("image/*") // Mở chọn ảnh
+                            imagePickerLauncher.launch("image/*") // Mở trình chọn ảnh
                         },
                         modifier = Modifier.size(24.dp)
                     ) {
                         Icon(Icons.Filled.Edit, contentDescription = "Chỉnh sửa ảnh")
                     }
-
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(text = name, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Các trường thông tin có thể chỉnh sửa (trừ email)
-                EditableField(label = "Họ và tên", value = name, editable = true, onValueChanged = { name = it })
-                EditableField(label = "Mã giảng viên", value = staff.staffIdFB, editable = true, onValueChanged = { staffidfb = it })
-                EditableField(label = "Chức vụ", value = position, editable = true, onValueChanged = { position = it })
-                EditableField(label = "Số điện thoại", value = phone, editable = true, onValueChanged = { phone = it })
-                EditableField(label = "Email", value = staff.staffId, editable = false)
-                EditableField(label = "Đơn vị trực thuộc", value = department, editable = true, onValueChanged = { department = it })
+                EditableField(label = "Họ và tên", value = name, editable = true, onValueChanged = { name = it }) // Trường chỉnh tên
+                EditableField(label = "Mã giảng viên", value = staff.staffIdFB, editable = true, onValueChanged = { staffidfb = it }) // Trường mã GV
+                EditableField(label = "Chức vụ", value = position, editable = true, onValueChanged = { position = it }) // Trường chức vụ
+                EditableField(label = "Số điện thoại", value = phone, editable = true, onValueChanged = { phone = it }) // Trường SDT
+                EditableField(label = "Email", value = staff.staffId, editable = false) // Trường email không chỉnh được
+                EditableField(label = "Đơn vị trực thuộc", value = department, editable = true, onValueChanged = { department = it }) // Trường đơn vị
 
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -130,13 +126,11 @@ fun UpdateDetailScreen(
                     }
                     Button(
                         onClick = {
-                            if (imageUri.value != null) {
-                                // Nếu người dùng chọn ảnh mới
+                            if (imageUri.value != null) { // Nếu người dùng chọn ảnh mới
                                 staffViewModel.uploadImageToStorage(
                                     uri = imageUri.value!!,
                                     onSuccess = { imageUrl ->
-                                        // Cập nhật thông tin kèm đường dẫn ảnh mới
-                                        val updatedStaff = staff.copy(
+                                        val updatedStaff = staff.copy( // Tạo staff mới với ảnh mới
                                             name = name,
                                             phone = phone,
                                             staffIdFB = staffidfb,
@@ -144,22 +138,21 @@ fun UpdateDetailScreen(
                                             position = position,
                                             avatarURL = imageUrl
                                         )
-                                        staffViewModel.updateStaffInfo(updatedStaff)
+                                        staffViewModel.updateStaffInfo(updatedStaff) // Gửi lên ViewModel
                                         onSave(updatedStaff)
                                     },
                                     onFailure = {
                                         Toast.makeText(context, "Lỗi khi tải ảnh lên", Toast.LENGTH_SHORT).show()
                                     }
                                 )
-                            } else {
-                                // Không chọn ảnh mới => giữ URL cũ
+                            } else { // Nếu không đổi ảnh
                                 val updatedStaff = staff.copy(
                                     name = name,
                                     phone = phone,
                                     staffIdFB = staffidfb,
                                     department = department,
                                     position = position,
-                                    avatarURL = staff.avatarURL // <- thêm dòng này
+                                    avatarURL = staff.avatarURL
                                 )
                                 staffViewModel.updateStaffInfo(updatedStaff)
                                 onSave(updatedStaff)
@@ -169,16 +162,16 @@ fun UpdateDetailScreen(
                     ) {
                         Text("Lưu", color = Color.White)
                     }
-
                 }
             }
         } else {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                CircularProgressIndicator() // Hiển thị vòng tròn load nếu chưa có dữ liệu staff
             }
         }
     }
-    LaunchedEffect(updateMessage) {
+
+    LaunchedEffect(updateMessage) { // Theo dõi updateMessage để hiển thị Toast nếu có
         updateMessage?.let {
             Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
             staffViewModel.clearUpdateMessage()
@@ -194,13 +187,13 @@ fun EditableField(
     editable: Boolean,
     onValueChanged: (String) -> Unit = {}
 ) {
-    var text by remember { mutableStateOf(value) }
+    var text by remember { mutableStateOf(value) } // Ghi nhớ giá trị nhập vào
 
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         OutlinedTextField(
             value = text,
             onValueChange = {
-                if (editable) {
+                if (editable) { // Nếu được phép chỉnh sửa thì cho thay đổi
                     text = it
                     onValueChanged(it)
                 }
@@ -223,4 +216,5 @@ fun EditableField(
         )
     }
 }
+
 

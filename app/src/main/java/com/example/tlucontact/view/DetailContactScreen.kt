@@ -34,60 +34,65 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.tlucontact.data.model.Staff
 import androidx.compose.ui.graphics.vector.ImageVector
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class) // Cho phép sử dụng API đang ở giai đoạn thử nghiệm
 @Composable
 fun DetailContactScreen(staff: Staff, onBack: () -> Unit) {
-    val scrollState = rememberScrollState()
+    val scrollState = rememberScrollState() // Ghi nhớ trạng thái cuộn để dùng trong vertical scroll
 
-    Scaffold(
+    Scaffold( // Scaffold giúp tạo layout có top bar, content và snackbar, v.v.
         topBar = {
             TopAppBar(
-                title = { Text("Thông tin cán bộ giảng viên", color = Color.Black) },
+                title = { Text("Thông tin cán bộ giảng viên", color = Color.Black) }, // Tiêu đề thanh top bar
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = onBack) { // Nút quay lại
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Quay lại", tint = Color.Black)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White) // Màu nền trắng cho top bar
             )
         }
-    ) { paddingValues ->
+    ) { paddingValues -> // Nội dung bên trong scaffold
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.White)
-                .verticalScroll(scrollState)
+                .verticalScroll(scrollState) // Cho phép cuộn
                 .padding(paddingValues)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(16.dp), // Lề
+            horizontalAlignment = Alignment.CenterHorizontally // Căn giữa các phần tử theo chiều ngang
         ) {
             Image(
-                painter = rememberAsyncImagePainter(model = staff.avatarURL),
+                painter = rememberAsyncImagePainter(model = staff.avatarURL), // Hiển thị ảnh đại diện từ URL
                 contentDescription = "Avatar",
                 modifier = Modifier
                     .size(100.dp)
-                    .clip(CircleShape)
+                    .clip(CircleShape) // Bo tròn thành hình tròn
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp)) // Khoảng cách
 
-            Text(text = staff.name, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+            Text( // Hiển thị tên
+                text = staff.name,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Row(
+            Row( // Dòng chứa các nút chức năng
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.SpaceEvenly // Giãn đều
             ) {
-                ActionButton(icon = Icons.Filled.Chat, label = "Tin nhắn", phoneNumber = staff.phone) // Assuming you might want to handle messaging later
+                ActionButton(icon = Icons.Filled.Chat, label = "Tin nhắn", phoneNumber = staff.phone)
                 ActionButton(icon = Icons.Filled.Phone, label = "Gọi", phoneNumber = staff.phone)
                 ActionButton(icon = Icons.Filled.VideoCall, label = "Gọi video", phoneNumber = staff.phone)
-
-                ActionButton(icon = Icons.Filled.Email, label = "Mail", phoneNumber = staff.email) // Assuming you might want to handle email later
+                ActionButton(icon = Icons.Filled.Email, label = "Mail", phoneNumber = staff.email)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Các trường thông tin tĩnh
             InfoField(label = "Mã giảng viên", value = staff.staffId)
             InfoField(label = "Chức vụ", value = staff.position)
             InfoField(label = "Số điện thoại", value = staff.phone)
@@ -98,12 +103,14 @@ fun DetailContactScreen(staff: Staff, onBack: () -> Unit) {
     }
 }
 
+
 @Composable
 fun ActionButton(icon: ImageVector, label: String, phoneNumber: String? = null) {
-    val context = LocalContext.current
+    val context = LocalContext.current // Lấy context để gọi intent
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         IconButton(onClick = {
+            // Xử lý hành động tương ứng với nút được nhấn
             when (label) {
                 "Gọi" -> phoneNumber?.let { makePhoneCall(context, it) }
                 "Tin nhắn" -> phoneNumber?.let { sendSMS(context, it) }
@@ -113,11 +120,13 @@ fun ActionButton(icon: ImageVector, label: String, phoneNumber: String? = null) 
         }) {
             Icon(imageVector = icon, contentDescription = label, tint = Color(0xFF007AFF))
         }
-        Text(
+
+        Text( // Label dưới nút
             text = label,
             fontSize = 12.sp,
             color = Color(0xFF007AFF),
             modifier = Modifier.clickable {
+                // Cũng xử lý khi người dùng nhấn vào chữ
                 when (label) {
                     "Gọi" -> phoneNumber?.let { makePhoneCall(context, it) }
                     "Tin nhắn" -> phoneNumber?.let { sendSMS(context, it) }
@@ -129,27 +138,30 @@ fun ActionButton(icon: ImageVector, label: String, phoneNumber: String? = null) 
     }
 }
 
+
 fun sendSMS(context: Context, phoneNumber: String) {
-    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("sms:$phoneNumber"))
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("sms:$phoneNumber")) // Mở app SMS với số đã điền
     context.startActivity(intent)
 }
+
 fun sendEmail(context: Context, email: String) {
     val intent = Intent(Intent.ACTION_SENDTO).apply {
-        data = Uri.parse("mailto:$email")
+        data = Uri.parse("mailto:$email") // Mở app email với email đã điền
     }
     context.startActivity(intent)
 }
+
 fun openVideoCallApp(context: Context, phoneNumber: String) {
-    // Mặc định mở Google Meet (có thể thay package name tùy app gọi video bạn hỗ trợ)
-    val intent = context.packageManager.getLaunchIntentForPackage("com.google.android.apps.meetings")
+    val intent = context.packageManager.getLaunchIntentForPackage("com.google.android.apps.meetings") // Gọi Google Meet
     if (intent != null) {
         context.startActivity(intent)
     } else {
-        // Nếu không có app, mở Play Store để cài
+        // Nếu chưa cài, mở Google Play để cài
         val playStoreIntent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.apps.meetings"))
         context.startActivity(playStoreIntent)
     }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -157,12 +169,12 @@ fun InfoField(label: String, value: String) {
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         OutlinedTextField(
             value = value,
-            onValueChange = { },
+            onValueChange = { }, // Không cho chỉnh sửa
             modifier = Modifier.fillMaxWidth(),
-            readOnly = true,
+            readOnly = true, // Chỉ hiển thị, không chỉnh sửa
             shape = RoundedCornerShape(16.dp),
-            label = { Text(label, color = Color.Gray) },
-            colors = TextFieldDefaults.colors(
+            label = { Text(label, color = Color.Gray) }, // Nhãn ở viền ngoài
+            colors = TextFieldDefaults.colors( // Màu sắc các trạng thái
                 focusedTextColor = Color.Black,
                 unfocusedTextColor = Color.Black,
                 disabledTextColor = Color.Black,
@@ -176,17 +188,17 @@ fun InfoField(label: String, value: String) {
         )
     }
 }
+
 fun makePhoneCall(context: Context, phoneNumber: String) {
     if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-        // Yêu cầu quyền nếu chưa được cấp
+        // Nếu chưa được cấp quyền gọi điện, yêu cầu quyền
         ActivityCompat.requestPermissions(
             (context as Activity),
             arrayOf(Manifest.permission.CALL_PHONE),
             1
         )
     } else {
-        // Nếu đã có quyền, thực hiện cuộc gọi
-        val intent = Intent(Intent.ACTION_CALL)
+        val intent = Intent(Intent.ACTION_CALL) // Gọi trực tiếp
         intent.data = Uri.parse("tel:$phoneNumber")
         context.startActivity(intent)
     }
