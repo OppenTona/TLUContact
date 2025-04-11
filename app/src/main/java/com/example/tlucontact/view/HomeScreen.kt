@@ -63,6 +63,7 @@ import com.example.tlucontact.viewmodel.GuestViewModel
 import com.example.tlucontact.viewmodel.LogoutViewModel
 import com.example.tlucontact.viewmodel.StaffViewModel
 import com.example.tlucontact.viewmodel.StudentViewModel
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun HomeScreen(
@@ -302,7 +303,7 @@ fun Directoryscreen(
                     selectedDepartment = selectedDepartment
                 )
                 "Đơn vị" -> DepartmentList(
-                    departments = filteredDepartments, // Sử dụng filteredDepartments
+                    departmentsFlow = departmentViewModel.filteredDepartments, // Truyền StateFlow
                     query = query,
                     navController = navController
                 )
@@ -456,25 +457,39 @@ fun StudentItem(
 
 
 @Composable
-fun DepartmentList(departments: List<Department>, query: String, navController: NavController) {
+fun DepartmentList(
+    departmentsFlow: StateFlow<List<Department>>, // Thay đổi kiểu tham số
+    query: String,
+    navController: NavController
+) {
+    val departments by departmentsFlow.collectAsState() // Lấy giá trị từ StateFlow
+
     val filteredDepartments = departments.filter { it.name.contains(query, ignoreCase = true) }
     val groupedDepartments = filteredDepartments.groupBy { it.name.first().uppercaseChar() }
 
-    LazyColumn {
-        ('A'..'Z').forEach { letter ->
-            if (groupedDepartments.containsKey(letter)) {
-                item {
-                    Text(
-                        text = letter.toString(),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Gray.copy(alpha = 0.6f), // Màu xám nhạt hơn
-                        modifier = Modifier.padding(3.dp)
-                    )
-                }
+    Column(modifier = Modifier.fillMaxSize()) {
+        Text(
+            text = "Danh bạ đơn vị",
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(16.dp)
+        )
 
-                items(groupedDepartments[letter]!!) { department ->
-                    DepartmentItem(department = department, navController = navController)
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            ('A'..'Z').forEach { letter ->
+                if (groupedDepartments.containsKey(letter)) {
+                    item {
+                        Text(
+                            text = letter.toString(),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Gray.copy(alpha = 0.6f),
+                            modifier = Modifier.padding(3.dp)
+                        )
+                    }
+
+                    items(groupedDepartments[letter]!!) { department ->
+                        DepartmentItem(department = department, navController = navController)
+                    }
                 }
             }
         }
