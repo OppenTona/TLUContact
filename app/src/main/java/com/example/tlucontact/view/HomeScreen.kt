@@ -255,6 +255,8 @@ fun Directoryscreen(
                 else -> {
                     Log.d("Navigation", "Navigating to update_detail_guest")
                     guestViewModel.fetchGuestByEmail(userLoginEmail)
+                    staffViewModel.setStaffByEmail(userLoginEmail)
+                    studentViewModel.fetchStudents(userLoginEmail)
                 }
             }
         }
@@ -299,7 +301,7 @@ fun Directoryscreen(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(8.dp)
             ) {
-                Useravatar(navController)
+                Useravatar(navController, guestViewModel)
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
                     Text("Hồ sơ của bạn", fontSize = 14.sp, color = Color.Gray)
@@ -569,10 +571,18 @@ fun DepartmentItem(department: Department, navController: NavController) {
 }
 
 @Composable
-fun Useravatar(navController: NavController) {
+fun Useravatar(navController: NavController, guestViewModel: GuestViewModel) {
     val conText = LocalContext.current
     val userLoginEmail = SessionManager(conText).getUserLoginEmail()
     //TODO: Bổ sung thêm trường hợp user = null hoặc email = null
+    val guest by guestViewModel.selectedGuest.collectAsState()
+
+    LaunchedEffect(userLoginEmail) {
+        userLoginEmail?.let { email ->
+            guestViewModel.fetchGuestByEmail(email)
+        }
+    }
+
     Icon(
         imageVector = Icons.Default.AccountCircle,
         contentDescription = "Avatar",
@@ -582,7 +592,7 @@ fun Useravatar(navController: NavController) {
                 if (userLoginEmail.toString().endsWith("@e.tlu.edu.vn")) {
                     navController.navigate("update_detail_student")
                 }
-                if (userLoginEmail.toString().endsWith("@tlu.edu.vn")) {
+                if (userLoginEmail.toString().endsWith("@tlu.edu.vn") || guest?.userType == "staff") {
                     navController.navigate("update_detail")
                 }
                 else{
