@@ -96,7 +96,6 @@ fun DepartmentDetailView(department: Department, onBack: () -> Unit) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            DepartmentInfoField(label = "Tên đơn vị", value = department.name)
             DepartmentInfoField(label = "Mã đơn vị", value = department.id)
             DepartmentInfoField(label = "Trưởng đơn vị", value = department.leader)
             DepartmentInfoField(label = "Email", value = department.email)
