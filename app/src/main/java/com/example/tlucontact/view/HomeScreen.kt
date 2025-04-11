@@ -467,29 +467,21 @@ fun DepartmentList(
     val filteredDepartments = departments.filter { it.name.contains(query, ignoreCase = true) }
     val groupedDepartments = filteredDepartments.groupBy { it.name.first().uppercaseChar() }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        Text(
-            text = "Danh bạ đơn vị",
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(16.dp)
-        )
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        ('A'..'Z').forEach { letter ->
+            if (groupedDepartments.containsKey(letter)) {
+                item {
+                    Text(
+                        text = letter.toString(),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Gray.copy(alpha = 0.6f),
+                        modifier = Modifier.padding(3.dp)
+                    )
+                }
 
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
-            ('A'..'Z').forEach { letter ->
-                if (groupedDepartments.containsKey(letter)) {
-                    item {
-                        Text(
-                            text = letter.toString(),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Gray.copy(alpha = 0.6f),
-                            modifier = Modifier.padding(3.dp)
-                        )
-                    }
-
-                    items(groupedDepartments[letter]!!) { department ->
-                        DepartmentItem(department = department, navController = navController)
-                    }
+                items(groupedDepartments[letter]!!) { department ->
+                    DepartmentItem(department = department, navController = navController)
                 }
             }
         }
