@@ -93,6 +93,11 @@ class AuthRepository(private val context: Context) {
                 "name" to guest.name, // Tên của người dùng
                 "email" to guest.email, // Email của người dùng
                 "phone" to guest.phone, // Số điện thoại của người dùng
+                "avatarURL" to guest.avatarURL, // URL ảnh đại diện của người dùng
+                "position" to guest.position,
+                "department" to guest.department,// Chức vụ của người dùng
+                "userId" to guest.userId, // ID người dùng
+                "adress" to guest.address, // Địa chỉ của người dùng
                 "userType" to "guest" // Loại tài khoản (guest)
             )
             firestore.collection("guests") // Chọn collection "guests" trong Firestore

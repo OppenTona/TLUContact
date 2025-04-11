@@ -59,6 +59,7 @@ import com.example.tlucontact.data.repository.DepartmentRepository
 import com.example.tlucontact.data.repository.SessionManager
 import com.example.tlucontact.viewmodel.DepartmentViewModel
 import com.example.tlucontact.viewmodel.DepartmentViewModelFactory
+import com.example.tlucontact.viewmodel.GuestViewModel
 import com.example.tlucontact.viewmodel.LogoutViewModel
 import com.example.tlucontact.viewmodel.StaffViewModel
 import com.example.tlucontact.viewmodel.StudentViewModel
@@ -71,11 +72,13 @@ fun HomeScreen(
             // ViewModel dùng chung
             val staffViewModel: StaffViewModel = viewModel()
             val studentViewModel: StudentViewModel = viewModel()
+            val guestViewModel: GuestViewModel = viewModel()
             val logoutViewModel: LogoutViewModel = viewModel() // Sử dụng ViewModel
             val logoutState by logoutViewModel.logoutState.collectAsState() // Theo dõi trạng thái đăng xuất
             // 👉 THÊM DÒNG NÀY
             val selectedStaff by staffViewModel.selectedStaff.collectAsState()
             val selectedStudent by studentViewModel.selectedStudent.collectAsState()
+            val selectedGuest by guestViewModel.selectedGuest.collectAsState()
             LaunchedEffect(logoutState) {
                 if (logoutState.first) {
                     navControllerLogout.navigate("login") {
@@ -116,7 +119,16 @@ fun HomeScreen(
                     )
                 }
 
+                composable(route = "update_detail_guest") {
+                    val guestViewModel: GuestViewModel = viewModel()
+                    val guestState by guestViewModel.selectedGuest.collectAsState()
 
+                    UpdateDetailGuestScreen(
+                        guest = guestState,
+                        onBack = { navController.popBackStack() },
+                        viewModel = guestViewModel
+                    )
+                }
 
                 composable("directory") {
                     Directoryscreen(
@@ -527,8 +539,11 @@ fun Useravatar(navController: NavController) {
                 if (userLoginEmail.toString().endsWith("@e.tlu.edu.vn")) {
                     navController.navigate("update_detail_student")
                 }
-                else {
+                if (userLoginEmail.toString().endsWith("@tlu.edu.vn")) {
                     navController.navigate("update_detail")
+                }
+                else{
+                    navController.navigate("update_detail_guest")
                 }
             }
     )
