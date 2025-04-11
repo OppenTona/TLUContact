@@ -3,6 +3,7 @@ package com.example.tlucontact.view
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -27,12 +28,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.tlucontact.R
 import com.example.tlucontact.data.model.Department
+import com.example.tlucontact.utils.checkAdminPermission
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DepartmentDetailView(department: Department, onBack: () -> Unit) {
+fun DepartmentDetailView(department: Department, onBack: () -> Unit, onEditClick: () -> Unit) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
+
+    val isAdmin = remember { checkAdminPermission(context) } // Kiểm tra quyền admin
+
 
     Scaffold(
         topBar = {
@@ -102,6 +107,15 @@ fun DepartmentDetailView(department: Department, onBack: () -> Unit) {
             DepartmentInfoField(label = "Số điện thoại", value = department.phone)
             DepartmentInfoField(label = "Địa chỉ", value = department.address)
             DepartmentInfoField(label = "Ghi chú", value = "-")
+
+            if (isAdmin) { // Chỉ hiển thị nút chỉnh sửa nếu là admin
+                Button(
+                    onClick = onEditClick,
+                    modifier = Modifier.align(Alignment.CenterHorizontally) // Sửa lỗi ở đây
+                ) {
+                    Text("Chỉnh sửa")
+                }
+            }
         }
     }
 }
@@ -164,3 +178,17 @@ fun openEmail(context: Context, emailAddress: String) {
     }
     context.startActivity(intent)
 }
+
+//fun checkAdminPermission(context: Context): Boolean {
+//    // Triển khai logic kiểm tra quyền admin ở đây
+//    // Ví dụ: kiểm tra email người dùng, vai trò, v.v.
+//    // Trả về true nếu là admin, false nếu không.
+//    // Lưu ý: Logic này cần phù hợp với cơ chế xác thực của ứng dụng bạn.
+//    // Ví dụ đơn giản:
+//    // return SessionManager(context).getUserLoginEmail() == "admin@example.com"
+//
+//    // Thêm log để kiểm tra giá trị trả về
+//    val isAdmin = false // Thay bằng logic kiểm tra quyền admin thực tế
+//    Log.d("AdminCheck", "Is admin: $isAdmin")
+//    return isAdmin
+//}

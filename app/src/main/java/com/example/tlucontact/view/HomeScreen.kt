@@ -1,6 +1,7 @@
 package com.example.tlucontact.view
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import com.example.tlucontact.DetailScreen
@@ -65,182 +66,206 @@ import com.example.tlucontact.viewmodel.LogoutViewModel
 import com.example.tlucontact.viewmodel.StaffViewModel
 import com.example.tlucontact.viewmodel.StudentViewModel
 import kotlinx.coroutines.flow.StateFlow
+import com.example.tlucontact.utils.checkAdminPermission
 
+@SuppressLint("StateFlowValueCalledInComposition")
 @Composable
 fun HomeScreen(
     navControllerLogout: NavController,
 ) {
-            // Tạo đối tượng NavController dùng để điều hướng giữa các màn hình trong Compose
-            // rememberNavController sẽ nhớ lại NavController khi giao diện được recomposed
-            val navController = rememberNavController()
-            // ViewModel dùng chung
+    // Tạo đối tượng NavController dùng để điều hướng giữa các màn hình trong Compose
+    // rememberNavController sẽ nhớ lại NavController khi giao diện được recomposed
+    val navController = rememberNavController()
 
-            val staffViewModel: StaffViewModel = viewModel()    // Tạo hoặc lấy ViewModel có kiểu StaffViewModel, ViewModel này được dùng để quản lý dữ liệu và logic liên quan đến giảng viên, viewModel() sẽ tự động gán theo vòng đời của composable
-            val studentViewModel: StudentViewModel = viewModel()
-            val guestViewModel: GuestViewModel = viewModel()
-            val logoutViewModel: LogoutViewModel = viewModel() // Sử dụng ViewModel
-            val logoutState by logoutViewModel.logoutState.collectAsState() // Theo dõi trạng thái đăng xuất
-            // 👉 THÊM DÒNG NÀY
-            val selectedStaff by staffViewModel.selectedStaff.collectAsState()
-            val selectedStudent by studentViewModel.selectedStudent.collectAsState()
-            val selectedGuest by guestViewModel.selectedGuest.collectAsState()
-            // LaunchedEffect sẽ chạy khối code bên trong khi giá trị logoutState thay đổi
-            LaunchedEffect(logoutState) {
-                // Nếu logoutState.first == true → đăng xuất thành công
-                if (logoutState.first) {
-                    // Điều hướng sang màn hình đăng nhập (login)
-                    navControllerLogout.navigate("login") {
-                        // Xóa toàn bộ backstack (xóa hết các màn hình trước đó)
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
-                // Nếu logoutState.second khác null → có lỗi xảy ra khi đăng xuất
-                else if (logoutState.second != null) {
-                    // Hiển thị thông báo lỗi bằng Toast
-                    Toast.makeText(
-                        navController.context,
-                        "Lỗi: ${logoutState.second}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
+    // Tạo instance của DepartmentRepository
+    val repository = DepartmentRepository() // Thay thế bằng cách tạo instance thực tế của repository
+
+    // Sử dụng DepartmentViewModelFactory để tạo DepartmentViewModel
+    val departmentViewModel: DepartmentViewModel = viewModel(factory = DepartmentViewModelFactory(repository))
+
+    // ViewModel dùng chung
+
+    val staffViewModel: StaffViewModel = viewModel()    // Tạo hoặc lấy ViewModel có kiểu StaffViewModel, ViewModel này được dùng để quản lý dữ liệu và logic liên quan đến giảng viên, viewModel() sẽ tự động gán theo vòng đời của composable
+    val studentViewModel: StudentViewModel = viewModel()
+    val guestViewModel: GuestViewModel = viewModel()
+    val logoutViewModel: LogoutViewModel = viewModel() // Sử dụng ViewModel
+    val logoutState by logoutViewModel.logoutState.collectAsState() // Theo dõi trạng thái đăng xuất
+    // 👉 THÊM DÒNG NÀY
+    val selectedStaff by staffViewModel.selectedStaff.collectAsState()
+    val selectedStudent by studentViewModel.selectedStudent.collectAsState()
+    val selectedGuest by guestViewModel.selectedGuest.collectAsState()
+    // LaunchedEffect sẽ chạy khối code bên trong khi giá trị logoutState thay đổi
+    LaunchedEffect(logoutState) {
+        // Nếu logoutState.first == true → đăng xuất thành công
+        if (logoutState.first) {
+            // Điều hướng sang màn hình đăng nhập (login)
+            navControllerLogout.navigate("login") {
+                // Xóa toàn bộ backstack (xóa hết các màn hình trước đó)
+                popUpTo(0) { inclusive = true }
             }
+        }
+        // Nếu logoutState.second khác null → có lỗi xảy ra khi đăng xuất
+        else if (logoutState.second != null) {
+            // Hiển thị thông báo lỗi bằng Toast
+            Toast.makeText(
+                navController.context,
+                "Lỗi: ${logoutState.second}",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
 
 
     NavHost(
-                navController = navController,
-                startDestination = "directory"
-            ) {
-                composable(route = "update_detail_student") {
-                    val studentViewModel: StudentViewModel = viewModel()
-                    UpdateDetailStudentScreen(
-                        student = selectedStudent, // selectedStudent
-                        onBack = { navController.popBackStack() },
-                        onSave = { updatedStudent ->
-                            studentViewModel.updateStudentInfo(updatedStudent) // Sử dụng studentViewModel và phương thức phù hợp
-                            navController.popBackStack()
-                        },
-                        viewModel = studentViewModel,
-                        navController = navController
-                    )
+        navController = navController,
+        startDestination = "directory"
+    ) {
+        composable(route = "update_detail_student") {
+            val studentViewModel: StudentViewModel = viewModel()
+            UpdateDetailStudentScreen(
+                student = selectedStudent, // selectedStudent
+                onBack = { navController.popBackStack() },
+                onSave = { updatedStudent ->
+                    studentViewModel.updateStudentInfo(updatedStudent) // Sử dụng studentViewModel và phương thức phù hợp
+                    navController.popBackStack()
+                    },
+                viewModel = studentViewModel,
+                navController = navController
+            )
+        }
+        // Định nghĩa một composable cho route "update_detail"
+        composable(route = "update_detail") {
+
+            // Lấy instance của StaffViewModel để dùng trong màn hình chỉnh sửa
+            val staffViewModel: StaffViewModel = viewModel()
+
+            // Gọi composable UpdateDetailScreen, truyền vào các tham số cần thiết
+            UpdateDetailScreen(
+                staff = selectedStaff, // Truyền đối tượng giảng viên đang được chọn để hiển thị thông tin
+                onBack = {
+                    navController.popBackStack() // Khi nhấn nút quay lại → điều hướng về màn hình trước đó
+                    },
+                onSave = { updatedStaff ->
+                    // Khi nhấn nút lưu → gọi hàm update trong ViewModel để cập nhật thông tin giảng viên
+                    staffViewModel.updateStaffInfo(updatedStaff)
+
+                // Quay lại màn hình trước sau khi lưu (nếu muốn kích hoạt dòng này thì bỏ comment)
+                // navController.popBackStack()
                 }
-                // Định nghĩa một composable cho route "update_detail"
-                composable(route = "update_detail") {
-
-                    // Lấy instance của StaffViewModel để dùng trong màn hình chỉnh sửa
-                    val staffViewModel: StaffViewModel = viewModel()
-
-                    // Gọi composable UpdateDetailScreen, truyền vào các tham số cần thiết
-                    UpdateDetailScreen(
-                        staff = selectedStaff, // Truyền đối tượng giảng viên đang được chọn để hiển thị thông tin
-                        onBack = {
-                            navController.popBackStack() // Khi nhấn nút quay lại → điều hướng về màn hình trước đó
-                        },
-                        onSave = { updatedStaff ->
-                            // Khi nhấn nút lưu → gọi hàm update trong ViewModel để cập nhật thông tin giảng viên
-                            staffViewModel.updateStaffInfo(updatedStaff)
-
-                            // Quay lại màn hình trước sau khi lưu (nếu muốn kích hoạt dòng này thì bỏ comment)
-                            // navController.popBackStack()
-                        }
-                    )
-                }
-
+            )
+        }
 
         composable(route = "update_detail_guest") {
-                    val guestViewModel: GuestViewModel = viewModel()
-                    val guestState by guestViewModel.selectedGuest.collectAsState()
+            val guestViewModel: GuestViewModel = viewModel()
+            val guestState by guestViewModel.selectedGuest.collectAsState()
 
-                    UpdateDetailGuestScreen(
-                        guest = guestState,
-                        onBack = { navController.popBackStack() },
-                        viewModel = guestViewModel
-                    )
-                }
+            UpdateDetailGuestScreen(
+                guest = guestState,
+                onBack = { navController.popBackStack() },
+                viewModel = guestViewModel
+            )
+        }
 
-                composable("directory") {
-                    Directoryscreen(
-                        navController = navController,
-                        staffViewModel = staffViewModel,
-                        studentViewModel = studentViewModel,
-                        guestViewModel = guestViewModel,
-                        logoutViewModel = logoutViewModel
-                    )
-                }
-
-
-                composable(
-                    route = "student_detail/{name}/{studentId}/{className}/{email}/{phone}/{address}",
-                    arguments = listOf(
-                        navArgument("name") { type = NavType.StringType },
-                        navArgument("studentId") { type = NavType.StringType },
-                        navArgument("className") { type = NavType.StringType },
-                        navArgument("email") { type = NavType.StringType },
-                        navArgument("phone") { type = NavType.StringType },
-                        navArgument("address") { type = NavType.StringType }
-                    )
-                ) { backStackEntry ->
-                    val args = backStackEntry.arguments!!
-                    DetailStudentScreen(
-                        student = Student(
-                            fullNameStudent = args.getString("name") ?: "",
-                            studentID = args.getString("studentId") ?: "",
-                            className = args.getString("className") ?: "",
-                            email = args.getString("email") ?: "",
-                            phone = args.getString("phone") ?: "",
-                            address = args.getString("address") ?: ""
-                        ),
-                        onBack = { navController.popBackStack() }
-                    )
-                }
-
-                // Định nghĩa một composable cho màn hình "DetailContactScreen"
-                composable(route = "DetailContactScreen") {
-
-                    // Lấy đối tượng staff được truyền từ màn hình trước đó thông qua savedStateHandle
-                    // Nếu không có (null) thì tạo một Staff rỗng để tránh lỗi
-                    val staff = navController.previousBackStackEntry
-                        ?.savedStateHandle
-                        ?.get<Staff>("staff")
-                        ?: Staff("", "", "", "") // Tránh lỗi null bằng cách gán giá trị mặc định
-
-                    // Gọi màn hình chi tiết, truyền dữ liệu staff vào
-                    DetailContactScreen(
-                        staff = staff,
-                        onBack = {
-                            navController.popBackStack() // Khi nhấn nút quay lại → điều hướng về màn hình trước
-                        },
-                    )
-                }
+        composable("directory") {
+            Directoryscreen(
+                navController = navController,
+                staffViewModel = staffViewModel,
+                studentViewModel = studentViewModel,
+                guestViewModel = guestViewModel,
+                logoutViewModel = logoutViewModel
+            )
+        }
 
 
         composable(
-                    route = "department_detail/{name}/{id}/{leader}/{email}/{phone}/{address}?screenTitle={screenTitle}",
-                    arguments = listOf(
-                        navArgument("name") { type = NavType.StringType },
-                        navArgument("id") { type = NavType.StringType },
-                        navArgument("leader") { type = NavType.StringType },
-                        navArgument("email") { type = NavType.StringType },
-                        navArgument("phone") { type = NavType.StringType },
-                        navArgument("address") { type = NavType.StringType },
-                        navArgument("screenTitle") { type = NavType.StringType }
-                    )
-                ) { backStackEntry ->
-                    val args = backStackEntry.arguments!!
-                    val department = Department(
-                        name = Uri.decode(args.getString("name") ?: ""),
-                        id = Uri.decode(args.getString("id") ?: ""),
-                        leader = Uri.decode(args.getString("leader") ?: ""),
-                        email = Uri.decode(args.getString("email") ?: ""),
-                        phone = Uri.decode(args.getString("phone") ?: ""),
-                        address = Uri.decode(args.getString("address") ?: "")
-                    )
+            route = "student_detail/{name}/{studentId}/{className}/{email}/{phone}/{address}",
+            arguments = listOf(
+                navArgument("name") { type = NavType.StringType },
+                navArgument("studentId") { type = NavType.StringType },
+                navArgument("className") { type = NavType.StringType },
+                navArgument("email") { type = NavType.StringType },
+                navArgument("phone") { type = NavType.StringType },
+                navArgument("address") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val args = backStackEntry.arguments!!
+            DetailStudentScreen(
+                student = Student(
+                    fullNameStudent = args.getString("name") ?: "",
+                    studentID = args.getString("studentId") ?: "",
+                    className = args.getString("className") ?: "",
+                    email = args.getString("email") ?: "",
+                    phone = args.getString("phone") ?: "",
+                    address = args.getString("address") ?: ""
+                ),
+                onBack = { navController.popBackStack() }
+            )
+        }
 
-                    DepartmentDetailView(
-                        department = department,
-                        onBack = { navController.popBackStack() }
-                    )
+        // Định nghĩa một composable cho màn hình "DetailContactScreen"
+        composable(route = "DetailContactScreen") {
+
+            // Lấy đối tượng staff được truyền từ màn hình trước đó thông qua savedStateHandle
+            // Nếu không có (null) thì tạo một Staff rỗng để tránh lỗi
+            val staff = navController.previousBackStackEntry
+                ?.savedStateHandle
+                ?.get<Staff>("staff")
+                ?: Staff("", "", "", "") // Tránh lỗi null bằng cách gán giá trị mặc định
+
+            // Gọi màn hình chi tiết, truyền dữ liệu staff vào
+            DetailContactScreen(
+                staff = staff,
+                onBack = {
+                    navController.popBackStack() // Khi nhấn nút quay lại → điều hướng về màn hình trước
+                },
+            )
+        }
+
+        composable(
+            route = "department_detail/{name}/{id}/{leader}/{email}/{phone}/{address}?screenTitle={screenTitle}",
+            arguments = listOf(
+                navArgument("name") { type = NavType.StringType },
+                navArgument("id") { type = NavType.StringType },
+                navArgument("leader") { type = NavType.StringType },
+                navArgument("email") { type = NavType.StringType },
+                navArgument("phone") { type = NavType.StringType },
+                navArgument("address") { type = NavType.StringType },
+                navArgument("screenTitle") { type = NavType.StringType }
+            )
+
+        ) { backStackEntry ->
+            val args = backStackEntry.arguments!!
+            val department = Department(
+                name = Uri.decode(args.getString("name") ?: ""),
+                id = Uri.decode(args.getString("id") ?: ""),
+                leader = Uri.decode(args.getString("leader") ?: ""),
+                email = Uri.decode(args.getString("email") ?: ""),
+                phone = Uri.decode(args.getString("phone") ?: ""),
+                address = Uri.decode(args.getString("address") ?: "")
+            )
+
+            DepartmentDetailView(
+                department = department, // Giả sử selectedDepartment là Department
+                onBack = { /* Logic quay lại */ },
+                onEditClick = {
+                    // Logic xử lý sự kiện click vào nút "Chỉnh sửa"
+                    navController.navigate("update_detail_department") // Ví dụ: Điều hướng đến màn hình chỉnh sửa
                 }
-            }
+            )
+                }
+        composable("update_detail_department") {
+            val departmentViewModel: DepartmentViewModel = viewModel()
+            UpdateDetailDepartmentScreen(
+                department = departmentViewModel.selectedDepartment.value,
+                onBack = { navController.popBackStack() },
+                onSave = { updatedDepartment ->
+                    departmentViewModel.updateDepartmentInfo(updatedDepartment)
+                    navController.popBackStack()
+                },
+                viewModel = departmentViewModel
+            )
+        }
+    }
 }
 
 @Composable
@@ -403,7 +428,16 @@ fun Directoryscreen(
                     departmentsFlow = departmentViewModel.filteredDepartments,
                     query = query,
                     navController = navController,
-                    departmentViewModel = departmentViewModel
+                    departmentViewModel = departmentViewModel,
+                    onDepartmentClick = { department ->
+                        val isAdmin = checkAdminPermission(context) // Sử dụng hàm đã import
+                        if (isAdmin) {
+                            departmentViewModel.setDepartmentById(department.id)
+                            navController.navigate("update_detail_department")
+                        } else {
+                            Toast.makeText(context, "Bạn không có quyền.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 )
 
                 "Sinh viên" -> StudentList(
@@ -415,6 +449,12 @@ fun Directoryscreen(
         }
     }
 }
+
+//private fun checkAdminPermission(context: Context): Boolean {
+//    val userEmail = SessionManager(context).getUserLoginEmail()
+//    val adminEmails = listOf("luukhanh656@gmail.com") // Danh sách email admin
+//    return adminEmails.contains(userEmail)
+//}
 
 
 @Composable
@@ -559,7 +599,8 @@ fun DepartmentList(
     departmentsFlow: StateFlow<List<Department>>,
     query: String,
     navController: NavController,
-    departmentViewModel: DepartmentViewModel
+    departmentViewModel: DepartmentViewModel,
+    onDepartmentClick: (Department) -> Unit // Thêm lambda xử lý click
 ) {
     val departments by departmentsFlow.collectAsState()
     val sortAscending by departmentViewModel.sortAscending.collectAsState()
@@ -594,7 +635,11 @@ fun DepartmentList(
                 }
 
                 items(groupedDepartments[letter]!!) { department ->
-                    DepartmentItem(department = department, navController = navController)
+                    DepartmentItem(
+                        department = department,
+                        navController = navController,
+                        onClick = { onDepartmentClick(department) } // Gọi lambda khi click
+                    )
                 }
             }
         }
@@ -602,10 +647,11 @@ fun DepartmentList(
 }
 
 @Composable
-fun DepartmentItem(department: Department, navController: NavController) {
+fun DepartmentItem(department: Department, navController: NavController, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(onClick = onClick) // Sử dụng onClick từ tham số
             .clickable {
                 Log.d(
                     "Navigation",

@@ -56,4 +56,38 @@ class DepartmentViewModel(private val repository: DepartmentRepository) : ViewMo
     fun toggleSortOrder() { // Thêm hàm để thay đổi trạng thái sắp xếp
         _sortAscending.value = !_sortAscending.value
     }
+
+
+    private val _selectedDepartment = MutableStateFlow<Department?>(null)
+    val selectedDepartment: StateFlow<Department?> = _selectedDepartment
+
+    private val _snackbarMessage = MutableStateFlow<String?>(null)
+    val snackbarMessage: StateFlow<String?> = _snackbarMessage
+
+    fun setDepartmentById(departmentId: String) {
+        viewModelScope.launch {
+            try {
+                val department = repository.getDepartmentById(departmentId)
+                _selectedDepartment.value = department
+            } catch (e: Exception) {
+                _snackbarMessage.value = "Lỗi lấy dữ liệu: ${e.message}"
+            }
+        }
+    }
+
+    fun updateDepartmentInfo(updatedDepartment: Department) {
+        viewModelScope.launch {
+            try {
+                repository.updateDepartment(updatedDepartment)
+                _selectedDepartment.value = updatedDepartment
+                _snackbarMessage.value = "Cập nhật thành công."
+            } catch (e: Exception) {
+                _snackbarMessage.value = "Lỗi cập nhật: ${e.message}"
+            }
+        }
+    }
+
+    fun clearSnackbarMessage() {
+        _snackbarMessage.value = null
+    }
 }
