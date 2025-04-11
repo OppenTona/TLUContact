@@ -1,5 +1,7 @@
 package com.example.tlucontact.viewmodel
 
+import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -13,10 +15,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.tlucontact.data.model.Staff
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.lang.reflect.Modifier
+import java.util.UUID
+
 
 class StaffViewModel : ViewModel() {
     private val db = FirebaseFirestore.getInstance()
@@ -117,5 +122,40 @@ class StaffViewModel : ViewModel() {
     fun toggleSortOrder() {
         _sortAscending.value = !_sortAscending.value
     }
+    fun uploadImageToStorage(
+        uri: Uri?,
+        onSuccess: (String) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        if (uri == null) {
+            onFailure(IllegalArgumentException("Uri ảnh không được null"))
+            return
+        }
+
+        val storageRef = FirebaseStorage.getInstance().reference
+        val imageRef = storageRef.child("avatars/${UUID.randomUUID()}.jpg")
+
+        Log.d("UploadImage", "Bắt đầu upload ảnh: $uri")
+
+        imageRef.putFile(uri)
+            .addOnSuccessListener {
+                imageRef.downloadUrl.addOnSuccessListener { downloadUrl ->
+                    Log.d("UploadImage", "Upload thành công. URL: $downloadUrl")
+                    onSuccess(downloadUrl.toString())
+                }.addOnFailureListener { e ->
+                    Log.e("UploadImage", "Lấy URL thất bại: ${e.message}")
+                    onFailure(e)
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.e("UploadImage", "Upload ảnh thất bại: ${exception.message}")
+                onFailure(exception)
+            }
+
+    }
+
+
+
+
 }
 

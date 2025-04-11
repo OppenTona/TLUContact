@@ -682,10 +682,12 @@ fun Stafflist(
                 item {
                     Text(
                         text = department,
-                        style = MaterialTheme.typography.h6,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Gray.copy(alpha = 1.0f),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(8.dp)
+                            .padding(horizontal = 12.dp, vertical = 4.dp)
                     )
                 }
                 items(staffList) { staff ->
