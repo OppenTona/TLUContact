@@ -29,6 +29,7 @@ fun ForgotPasswordScreen(navController: NavController) { // Hàm hiển thị m�
     val context = LocalContext.current // Lấy ngữ cảnh hiện tại để sử dụng cho Toast
     val viewModel: LoginViewModel = viewModel() // Lấy LoginViewModel để quản lý trạng thái
     val email by viewModel.email.collectAsState() // Lấy trạng thái email từ ViewModel
+    val emailError by viewModel.emailError.collectAsState()
     val resetState by viewModel.resetState.collectAsState() // Lấy trạng thái reset mật khẩu từ ViewModel
     val configuration = LocalConfiguration.current // Lấy cấu hình hiện tại của thiết bị
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE // Kiểm tra thiết bị có đang ở chế độ ngang hay không
@@ -62,7 +63,7 @@ fun ForgotPasswordScreen(navController: NavController) { // Hàm hiển thị m�
                 }
                 Spacer(modifier = Modifier.width(32.dp)) // Thêm khoảng cách ngang 32dp
                 Box(modifier = Modifier.weight(1f)) { // Hộp chứa form quên mật khẩu
-                    ForgotPasswordForm(navController, viewModel, email) // Hiển thị form quên mật khẩu
+                    ForgotPasswordForm(navController, viewModel, email, emailError) // Hiển thị form quên mật khẩu
                 }
             }
         }
@@ -82,7 +83,7 @@ fun ForgotPasswordScreen(navController: NavController) { // Hàm hiển thị m�
                 Spacer(modifier = Modifier.height(16.dp)) // Thêm khoảng cách dọc 16dp
                 ForgotPasswordLogo() // Hiển thị logo quên mật khẩu
                 Spacer(modifier = Modifier.height(16.dp)) // Thêm khoảng cách dọc 16dp
-                ForgotPasswordForm(navController, viewModel, email) // Hiển thị form quên mật khẩu
+                ForgotPasswordForm(navController, viewModel, email, emailError) // Hiển thị form quên mật khẩu
             }
         }
     }
@@ -102,7 +103,7 @@ fun ForgotPasswordLogo() { // Hàm hiển thị logo và tiêu đề trên màn 
 }
 
 @Composable // Đánh dấu hàm là một thành phần giao diện trong Compose
-fun ForgotPasswordForm(navController: NavController, viewModel: LoginViewModel, email: String) { // Hàm hiển thị form quên mật khẩu
+fun ForgotPasswordForm(navController: NavController, viewModel: LoginViewModel, email: String, emailError: Boolean) { // Hàm hiển thị form quên mật khẩu
     Column(horizontalAlignment = Alignment.CenterHorizontally) { // Sử dụng bố cục cột, căn giữa nội dung
         TextField( // Trường nhập liệu email
             value = email, // Giá trị của trường nhập liệu
@@ -112,9 +113,10 @@ fun ForgotPasswordForm(navController: NavController, viewModel: LoginViewModel, 
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email), // Thiết lập bàn phím cho kiểu nhập email
             modifier = Modifier.fillMaxWidth(), // Chiếm toàn bộ chiều rộng
             colors = TextFieldDefaults.textFieldColors( // Thiết lập màu sắc cho trường nhập liệu
-                backgroundColor = Color.Transparent, // Màu nền trong suốt
-                focusedIndicatorColor = Color.Black, // Màu gạch chân khi được chọn
-                unfocusedIndicatorColor = Color.Gray // Màu gạch chân khi không được chọn
+                backgroundColor = Color.Transparent, // Nền trong suốt
+                unfocusedIndicatorColor = if (emailError) Color.Red else Color.Gray, // Màu khi không được chọn
+                focusedIndicatorColor = if (emailError) Color.Red else Color.Gray, // Màu khi được chọn
+                focusedLabelColor = if (emailError) Color.Red else Color.Gray // Màu của nhãn khi được chọn
             )
         )
         Spacer(modifier = Modifier.height(16.dp)) // Thêm khoảng cách dọc 16dp
