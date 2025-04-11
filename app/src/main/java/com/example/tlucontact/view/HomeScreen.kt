@@ -70,9 +70,12 @@ import kotlinx.coroutines.flow.StateFlow
 fun HomeScreen(
     navControllerLogout: NavController,
 ) {
+            // Tạo đối tượng NavController dùng để điều hướng giữa các màn hình trong Compose
+            // rememberNavController sẽ nhớ lại NavController khi giao diện được recomposed
             val navController = rememberNavController()
             // ViewModel dùng chung
-            val staffViewModel: StaffViewModel = viewModel()
+
+            val staffViewModel: StaffViewModel = viewModel()    // Tạo hoặc lấy ViewModel có kiểu StaffViewModel, ViewModel này được dùng để quản lý dữ liệu và logic liên quan đến giảng viên, viewModel() sẽ tự động gán theo vòng đời của composable
             val studentViewModel: StudentViewModel = viewModel()
             val guestViewModel: GuestViewModel = viewModel()
             val logoutViewModel: LogoutViewModel = viewModel() // Sử dụng ViewModel
@@ -81,18 +84,29 @@ fun HomeScreen(
             val selectedStaff by staffViewModel.selectedStaff.collectAsState()
             val selectedStudent by studentViewModel.selectedStudent.collectAsState()
             val selectedGuest by guestViewModel.selectedGuest.collectAsState()
+            // LaunchedEffect sẽ chạy khối code bên trong khi giá trị logoutState thay đổi
             LaunchedEffect(logoutState) {
+                // Nếu logoutState.first == true → đăng xuất thành công
                 if (logoutState.first) {
+                    // Điều hướng sang màn hình đăng nhập (login)
                     navControllerLogout.navigate("login") {
+                        // Xóa toàn bộ backstack (xóa hết các màn hình trước đó)
                         popUpTo(0) { inclusive = true }
                     }
-                } else if (logoutState.second != null) {
-                    // Hiển thị lỗi nếu có
-                    Toast.makeText(navController.context, "Lỗi: ${logoutState.second}", Toast.LENGTH_SHORT).show()
+                }
+                // Nếu logoutState.second khác null → có lỗi xảy ra khi đăng xuất
+                else if (logoutState.second != null) {
+                    // Hiển thị thông báo lỗi bằng Toast
+                    Toast.makeText(
+                        navController.context,
+                        "Lỗi: ${logoutState.second}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
 
-            NavHost(
+
+    NavHost(
                 navController = navController,
                 startDestination = "directory"
             ) {
@@ -109,19 +123,30 @@ fun HomeScreen(
                         navController = navController
                     )
                 }
+                // Định nghĩa một composable cho route "update_detail"
                 composable(route = "update_detail") {
-                    val staffViewModel: StaffViewModel = viewModel()  // Lấy ViewModel
+
+                    // Lấy instance của StaffViewModel để dùng trong màn hình chỉnh sửa
+                    val staffViewModel: StaffViewModel = viewModel()
+
+                    // Gọi composable UpdateDetailScreen, truyền vào các tham số cần thiết
                     UpdateDetailScreen(
-                        staff = selectedStaff,
-                        onBack = { navController.popBackStack() },
+                        staff = selectedStaff, // Truyền đối tượng giảng viên đang được chọn để hiển thị thông tin
+                        onBack = {
+                            navController.popBackStack() // Khi nhấn nút quay lại → điều hướng về màn hình trước đó
+                        },
                         onSave = { updatedStaff ->
-                            staffViewModel.updateStaffInfo(updatedStaff)  // Gọi hàm update trong ViewModel
-                            //navController.popBackStack()  // Quay lại sau khi lưu
+                            // Khi nhấn nút lưu → gọi hàm update trong ViewModel để cập nhật thông tin giảng viên
+                            staffViewModel.updateStaffInfo(updatedStaff)
+
+                            // Quay lại màn hình trước sau khi lưu (nếu muốn kích hoạt dòng này thì bỏ comment)
+                            // navController.popBackStack()
                         }
                     )
                 }
 
-                composable(route = "update_detail_guest") {
+
+        composable(route = "update_detail_guest") {
                     val guestViewModel: GuestViewModel = viewModel()
                     val guestState by guestViewModel.selectedGuest.collectAsState()
 
@@ -168,18 +193,27 @@ fun HomeScreen(
                     )
                 }
 
+                // Định nghĩa một composable cho màn hình "DetailContactScreen"
                 composable(route = "DetailContactScreen") {
-                    val staff =
-                        navController.previousBackStackEntry?.savedStateHandle?.get<Staff>("staff")
-                            ?: Staff("", "", "", "")
 
+                    // Lấy đối tượng staff được truyền từ màn hình trước đó thông qua savedStateHandle
+                    // Nếu không có (null) thì tạo một Staff rỗng để tránh lỗi
+                    val staff = navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.get<Staff>("staff")
+                        ?: Staff("", "", "", "") // Tránh lỗi null bằng cách gán giá trị mặc định
+
+                    // Gọi màn hình chi tiết, truyền dữ liệu staff vào
                     DetailContactScreen(
                         staff = staff,
-                        onBack = { navController.popBackStack() },
+                        onBack = {
+                            navController.popBackStack() // Khi nhấn nút quay lại → điều hướng về màn hình trước
+                        },
                     )
                 }
 
-                composable(
+
+        composable(
                     route = "department_detail/{name}/{id}/{leader}/{email}/{phone}/{address}?screenTitle={screenTitle}",
                     arguments = listOf(
                         navArgument("name") { type = NavType.StringType },
@@ -211,16 +245,29 @@ fun HomeScreen(
 
 @Composable
 fun Directoryscreen(
-    navController: NavController,
+    navController: NavController, //điều hướng
+    //Đảm bảo tái sử dụng ViewModel, tránh việc mỗi màn hình lại tạo mới.
+    //Truy cập các hàm như updateStaffInfo(), getStaffById(), hoặc luồng dữ liệu như staffList.
     staffViewModel: StaffViewModel,
     studentViewModel: StudentViewModel,
     guestViewModel: GuestViewModel = viewModel(),
     logoutViewModel: LogoutViewModel = viewModel()
 ) {
+    // Lấy context hiện tại của ứng dụng (dùng để hiển thị Toast, gọi Intent,...)
     val context = LocalContext.current
+
+    // Biến lưu trạng thái tab đang được chọn, mặc định là "Giảng viên"
+    // Dùng để hiển thị nội dung phù hợp theo tab (ví dụ: "Giảng viên", "Sinh viên", v.v.)
     var selectedTab by remember { mutableStateOf("Giảng viên") }
+
+    // Biến lưu nội dung tìm kiếm hiện tại trong ô tìm kiếm
+    // Khi người dùng nhập text vào ô tìm kiếm, query sẽ thay đổi
     var query by remember { mutableStateOf("") }
+
+    // Biến dùng để xác định xem bộ lọc có đang được bật hay không
+    // true → đang bật lọc; false → không lọc
     var isFilterActive by remember { mutableStateOf(false) }
+
     var selectedDepartment by remember { mutableStateOf("") }
 
     val departmentRepository = DepartmentRepository()
@@ -231,11 +278,19 @@ fun Directoryscreen(
 
     val departments by departmentViewModel.departmentList.collectAsState()
 
+    // Lấy email người dùng đã đăng nhập từ SessionManager (lưu trong SharedPreferences hoặc tương tự)
     val userLoginEmail = SessionManager(context).getUserLoginEmail()
+
+    // Lấy danh sách giảng viên từ ViewModel dưới dạng State để tự động cập nhật UI khi dữ liệu thay đổi
+    val staffs by staffViewModel.staffList.collectAsState()
+
+    // Lấy thông tin giảng viên đang được chọn từ ViewModel
+    // Thường dùng để truyền sang màn hình chi tiết hoặc chỉnh sửa
     val selectedStaff by staffViewModel.selectedStaff.collectAsState()
+
     val selectedStudent by studentViewModel.selectedStudent.collectAsState()
     val selectedGuest by guestViewModel.selectedGuest.collectAsState()
-    val staffs by staffViewModel.staffList.collectAsState()
+
     val students by studentViewModel.studentList.collectAsState()
 
 
@@ -263,50 +318,69 @@ fun Directoryscreen(
     }
 
 
+    // Scaffold là layout cơ bản có top bar, bottom bar, FAB, content...
     Scaffold(
+        // Thanh điều hướng dưới cùng (BottomNavigationBar)
         bottomBar = {
             Bottomnavigationbar(selectedTab) { newTab ->
+                // Khi người dùng chọn tab mới → cập nhật selectedTab
                 selectedTab = newTab
             }
         }
     ) { padding ->
+
+        // Phần nội dung chính, được bọc trong Column
         Column(
             Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
+                .padding(padding) // padding do Scaffold cung cấp
+                .padding(16.dp)   // padding cố định bên trong
         ) {
+
+            // Topbar hiển thị tiêu đề và nút logout
             Topbar(
-                title = "Danh bạ $selectedTab",
-                onLogoutClick = { logoutViewModel.logout() }
+                title = "Danh bạ $selectedTab", // Tiêu đề thay đổi theo tab
+                onLogoutClick = { logoutViewModel.logout() } // Gọi logout khi nhấn nút
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp)) // Khoảng cách
+
+            // Thanh tìm kiếm, có thể hiển thị thêm lọc nếu là Đơn vị
             Searchbar(
-                query = query,
-                onQueryChange = { query = it },
-                selectedTab = selectedTab,
-                onFilterClick = { isFilterActive = true },
+                query = query, // Nội dung tìm kiếm hiện tại
+                onQueryChange = { query = it }, // Cập nhật query khi người dùng nhập
+                selectedTab = selectedTab, // Biết đang ở tab nào để xử lý đúng
+                onFilterClick = { isFilterActive = true }, // Mở lọc khi nhấn icon lọc
+
+                // Chỉ truyền DepartmentViewModel nếu đang ở tab "Đơn vị"
                 departmentViewModel = if (selectedTab == "Đơn vị") departmentViewModel else null,
+
                 onDepartmentSortOrderChange = { newSortOrder ->
-                    // Cập nhật trạng thái sắp xếp trong DepartmentList
-                    // (nếu cần, bạn có thể truyền nó vào DepartmentList hoặc sử dụng ViewModel)
-                    // Ví dụ:
+                    // (Nếu muốn) cập nhật trạng thái sắp xếp
                     // departmentViewModel.setSortAscending(newSortOrder)
                 }
             )
+
             Spacer(Modifier.height(8.dp))
 
+            // Hiển thị avatar người dùng và tên hồ sơ hiện tại (giảng viên, sinh viên, hoặc khách)
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(8.dp)
             ) {
-                Useravatar(navController, guestViewModel)
+                Useravatar(navController, guestViewModel) // Hiển thị avatar
+
                 Spacer(modifier = Modifier.width(8.dp))
+
                 Column {
                     Text("Hồ sơ của bạn", fontSize = 14.sp, color = Color.Gray)
+
+                    // Hiển thị tên người dùng tương ứng với loại tài khoản (ưu tiên theo thứ tự)
                     Text(
-                        text = selectedStaff?.name ?: selectedStudent?.fullNameStudent ?: selectedGuest?.name ?: "Chưa có tên",
+                        text = selectedStaff?.name
+                            ?: selectedStudent?.fullNameStudent
+                            ?: selectedGuest?.name
+                            ?: "Chưa có tên",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -315,22 +389,23 @@ fun Directoryscreen(
 
             Spacer(Modifier.height(16.dp))
 
+            // Hiển thị danh sách tương ứng theo tab được chọn
             when (selectedTab) {
                 "Giảng viên" -> Stafflist(
-                    staffs = staffs,
+                    staffs = staffs, // Danh sách giảng viên
+                    query = query,   // Từ khóa tìm kiếm
+                    navController = navController,
+                    isFilterActive = isFilterActive, // Có lọc không?
+                    selectedDepartment = selectedDepartment // Bộ lọc đơn vị (nếu có)
+                )
+
+                "Đơn vị" -> DepartmentList(
+                    departmentsFlow = departmentViewModel.filteredDepartments,
                     query = query,
                     navController = navController,
-                    isFilterActive = isFilterActive,
-                    selectedDepartment = selectedDepartment
+                    departmentViewModel = departmentViewModel
                 )
-                "Đơn vị" -> {
-                    DepartmentList(
-                        departmentsFlow = departmentViewModel.filteredDepartments,
-                        query = query,
-                        navController = navController,
-                        departmentViewModel = departmentViewModel
-                    )
-                }
+
                 "Sinh viên" -> StudentList(
                     students = students,
                     query = query,
@@ -572,30 +647,45 @@ fun DepartmentItem(department: Department, navController: NavController) {
 
 @Composable
 fun Useravatar(navController: NavController, guestViewModel: GuestViewModel) {
+    // Lấy context hiện tại trong Compose (dùng cho các thao tác ngoài UI như lấy email)
     val conText = LocalContext.current
+
+    // Lấy email người dùng đã đăng nhập từ SessionManager (thường được lưu trong SharedPreferences)
     val userLoginEmail = SessionManager(conText).getUserLoginEmail()
-    //TODO: Bổ sung thêm trường hợp user = null hoặc email = null
+
+    // TODO: Bổ sung xử lý nếu userLoginEmail là null để tránh crash app
+
+    // Lấy thông tin người dùng kiểu khách (guest) từ ViewModel dưới dạng State để tự động cập nhật UI khi dữ liệu thay đổi
     val guest by guestViewModel.selectedGuest.collectAsState()
 
+    // Khi userLoginEmail thay đổi, gọi hàm lấy thông tin guest tương ứng từ ViewModel
     LaunchedEffect(userLoginEmail) {
         userLoginEmail?.let { email ->
             guestViewModel.fetchGuestByEmail(email)
         }
     }
 
+    // Hiển thị icon avatar người dùng (mặc định là hình tròn có người)
     Icon(
-        imageVector = Icons.Default.AccountCircle,
+        imageVector = Icons.Default.AccountCircle, // Icon avatar mặc định
         contentDescription = "Avatar",
         modifier = Modifier
-            .size(32.dp)
+            .size(32.dp) // Kích thước icon
             .clickable {
+                // Khi người dùng bấm vào avatar, xác định sẽ điều hướng đến màn hình nào
+
+                // Nếu là sinh viên (email kết thúc bằng @e.tlu.edu.vn)
                 if (userLoginEmail.toString().endsWith("@e.tlu.edu.vn")) {
                     navController.navigate("update_detail_student")
                 }
-                if (userLoginEmail.toString().endsWith("@tlu.edu.vn") || guest?.userType == "staff") {
+
+                // Nếu là giảng viên (email @tlu.edu.vn) hoặc khách nhưng có kiểu là "staff"
+                else if (userLoginEmail.toString().endsWith("@tlu.edu.vn") || guest?.userType == "staff") {
                     navController.navigate("update_detail")
                 }
-                else{
+
+                // Còn lại là khách
+                else {
                     navController.navigate("update_detail_guest")
                 }
             }
@@ -604,48 +694,49 @@ fun Useravatar(navController: NavController, guestViewModel: GuestViewModel) {
 
 @Composable
 fun Staffitem(
-    staff: Staff,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    navController: NavController
+    staff: Staff, // Dữ liệu giảng viên cụ thể
+    isSelected: Boolean, // Nếu được chọn, hiển thị thêm thông tin
+    onClick: () -> Unit, // Callback khi người dùng click vào item
+    navController: NavController // Dùng để điều hướng đến màn hình chi tiết
 ) {
     Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .fillMaxWidth() // Chiều rộng tối đa
+            .clickable(onClick = onClick) // Bắt sự kiện click
+            .padding(horizontal = 16.dp, vertical = 8.dp) // Lề bên trong
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically // Căn giữa avatar và text theo chiều dọc
         ) {
-            // Avatar tròn, nhỏ
+            // Ảnh đại diện (avatar) hình tròn
             AsyncImage(
-                model = staff.avatarURL,
+                model = staff.avatarURL, // URL ảnh đại diện
                 contentDescription = "Avatar",
                 modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(Color.LightGray, CircleShape)
+                    .size(36.dp) // Kích thước avatar
+                    .clip(CircleShape) // Cắt ảnh thành hình tròn
+                    .background(Color.LightGray, CircleShape) // Nền sáng khi ảnh chưa load
             )
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(12.dp)) // Khoảng cách giữa avatar và văn bản
 
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f) // Đẩy text chiếm hết chiều rộng còn lại
             ) {
                 Text(
-                    text = staff.name,
+                    text = staff.name, // Tên giảng viên
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = staff.position,
+                    text = staff.position, // Chức vụ giảng viên
                     fontSize = 14.sp,
                     color = Color.Gray
                 )
             }
         }
 
+        // Nếu được chọn (đang mở rộng chi tiết)
         if (isSelected) {
             Spacer(modifier = Modifier.height(8.dp))
             Text("Đơn vị: ${staff.department}", fontSize = 14.sp)
@@ -653,7 +744,7 @@ fun Staffitem(
             Spacer(modifier = Modifier.height(8.dp))
         }
 
-        // Divider dưới mỗi item
+        // Gạch phân cách giữa các item
         Divider(color = Color.LightGray.copy(alpha = 0.3f))
     }
 }
@@ -661,24 +752,24 @@ fun Staffitem(
 
 @Composable
 fun Stafflist(
-    staffs: List<Staff>,
-    query: String,
-    navController: NavController,
-    isFilterActive: Boolean,
-    selectedDepartment: String,
-    staffViewModel: StaffViewModel = viewModel()
+    staffs: List<Staff>, // Danh sách tất cả giảng viên
+    query: String, // Chuỗi tìm kiếm (tên giảng viên)
+    navController: NavController, // Dùng để điều hướng đến màn hình chi tiết
+    isFilterActive: Boolean, // Có đang bật lọc theo đơn vị không?
+    selectedDepartment: String, // Bộ môn được chọn (nếu có)
+    staffViewModel: StaffViewModel = viewModel() // ViewModel quản lý danh sách và trạng thái lọc/sắp xếp
 ) {
-    // Lấy trạng thái sắp xếp từ ViewModel
+    // Lấy trạng thái sắp xếp từ ViewModel (tăng hay giảm dần theo tên)
     val sortAscending by staffViewModel.sortAscending.collectAsState()
 
-    // Sắp xếp danh sách
+    // Sắp xếp danh sách theo tên (tăng/giảm dần)
     val sortedStaffs = if (sortAscending) {
         staffs.sortedBy { it.name.lowercase() }
     } else {
         staffs.sortedByDescending { it.name.lowercase() }
     }
 
-    // Lọc theo query và bộ môn nếu có
+    // Lọc danh sách nếu có bật lọc theo đơn vị và từ khóa
     val filteredStaffs = if (isFilterActive) {
         sortedStaffs.filter {
             it.name.contains(query, ignoreCase = true) &&
@@ -688,22 +779,23 @@ fun Stafflist(
         sortedStaffs.filter { it.name.contains(query, ignoreCase = true) }
     }
 
-    // Tạo danh sách chữ cái từ A-Z hoặc Z-A dựa trên trạng thái sort
+    // Tạo dải chữ cái A-Z hoặc Z-A để nhóm theo chữ cái đầu của tên
     val letterRange = if (sortAscending) 'A'..'Z' else 'Z' downTo 'A'
 
-    // Nhóm theo bộ môn (nếu lọc), hoặc nhóm theo chữ cái đầu tiên
+    // Nhóm danh sách theo bộ môn (khi lọc) hoặc theo chữ cái đầu tên
     val groupedStaffsByDepartment = filteredStaffs.groupBy { it.department }
     val groupedStaffsByName = letterRange.associateWith { letter ->
         filteredStaffs.filter { it.name.firstOrNull()?.uppercaseChar() == letter }
     }
 
+    // Hiển thị danh sách dạng LazyColumn (cuộn được)
     LazyColumn {
         if (isFilterActive) {
-            // Nếu lọc theo bộ môn
+            // Nếu đang lọc theo bộ môn
             groupedStaffsByDepartment.forEach { (department, staffList) ->
                 item {
                     Text(
-                        text = department,
+                        text = department, // Tên đơn vị
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color.Gray.copy(alpha = 1.0f),
@@ -712,25 +804,28 @@ fun Stafflist(
                             .padding(horizontal = 12.dp, vertical = 4.dp)
                     )
                 }
+
+                // Hiển thị từng staff trong đơn vị đó
                 items(staffList) { staff ->
                     Staffitem(
                         staff = staff,
                         isSelected = false,
                         onClick = {
+                            // Khi bấm vào, lưu staff vào savedStateHandle để chuyển màn hình
                             navController.currentBackStackEntry?.savedStateHandle?.set("staff", staff)
-                            navController.navigate("DetailContactScreen")
+                            navController.navigate("DetailContactScreen") // Điều hướng đến màn hình chi tiết
                         },
                         navController = navController
                     )
                 }
             }
         } else {
-            // Nếu không lọc, nhóm theo chữ cái đầu tiên
+            // Không lọc thì nhóm theo chữ cái đầu tiên của tên
             groupedStaffsByName.forEach { (letter, staffList) ->
                 if (staffList.isNotEmpty()) {
                     item {
                         Text(
-                            text = letter.toString(),
+                            text = letter.toString(), // Tên nhóm chữ cái
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color.Gray,
@@ -739,6 +834,7 @@ fun Stafflist(
                                 .padding(vertical = 6.dp, horizontal = 16.dp)
                         )
                     }
+
                     items(staffList) { staff ->
                         Staffitem(
                             staff = staff,
@@ -755,6 +851,7 @@ fun Stafflist(
         }
     }
 }
+
 
 
 
@@ -778,27 +875,32 @@ fun Topbar(
     }
 }
 
-@SuppressLint("UnrememberedMutableState")
+@SuppressLint("UnrememberedMutableState") // Bỏ cảnh báo mutableState không được remember đúng cách (dành cho biến fallback)
 @Composable
 fun Searchbar(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    selectedTab: String,
-    onFilterClick: () -> Unit,
-    studentViewModel: StudentViewModel = viewModel(),
-    staffViewModel: StaffViewModel = viewModel(),
-    departmentViewModel: DepartmentViewModel? = null,
-    onDepartmentSortOrderChange: (Boolean) -> Unit = {} // Thêm callback
+    query: String, // Chuỗi tìm kiếm nhập vào
+    onQueryChange: (String) -> Unit, // Callback khi người dùng nhập thay đổi
+    selectedTab: String, // Tab hiện tại ("Sinh viên", "Giảng viên", "Đơn vị")
+    onFilterClick: () -> Unit, // Callback khi người dùng chọn chức năng lọc
+    studentViewModel: StudentViewModel = viewModel(), // ViewModel sinh viên
+    staffViewModel: StaffViewModel = viewModel(), // ViewModel giảng viên
+    departmentViewModel: DepartmentViewModel? = null, // ViewModel đơn vị (có thể null)
+    onDepartmentSortOrderChange: (Boolean) -> Unit = {} // Callback khi đổi thứ tự sắp xếp đơn vị (dự phòng)
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    var expandedFilter by remember { mutableStateOf(false) }
-    val dropdownOffset = DpOffset(0.dp, 15.dp)
-    val filterMenuOffset = DpOffset(160.dp, 165.dp)
+    var expanded by remember { mutableStateOf(false) } // Có đang mở menu "More" không?
+    var expandedFilter by remember { mutableStateOf(false) } // Có đang mở menu lọc không?
+    val dropdownOffset = DpOffset(0.dp, 15.dp) // Đặt vị trí menu chính
+    val filterMenuOffset = DpOffset(160.dp, 165.dp) // Đặt vị trí menu lọc (lùi sang phải)
 
+    // Trạng thái sắp xếp hiện tại theo từng ViewModel
     val studentSortAscending by studentViewModel.sortAscending.collectAsState()
     val staffSortAscending by staffViewModel.sortAscending.collectAsState()
-    val departmentSortAscending by departmentViewModel?.sortAscending?.collectAsState(initial = true) ?: remember { mutableStateOf(true) }
 
+    // Trạng thái sắp xếp của department, có thể null -> fallback là true
+    val departmentSortAscending by departmentViewModel?.sortAscending?.collectAsState(initial = true)
+        ?: remember { mutableStateOf(true) }
+
+    // Lấy đúng sort đang áp dụng theo tab được chọn
     val currentSortAscending = when (selectedTab) {
         "Sinh viên" -> studentSortAscending
         "Giảng viên" -> staffSortAscending
@@ -806,11 +908,12 @@ fun Searchbar(
         else -> true
     }
 
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(36.dp)
-            .background(Color(0xFFF0F0F0), RoundedCornerShape(10.dp))
+            .background(Color(0xFFF0F0F0), RoundedCornerShape(10.dp)) // Nền xám nhạt, bo góc
             .padding(horizontal = 8.dp),
         contentAlignment = Alignment.CenterStart
     ) {
@@ -818,19 +921,26 @@ fun Searchbar(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Icon tìm kiếm
             Icon(
                 Icons.Default.Search,
                 contentDescription = null,
                 modifier = Modifier.size(30.dp).padding(start = 3.dp)
             )
+
             Spacer(Modifier.width(8.dp))
+
+            // Ô nhập text tìm kiếm
             BasicTextField(
                 value = query,
                 onValueChange = onQueryChange,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f), // Chiếm toàn bộ chiều rộng còn lại
                 singleLine = true
             )
+
             Spacer(Modifier.width(8.dp))
+
+            // Nút mở menu tuỳ chọn (ba chấm)
             Box {
                 IconButton(onClick = { expanded = true }) {
                     Icon(
@@ -840,12 +950,15 @@ fun Searchbar(
                     )
                 }
 
+                // Menu xổ xuống (Dropdown) chính
                 DropdownMenu(
                     expanded = expanded,
                     onDismissRequest = { expanded = false },
                     offset = dropdownOffset
                 ) {
+
                     DropdownMenuItem(onClick = {
+                        // Đảo thứ tự sắp xếp tùy theo tab
                         when (selectedTab) {
                             "Sinh viên" -> studentViewModel.toggleSortOrder()
                             "Giảng viên" -> staffViewModel.toggleSortOrder()
@@ -853,13 +966,21 @@ fun Searchbar(
                         }
                         expanded = false
                     }) {
-                        Text(if (departmentViewModel?.sortAscending?.collectAsState()?.value == true) "Sắp xếp Z-A" else "Sắp xếp A-Z")
+                        // Hiển thị nội dung theo thứ tự hiện tại
+                        Text(
+                            if (departmentViewModel?.sortAscending?.collectAsState()?.value == true)
+                                "Sắp xếp Z-A"
+                            else
+                                "Sắp xếp A-Z"
+                        )
                     }
+
 
                     DropdownMenuItem(onClick = { expandedFilter = true }) {
                         Text("Lọc")
                     }
 
+                    // Menu con: lọc tùy vào tab hiện tại
                     if (expandedFilter) {
                         DropdownMenu(
                             expanded = expandedFilter,
@@ -876,6 +997,7 @@ fun Searchbar(
                                     }) {
                                         Text("Lọc Theo Lớp")
                                     }
+
                                     DropdownMenuItem(onClick = {
                                         studentViewModel.setFilterMode("ByName")
                                         expanded = false
@@ -898,19 +1020,39 @@ fun Searchbar(
 
                                 "Đơn vị" -> {
                                     if (departmentViewModel != null) {
-                                        DropdownMenuItem(onClick = { departmentViewModel.setFilterType("") }) {
+                                        DropdownMenuItem(onClick = {
+                                            departmentViewModel.setFilterType("")
+                                            expandedFilter = false
+                                            expanded = false
+                                        }) {
                                             Text("Tất cả")
                                         }
-                                        DropdownMenuItem(onClick = { departmentViewModel.setFilterType("Khoa") }) {
+                                        DropdownMenuItem(onClick = {
+                                            departmentViewModel.setFilterType("Khoa")
+                                            expandedFilter = false
+                                            expanded = false
+                                        }) {
                                             Text("Khoa")
                                         }
-                                        DropdownMenuItem(onClick = { departmentViewModel.setFilterType("Phòng") }) {
+                                        DropdownMenuItem(onClick = {
+                                            departmentViewModel.setFilterType("Phòng")
+                                            expandedFilter = false
+                                            expanded = false
+                                        }) {
                                             Text("Phòng")
                                         }
-                                        DropdownMenuItem(onClick = { departmentViewModel.setFilterType("Trung tâm") }) {
+                                        DropdownMenuItem(onClick = {
+                                            departmentViewModel.setFilterType("Trung tâm")
+                                            expandedFilter = false
+                                            expanded = false
+                                        }) {
                                             Text("Trung tâm")
                                         }
-                                        DropdownMenuItem(onClick = { departmentViewModel.setFilterType("Viện") }) {
+                                        DropdownMenuItem(onClick = {
+                                            departmentViewModel.setFilterType("Viện")
+                                            expandedFilter = false
+                                            expanded = false
+                                        }) {
                                             Text("Viện")
                                         }
                                     }
@@ -918,6 +1060,7 @@ fun Searchbar(
                             }
                         }
                     }
+
                 }
             }
         }
@@ -925,78 +1068,92 @@ fun Searchbar(
 }
 
 
-    @Composable
-    fun Bottomnavigationbar(selectedTab: String, onTabSelected: (String) -> Unit) {
-        BottomNavigation(backgroundColor = Color.White, contentColor = Color.Black) {
-            BottomNavigationItem(
-                icon = {
-                    Image(
-                        painter = painterResource(id = R.drawable.department_icon),
-                        contentDescription = "Đơn vị",
-                        modifier = Modifier.size(24.dp),
-                        colorFilter = ColorFilter.tint(
-                            if (selectedTab == "Đơn vị") Color(0xFF007BFE) else Color.Black,
-                            BlendMode.SrcIn
-                        )
-                    )
-                },
-                label = {
-                    Text(
-                        "Đơn vị",
-                        color = if (selectedTab == "Đơn vị") Color(0xFF007BFE) else Color.Black
-                    )
-                },
-                selected = selectedTab == "Đơn vị",
-                onClick = { onTabSelected("Đơn vị") }
-            )
+@Composable
+fun Bottomnavigationbar(
+    selectedTab: String, // Tên của tab hiện tại đang được chọn (ví dụ: "Giảng viên")
+    onTabSelected: (String) -> Unit // Hàm callback để xử lý khi người dùng chọn tab khác
+) {
+    BottomNavigation(
+        backgroundColor = Color.White, // Màu nền của thanh điều hướng
+        contentColor = Color.Black // Màu mặc định cho nội dung (icon/text)
+    ) {
 
-            BottomNavigationItem(
-                icon = {
-                    Image(
-                        painter = painterResource(id = R.drawable.staff_icon),
-                        contentDescription = "Giảng viên",
-                        modifier = Modifier.size(24.dp),
-                        colorFilter = ColorFilter.tint(
-                            if (selectedTab == "Giảng viên") Color(0xFF007BFE) else Color.Black,
-                            BlendMode.SrcIn
-                        )
+        BottomNavigationItem(
+            icon = {
+                Image(
+                    painter = painterResource(id = R.drawable.department_icon), // Icon từ drawable resource
+                    contentDescription = "Đơn vị", // Mô tả cho trình đọc màn hình
+                    modifier = Modifier.size(24.dp), // Kích thước icon
+                    colorFilter = ColorFilter.tint(
+                        if (selectedTab == "Đơn vị") Color(0xFF007BFE) else Color.Black, // Màu xanh nếu đang chọn, đen nếu không
+                        BlendMode.SrcIn
                     )
-                },
-                label = {
-                    Text(
-                        "Giảng viên",
-                        color = if (selectedTab == "Giảng viên") Color(0xFF007BFE) else Color.Black
-                    )
-                },
-                selected = selectedTab == "Giảng viên",
-                onClick = { onTabSelected("Giảng viên") }
-            )
+                )
+            },
+            label = {
+                Text(
+                    "Đơn vị", // Nhãn hiển thị bên dưới icon
+                    color = if (selectedTab == "Đơn vị") Color(0xFF007BFE) else Color.Black // Tô màu xanh nếu được chọn
+                )
+            },
+            selected = selectedTab == "Đơn vị", // Kiểm tra xem tab này có đang được chọn không
+            onClick = { onTabSelected("Đơn vị") } // Khi click, gọi callback để thay đổi tab
+        )
 
-            BottomNavigationItem(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.School,
-                        contentDescription = "Sinh viên",
-                        tint = if (selectedTab == "Sinh viên") Color(0xFF007BFE) else Color.Black
+
+        BottomNavigationItem(
+            icon = {
+                Image(
+                    painter = painterResource(id = R.drawable.staff_icon), // Icon từ resource
+                    contentDescription = "Giảng viên",
+                    modifier = Modifier.size(24.dp),
+                    colorFilter = ColorFilter.tint(
+                        if (selectedTab == "Giảng viên") Color(0xFF007BFE) else Color.Black, // Màu xanh khi được chọn
+                        BlendMode.SrcIn
                     )
-                },
-                label = {
-                    Text(
-                        "Sinh viên",
-                        color = if (selectedTab == "Sinh viên") Color(0xFF007BFE) else Color.Black
-                    )
-                },
-                selected = selectedTab == "Sinh viên",
-                onClick = { onTabSelected("Sinh viên") }
-            )
-        }
+                )
+            },
+            label = {
+                Text(
+                    "Giảng viên",
+                    color = if (selectedTab == "Giảng viên") Color(0xFF007BFE) else Color.Black
+                )
+            },
+            selected = selectedTab == "Giảng viên",
+            onClick = { onTabSelected("Giảng viên") } // Gọi callback khi tab được chọn
+        )
+
+
+        BottomNavigationItem(
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.School, // Icon mặc định từ thư viện material
+                    contentDescription = "Sinh viên",
+                    tint = if (selectedTab == "Sinh viên") Color(0xFF007BFE) else Color.Black
+                )
+            },
+            label = {
+                Text(
+                    "Sinh viên",
+                    color = if (selectedTab == "Sinh viên") Color(0xFF007BFE) else Color.Black
+                )
+            },
+            selected = selectedTab == "Sinh viên",
+            onClick = { onTabSelected("Sinh viên") } // Chọn tab Sinh viên
+        )
     }
+}
 
-    @Preview(showBackground = true)
-    @Composable
-    fun PreviewScreen() {
-        val navController = rememberNavController()
-        val staffViewModel = StaffViewModel() // giả lập trong preview
+
+
+@Preview(showBackground = true) // Annotation dùng để hiển thị giao diện này trong cửa sổ Preview của Android Studio.
+// showBackground = true giúp hiển thị nền trắng, làm cho preview dễ nhìn hơn.
+@Composable // Đây là một hàm composable – có thể sử dụng để dựng giao diện trong Jetpack Compose.
+fun PreviewScreen() {
+
+    val navController = rememberNavController()
+
+    val staffViewModel = StaffViewModel() // giả lập trong preview
         val studentViewModel = StudentViewModel() // giả lập trong preview
         Directoryscreen(
             navController = navController,

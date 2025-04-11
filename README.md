@@ -7,7 +7,7 @@ Dự án bài tập lớn TLUContact của các sinh viên trường đại họ
 - Nguyễn Thế Toàn (OppenTona)
 - Nguyễn Thị Thanh Vân (ThanhVan2024)
 - Lưu Hiểu Khánh (HieuKhanh04)
-- Lê Hà Phương (phuonghale)
+- Lê Hà Phương (LeHaPhuong2004)
 
 ## Giới thiệu về đề tài
 
