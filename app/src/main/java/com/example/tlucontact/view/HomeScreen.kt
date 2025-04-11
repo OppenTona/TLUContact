@@ -470,7 +470,7 @@ fun StudentList(
                 }
             }
         } else {
-            // Hiển thị dạng nhóm theo chữ cái đầu (giữ nguyên code cũ)
+            // Hiển thị dạng nhóm theo chữ cái đầu
             val groupedStudents = sortedStudents.groupBy { it.fullNameStudent.firstOrNull()?.uppercaseChar() ?: '#' }
 
             LazyColumn {
@@ -995,7 +995,7 @@ fun Searchbar(
                                         expandedFilter = false
                                         onFilterClick()
                                     }) {
-                                        Text("Lọc Theo Lớp")
+                                        Text("Theo Lớp")
                                     }
 
                                     DropdownMenuItem(onClick = {
@@ -1004,7 +1004,7 @@ fun Searchbar(
                                         expandedFilter = false
                                         onFilterClick()
                                     }) {
-                                        Text("Lọc Theo Tên")
+                                        Text("Theo Tên")
                                     }
                                 }
 
