@@ -1,6 +1,9 @@
 package com.example.tlucontact.view
 
+import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -45,11 +48,18 @@ fun UpdateDetailScreen(
     var staffidfb by remember { mutableStateOf(staff?.staffIdFB ?: "") }
 
 
+
     val snackbarHostState = remember { SnackbarHostState() }
     val updateMessage by staffViewModel.updateMessage.collectAsState()
     val context = LocalContext.current
 
+    val imageUri = remember { mutableStateOf<Uri?>(null) }
 
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        imageUri.value = uri
+    }
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
@@ -75,19 +85,23 @@ fun UpdateDetailScreen(
                 // Ảnh đại diện và tên
                 Box(contentAlignment = Alignment.BottomEnd) {
                     Image(
-                        painter = rememberAsyncImagePainter(model = staff.avatarURL),
+                        painter = rememberAsyncImagePainter(model = imageUri.value ?: staff.avatarURL),
                         contentDescription = "Ảnh đại diện",
                         modifier = Modifier
                             .size(100.dp)
                             .clip(CircleShape),
                         contentScale = ContentScale.Crop
                     )
+
                     IconButton(
-                        onClick = { /* Xử lý chọn ảnh nếu cần */ },
+                        onClick = {
+                            imagePickerLauncher.launch("image/*") // Mở chọn ảnh
+                        },
                         modifier = Modifier.size(24.dp)
                     ) {
                         Icon(Icons.Filled.Edit, contentDescription = "Chỉnh sửa ảnh")
                     }
+
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -116,23 +130,46 @@ fun UpdateDetailScreen(
                     }
                     Button(
                         onClick = {
-                            // Gửi thông tin đã chỉnh sửa để lưu vào Firestore
-                            val updatedStaff = staff.copy(
-                                name = name,
-                                phone = phone,
-                                staffIdFB = staffidfb,
-                                department = department,
-                                position = position
-                            )
-                            staffViewModel.updateStaffInfo(updatedStaff)
-
-                            onSave(updatedStaff)
-
+                            if (imageUri.value != null) {
+                                // Nếu người dùng chọn ảnh mới
+                                staffViewModel.uploadImageToStorage(
+                                    uri = imageUri.value!!,
+                                    onSuccess = { imageUrl ->
+                                        // Cập nhật thông tin kèm đường dẫn ảnh mới
+                                        val updatedStaff = staff.copy(
+                                            name = name,
+                                            phone = phone,
+                                            staffIdFB = staffidfb,
+                                            department = department,
+                                            position = position,
+                                            avatarURL = imageUrl
+                                        )
+                                        staffViewModel.updateStaffInfo(updatedStaff)
+                                        onSave(updatedStaff)
+                                    },
+                                    onFailure = {
+                                        Toast.makeText(context, "Lỗi khi tải ảnh lên", Toast.LENGTH_SHORT).show()
+                                    }
+                                )
+                            } else {
+                                // Không chọn ảnh mới => giữ URL cũ
+                                val updatedStaff = staff.copy(
+                                    name = name,
+                                    phone = phone,
+                                    staffIdFB = staffidfb,
+                                    department = department,
+                                    position = position,
+                                    avatarURL = staff.avatarURL // <- thêm dòng này
+                                )
+                                staffViewModel.updateStaffInfo(updatedStaff)
+                                onSave(updatedStaff)
+                            }
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF74B7FF))
                     ) {
                         Text("Lưu", color = Color.White)
                     }
+
                 }
             }
         } else {
@@ -187,23 +224,3 @@ fun EditableField(
     }
 }
 
-@Composable
-fun SaveCancelButtons(onBack: () -> Unit, onSave: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        Button(
-            onClick = onBack,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0x80007AFF))
-        ) {
-            Text("Hủy", color = Color.White)
-        }
-        Button(
-            onClick = onSave,
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0x80007AFF))
-        ) {
-            Text("Lưu", color = Color.White)
-        }
-    }
-}

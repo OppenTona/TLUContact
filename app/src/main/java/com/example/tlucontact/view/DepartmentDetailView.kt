@@ -1,5 +1,8 @@
 package com.example.tlucontact.view
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,18 +19,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.tlucontact.R // Nhập R để truy cập tài nguyên drawable
+import com.example.tlucontact.R
 import com.example.tlucontact.data.model.Department
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DepartmentDetailView(department: Department, onBack: () -> Unit) {
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -52,7 +57,7 @@ fun DepartmentDetailView(department: Department, onBack: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Image(
-                painter = painterResource(id = R.drawable.thuyloi), // Sử dụng painterResource
+                painter = painterResource(id = R.drawable.thuyloi),
                 contentDescription = "Ảnh đơn vị",
                 modifier = Modifier
                     .size(100.dp)
@@ -66,25 +71,31 @@ fun DepartmentDetailView(department: Department, onBack: () -> Unit) {
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black,
-                textAlign = TextAlign.Center, // Căn giữa văn bản
-                modifier = Modifier.fillMaxWidth() // Cho phép Text chiếm toàn bộ chiều rộng
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.Center
             ) {
-                DepartmentActionButton(icon = Icons.Filled.Chat, label = "tin nhắn")
-                DepartmentActionButton(icon = Icons.Filled.Phone, label = "gọi")
-                DepartmentActionButton(icon = Icons.Filled.VideoCall, label = "gọi video")
-                DepartmentActionButton(icon = Icons.Filled.Email, label = "mail")
+                DepartmentActionButton(
+                    icon = Icons.Filled.Phone,
+                    label = "gọi",
+                    onClick = { openDialer(context, department.phone) }
+                )
+                Spacer(modifier = Modifier.width(32.dp))
+                DepartmentActionButton(
+                    icon = Icons.Filled.Email,
+                    label = "mail",
+                    onClick = { openEmail(context, department.email) }
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            DepartmentInfoField(label = "Tên đơn vị", value = department.name)
             DepartmentInfoField(label = "Mã đơn vị", value = department.id)
             DepartmentInfoField(label = "Trưởng đơn vị", value = department.leader)
             DepartmentInfoField(label = "Email", value = department.email)
@@ -96,16 +107,20 @@ fun DepartmentDetailView(department: Department, onBack: () -> Unit) {
 }
 
 @Composable
-fun DepartmentActionButton(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String) {
+fun DepartmentActionButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        IconButton(onClick = { /* Xử lý sự kiện */ }) {
+        IconButton(onClick = onClick) {
             Icon(icon, contentDescription = label, tint = Color(0xFF007AFF))
         }
         Text(
             text = label,
             fontSize = 12.sp,
             color = Color(0xFF007AFF),
-            modifier = Modifier.clickable { /* Xử lý sự kiện */ }
+            modifier = Modifier.clickable(onClick = onClick)
         )
     }
 }
@@ -134,4 +149,18 @@ fun DepartmentInfoField(label: String, value: String) {
             )
         )
     }
+}
+
+fun openDialer(context: Context, phoneNumber: String) {
+    val intent = Intent(Intent.ACTION_DIAL).apply {
+        data = Uri.parse("tel:$phoneNumber")
+    }
+    context.startActivity(intent)
+}
+
+fun openEmail(context: Context, emailAddress: String) {
+    val intent = Intent(Intent.ACTION_SENDTO).apply {
+        data = Uri.parse("mailto:$emailAddress")
+    }
+    context.startActivity(intent)
 }
