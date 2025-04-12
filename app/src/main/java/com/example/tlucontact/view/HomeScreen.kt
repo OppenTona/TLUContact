@@ -88,13 +88,13 @@ fun HomeScreen(
     // ViewModel dùng chung
 
     val staffViewModel: StaffViewModel = viewModel()    // Tạo hoặc lấy ViewModel có kiểu StaffViewModel, ViewModel này được dùng để quản lý dữ liệu và logic liên quan đến giảng viên, viewModel() sẽ tự động gán theo vòng đời của composable
-    val studentViewModel: StudentViewModel = viewModel()
+    val studentViewModel: StudentViewModel = viewModel() // Tạo hoặc lấy ViewModel có kiểu StudentViewModel, ViewModel này được dùng để quản lý dữ liệu và logic liên quan đến sinh viên
     val guestViewModel: GuestViewModel = viewModel()
     val logoutViewModel: LogoutViewModel = viewModel() // Sử dụng ViewModel
     val logoutState by logoutViewModel.logoutState.collectAsState() // Theo dõi trạng thái đăng xuất
-    // 👉 THÊM DÒNG NÀY
+
     val selectedStaff by staffViewModel.selectedStaff.collectAsState()
-    val selectedStudent by studentViewModel.selectedStudent.collectAsState()
+    val selectedStudent by studentViewModel.selectedStudent.collectAsState() // Lấy thông tin sinh viên đang được chọn từ ViewModel
     val selectedGuest by guestViewModel.selectedGuest.collectAsState()
     // LaunchedEffect sẽ chạy khối code bên trong khi giá trị logoutState thay đổi
     LaunchedEffect(logoutState) {
@@ -123,16 +123,17 @@ fun HomeScreen(
         startDestination = "directory"
     ) {
         composable(route = "update_detail_student") {
+            // Lấy hoặc tạo một instance của StudentViewModel để quản lý dữ liệu và logic của màn hình cập nhật sinh viên
             val studentViewModel: StudentViewModel = viewModel()
             UpdateDetailStudentScreen(
-                student = selectedStudent, // selectedStudent
-                onBack = { navController.popBackStack() },
-                onSave = { updatedStudent ->
-                    studentViewModel.updateStudentInfo(updatedStudent) // Sử dụng studentViewModel và phương thức phù hợp
-                    navController.popBackStack()
+                student = selectedStudent, // Truyền vào sinh viên được chọn để hiển thị thông tin cần cập nhật
+                onBack = { navController.popBackStack() }, // Callback khi người dùng nhấn nút quay lại, sẽ điều hướng quay lại màn hình trước
+                onSave = { updatedStudent ->  // Callback khi người dùng nhấn nút "Lưu" sau khi chỉnh sửa thông tin sinh viên
+                    studentViewModel.updateStudentInfo(updatedStudent) // Gọi hàm cập nhật thông tin sinh viên trong ViewModel với dữ liệu mới
+                    navController.popBackStack() // Sau khi cập nhật xong thì quay trở lại màn hình trước đó
                     },
-                viewModel = studentViewModel,
-                navController = navController
+                viewModel = studentViewModel,  // Truyền ViewModel vào màn hình để sử dụng trong giao diện
+                navController = navController // Truyền NavController để có thể điều hướng trong composable UpdateDetailStudentScreen
             )
         }
         // Định nghĩa một composable cho route "update_detail"
@@ -180,7 +181,9 @@ fun HomeScreen(
 
 
         composable(
+            // Định nghĩa đường dẫn (route) có chứa các tham số truyền vào
             route = "student_detail/{name}/{studentId}/{className}/{email}/{phone}/{address}",
+            // Định nghĩa đường dẫn (route) có chứa các tham số truyền vào
             arguments = listOf(
                 navArgument("name") { type = NavType.StringType },
                 navArgument("studentId") { type = NavType.StringType },
@@ -189,8 +192,9 @@ fun HomeScreen(
                 navArgument("phone") { type = NavType.StringType },
                 navArgument("address") { type = NavType.StringType }
             )
-        ) { backStackEntry ->
-            val args = backStackEntry.arguments!!
+        ) { backStackEntry -> // Khối xử lý khi route này được điều hướng đến
+            val args = backStackEntry.arguments!! // Lấy ra Bundle chứa các tham số đã truyền vào
+            // Gọi màn hình chi tiết sinh viên, truyền vào một đối tượng Student được tạo từ các tham số
             DetailStudentScreen(
                 student = Student(
                     fullNameStudent = args.getString("name") ?: "",
@@ -200,6 +204,7 @@ fun HomeScreen(
                     phone = args.getString("phone") ?: "",
                     address = args.getString("address") ?: ""
                 ),
+                // Hàm xử lý khi nhấn nút quay lại, sẽ pop khỏi backstack
                 onBack = { navController.popBackStack() }
             )
         }
@@ -438,33 +443,37 @@ fun StudentList(
 ) {
     // Sử dụng trạng thái sắp xếp từ ViewModel thay vì biến local
     val sortAscending by studentViewModel.sortAscending.collectAsState()
-    val filterMode by studentViewModel.filterMode.collectAsState()
-
+    val filterMode by studentViewModel.filterMode.collectAsState() // Lấy chế độ lọc từ ViewModel
+    // Lọc danh sách sinh viên theo tên
     val filteredStudents = students.filter { it.fullNameStudent.contains(query, ignoreCase = true) }
+    // Sắp xếp danh sách sinh viên theo tên
     val sortedStudents = if (sortAscending) {
+        // Nếu đang sắp xếp tăng dần ừ A-Z
         filteredStudents.sortedBy { it.fullNameStudent.lowercase() }
     } else {
+        // Nếu đang sắp xếp giảm dần Z-A
         filteredStudents.sortedByDescending { it.fullNameStudent.lowercase() }
     }
 
     Column {
+        // Kiểm tra nếu người dùng đang lọc theo lớp
         if (filterMode == "ByClass") {
             // Hiển thị danh sách sinh viên theo lớp
             val groupedByClass = sortedStudents.groupBy { it.className }
 
             LazyColumn {
+                // Duyệt qua từng sinh viên theo lớp
                 groupedByClass.forEach { (className, studentList) ->
                     // Hiển thị tên lớp làm header
                     item {
                         Text(
                             text = className.ifEmpty { "Không có lớp" },
                             fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.Medium,
                             color = Color.Gray,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Color(0xFFEAEAEA))
-                                .padding(vertical = 8.dp, horizontal = 16.dp)
+                                .padding(vertical = 6.dp, horizontal = 16.dp)
                         )
                     }
 
@@ -482,8 +491,15 @@ fun StudentList(
                 }
             }
         } else {
-            // Hiển thị dạng nhóm theo chữ cái đầu
-            val groupedStudents = sortedStudents.groupBy { it.fullNameStudent.firstOrNull()?.uppercaseChar() ?: '#' }
+            // Nếu không lọc theo lớp thì hiển thị danh sách sinh viên theo chữ cái đầu tiên của tên
+            val groupedStudents = sortedStudents.groupBy {
+                it.fullNameStudent
+                    .trim()
+                    .split(" ")
+                    .lastOrNull()
+                    ?.firstOrNull()
+                    ?.uppercaseChar() ?: '#'
+            }
 
             LazyColumn {
                 groupedStudents.forEach { (letter, studentList) ->
@@ -910,9 +926,6 @@ fun Searchbar(
     val dropdownOffset = DpOffset(0.dp, 15.dp) // Đặt vị trí menu chính
     val filterMenuOffset = DpOffset(160.dp, 165.dp) // Đặt vị trí menu lọc (lùi sang phải)
 
-    val filterAnchorPosition = remember { mutableStateOf(Offset.Zero) }
-    val density = LocalDensity.current
-
     // Trạng thái sắp xếp hiện tại theo từng ViewModel
     val studentSortAscending by studentViewModel.sortAscending.collectAsState()
     val staffSortAscending by staffViewModel.sortAscending.collectAsState()
@@ -962,12 +975,7 @@ fun Searchbar(
             Spacer(Modifier.width(8.dp))
 
             // Nút mở menu tuỳ chọn (ba chấm)
-            Box (modifier = Modifier
-                .onGloballyPositioned { coordinates ->
-                    // Lưu lại vị trí toàn cục (global position) của IconButton
-                    val pos = coordinates.localToWindow(Offset.Zero)
-                    filterAnchorPosition.value = pos}
-            ) {
+            Box {
                 // Vị trí của nút mở menu
                 IconButton(onClick = { expanded = true }) {
                     Icon(
@@ -1009,17 +1017,10 @@ fun Searchbar(
 
                     // Menu con: lọc tùy vào tab hiện tại
                     if (expandedFilter) {
-                        // Chuyển đổi Offset về DpOffset để dùng được trong DropdownMenu
-                        val dpOffset = with(density) {
-                            DpOffset(
-                                x = filterAnchorPosition.value.x.toDp() - 190.dp, // dịch sang trái một chút so với nút More
-                                y = filterAnchorPosition.value.y.toDp() + 500.dp // dịch xuống một chút so với nút More
-                            )
-                        }
                         DropdownMenu(
                             expanded = expandedFilter,
                             onDismissRequest = { expandedFilter = false },
-                            offset = dpOffset
+                            offset = filterMenuOffset
                         ) {
                             when (selectedTab) {
                                 "Sinh viên" -> {
@@ -1183,11 +1184,9 @@ fun Bottomnavigationbar(
 // showBackground = true giúp hiển thị nền trắng, làm cho preview dễ nhìn hơn.
 @Composable // Đây là một hàm composable – có thể sử dụng để dựng giao diện trong Jetpack Compose.
 fun PreviewScreen() {
-
     val navController = rememberNavController()
-
     val staffViewModel = StaffViewModel() // giả lập trong preview
-        val studentViewModel = StudentViewModel() // giả lập trong preview
+    val studentViewModel = StudentViewModel() // giả lập trong preview
         Directoryscreen(
             navController = navController,
             staffViewModel = staffViewModel,
