@@ -17,7 +17,7 @@ class GuestRepository {
                     val guest = Guest( // Tạo đối tượng Guest từ dữ liệu trong document
                         userId = doc.getString("userId") ?: "", // Lấy userId, nếu null gán giá trị mặc định ""
                         name = doc.getString("name") ?: "", // Lấy name, nếu null gán giá trị mặc định ""
-                        email = doc.getString("email") ?: "", // Lấy email, nếu null gán giá trị mặc định ""
+                        email = doc.id, // Lấy email, id của document là email
                         phone = doc.getString("phone") ?: "", // Lấy phone, nếu null gán giá trị mặc định ""
                         avatarURL = doc.getString("avatarURL") ?: "", // Lấy avatarURL, nếu null gán giá trị mặc định ""
                         position = doc.getString("position") ?: "", // Lấy position, nếu null gán giá trị mặc định ""
@@ -37,11 +37,24 @@ class GuestRepository {
 
     // Hàm cập nhật thông tin guest
     suspend fun updateGuest(guest: Guest): Result<Unit> {
-        return try { // Bắt đầu khối xử lý ngoại lệ
-            guestCollection.document(guest.email).set(guest).await() // Lưu đối tượng Guest vào document với email là ID và chờ hoàn thành
-            Result.success(Unit) // Trả về kết quả thành công
-        } catch (e: Exception) { // Bắt lỗi nếu có ngoại lệ xảy ra
-            Result.failure(e) // Trả về kết quả thất bại với lỗi được bắt
+        return try {
+            // Tạo một bản sao của đối tượng Guest mà không bao gồm email
+            val guestData = mapOf(
+                "userId" to guest.userId,
+                "name" to guest.name,
+                "phone" to guest.phone,
+                "avatarURL" to guest.avatarURL,
+                "position" to guest.position,
+                "department" to guest.department,
+                "address" to guest.address,
+                "userType" to guest.userType
+            )
+
+            // Lưu dữ liệu vào Firestore mà không bao gồm email
+            guestCollection.document(guest.email).set(guestData).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 }

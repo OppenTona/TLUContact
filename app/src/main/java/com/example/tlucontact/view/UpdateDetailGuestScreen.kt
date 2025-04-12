@@ -48,8 +48,6 @@ fun UpdateDetailGuestScreen(
     var department by remember { mutableStateOf(guest?.department ?: "") } // Tạo state cho phòng ban
     var address by remember { mutableStateOf(guest?.address ?: "") } // Tạo state cho địa chỉ
     val snackbarHostState = remember { SnackbarHostState() } // Tạo trạng thái cho Snackbar
-    val context = LocalContext.current // Lấy context hiện tại
-    val activity = context as? Activity // Ép kiểu context thành Activity nếu có
 
     // Lấy dữ liệu khách hiện tại bằng email
     LaunchedEffect(Unit) { // Hiệu ứng được chạy khi giao diện được tạo
