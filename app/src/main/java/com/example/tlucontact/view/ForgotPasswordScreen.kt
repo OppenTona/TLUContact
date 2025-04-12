@@ -108,7 +108,7 @@ fun ForgotPasswordForm(navController: NavController, viewModel: LoginViewModel, 
         TextField( // Trường nhập liệu email
             value = email, // Giá trị của trường nhập liệu
             onValueChange = { viewModel.email.value = it }, // Cập nhật giá trị email trong ViewModel khi người dùng nhập
-            label = { Text("Nhập email của bạn") }, // Nhãn cho trường nhập liệu
+            label = { Text("Nhập email của bạn", color = if (emailError) Color.Red else Color.Gray) }, // Nhãn cho trường nhập liệu
             singleLine = true, // Chỉ cho phép nhập một dòng
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email), // Thiết lập bàn phím cho kiểu nhập email
             modifier = Modifier.fillMaxWidth(), // Chiếm toàn bộ chiều rộng

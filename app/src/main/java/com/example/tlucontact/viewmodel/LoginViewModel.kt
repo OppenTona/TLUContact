@@ -61,13 +61,23 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         return null // Trả về null nếu không có lỗi
     }
 
-    fun resetPassword(email: String) { // Hàm đặt lại mật khẩu, nhận tham số email
-        viewModelScope.launch { // Sử dụng coroutine để gọi hàm resetPassword từ repository
-            repository.resetPassword(email) { success, message -> // Gọi hàm resetPassword và xử lý callback
-                _resetState.value = Pair(success, message) // Cập nhật trạng thái đặt lại mật khẩu dựa trên kết quả callback
+    fun resetPassword(email: String) {
+        val emailValue = email.trim()
+        if (emailValue.isEmpty()) {
+            _emailError.value = true
+            _resetState.value = Pair(false, "Vui lòng nhập email")
+            return
+        } else {
+            _emailError.value = false
+        }
+
+        viewModelScope.launch {
+            repository.resetPassword(emailValue) { success, message ->
+                _resetState.value = Pair(success, message)
             }
         }
     }
+
 
     fun loginWithMicrosoft(activity: Activity, onResult: (Boolean, String?) -> Unit) { // Hàm hỗ trợ đăng nhập bằng Microsoft, nhận tham số activity và callback onResult
         viewModelScope.launch { // Sử dụng coroutine để gọi hàm loginWithMicrosoft từ repository
