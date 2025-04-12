@@ -445,7 +445,10 @@ fun StudentList(
     val sortAscending by studentViewModel.sortAscending.collectAsState()
     val filterMode by studentViewModel.filterMode.collectAsState() // Lấy chế độ lọc từ ViewModel
     // Lọc danh sách sinh viên theo tên
-    val filteredStudents = students.filter { it.fullNameStudent.contains(query, ignoreCase = true) }
+    val filteredStudents = students.filter { student ->
+        student.fullNameStudent.contains(query, ignoreCase = true) || // Tìm kiếm theo tên
+                student.studentID.equals(query, ignoreCase = true) // Tìm kiếm theo mã sinh viên
+    }
     // Sắp xếp danh sách sinh viên theo tên
     val sortedStudents = if (sortAscending) {
         // Nếu đang sắp xếp tăng dần ừ A-Z
