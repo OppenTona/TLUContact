@@ -425,9 +425,9 @@ fun Directoryscreen(
                 )
 
                 "Sinh viên" -> StudentList(
-                    students = students,
-                    query = query,
-                    navController = navController
+                    students = students, // Danh sách sinh viên
+                    query = query, // Từ khóa tìm kiếm
+                    navController = navController // Điều hướng
                 )
             }
         }
@@ -535,33 +535,40 @@ fun StudentList(
 
 @Composable
 fun StudentItem(
-    student: Student,
-    isSelected: Boolean,
-    onClick: () -> Unit,
+    student: Student, // Dữ liệu sinh viên cụ thể
+    isSelected: Boolean, // Nếu được chọn, hiển thị thêm thông tin
+    onClick: () -> Unit, // Callback khi người dùng click vào item
     navController: NavController
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(8.dp)
+            .clickable(onClick = onClick) // Khi nhấn vào item, gọi hàm onClick
+            .padding(8.dp) // Khoảng cách bên trong item
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically // Sắp xếp các thành phần bên trong theo chiều ngang, căn giữa theo chiều dọc
         ) {
+            // Hiển thị ảnh đại diện của sinh viên.
             AsyncImage(
                 model = student.photoURL,
                 contentDescription = "Avatar",
                 modifier = Modifier
                     .size(40.dp)
                     .background(Color.LightGray, CircleShape)
+                    .clip(CircleShape) // Bo tròn ảnh
             )
 
             Spacer(modifier = Modifier.width(8.dp))
 
             Column {
+                // Hiển thị tên sinh viên
                 Text(text = student.fullNameStudent, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                Text(text = student.className, fontSize = 14.sp, color = Color.Gray)
+//                Text(text = student.className, fontSize = 14.sp, color = Color.Gray)
+                // Thêm khoảng cách 4dp giữa Text và Divider
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Kẻ đường gạch chân dưới tên sinh viên
                 Divider(
                     color = Color.LightGray.copy(alpha = 0.5f),
                     modifier = Modifier.wrapContentWidth(Alignment.Start) // Giới hạn chiều rộng theo nội dung và căn trái
