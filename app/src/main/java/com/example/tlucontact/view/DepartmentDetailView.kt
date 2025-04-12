@@ -28,16 +28,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.tlucontact.R
 import com.example.tlucontact.data.model.Department
-import com.example.tlucontact.utils.checkAdminPermission
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DepartmentDetailView(department: Department, onBack: () -> Unit, onEditClick: () -> Unit) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
-
-    val isAdmin = remember { checkAdminPermission(context) } // Kiểm tra quyền admin
-
 
     Scaffold(
         topBar = {

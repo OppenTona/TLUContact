@@ -66,7 +66,6 @@ import com.example.tlucontact.viewmodel.LogoutViewModel
 import com.example.tlucontact.viewmodel.StaffViewModel
 import com.example.tlucontact.viewmodel.StudentViewModel
 import kotlinx.coroutines.flow.StateFlow
-import com.example.tlucontact.utils.checkAdminPermission
 
 @SuppressLint("StateFlowValueCalledInComposition")
 @Composable
@@ -1076,7 +1075,6 @@ fun Searchbar(
                             }
                         }
                     }
-
                 }
             }
         }
