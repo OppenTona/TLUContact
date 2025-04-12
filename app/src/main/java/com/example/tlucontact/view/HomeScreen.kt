@@ -245,12 +245,9 @@ fun HomeScreen(
             )
 
             DepartmentDetailView(
-                department = department, // Giả sử selectedDepartment là Department
+                department = department,
                 onBack = { navController.popBackStack() },
-                onEditClick = {
-                    // Logic xử lý sự kiện click vào nút "Chỉnh sửa"
-                    navController.navigate("update_detail_department") // Ví dụ: Điều hướng đến màn hình chỉnh sửa
-                }
+                onEditClick = {}
             )
         }
     }
