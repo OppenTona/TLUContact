@@ -32,10 +32,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -907,6 +910,9 @@ fun Searchbar(
     val dropdownOffset = DpOffset(0.dp, 15.dp) // Đặt vị trí menu chính
     val filterMenuOffset = DpOffset(160.dp, 165.dp) // Đặt vị trí menu lọc (lùi sang phải)
 
+    val filterAnchorPosition = remember { mutableStateOf(Offset.Zero) }
+    val density = LocalDensity.current
+
     // Trạng thái sắp xếp hiện tại theo từng ViewModel
     val studentSortAscending by studentViewModel.sortAscending.collectAsState()
     val staffSortAscending by staffViewModel.sortAscending.collectAsState()
@@ -956,7 +962,13 @@ fun Searchbar(
             Spacer(Modifier.width(8.dp))
 
             // Nút mở menu tuỳ chọn (ba chấm)
-            Box {
+            Box (modifier = Modifier
+                .onGloballyPositioned { coordinates ->
+                    // Lưu lại vị trí toàn cục (global position) của IconButton
+                    val pos = coordinates.localToWindow(Offset.Zero)
+                    filterAnchorPosition.value = pos}
+            ) {
+                // Vị trí của nút mở menu
                 IconButton(onClick = { expanded = true }) {
                     Icon(
                         Icons.Default.MoreVert,
@@ -997,10 +1009,17 @@ fun Searchbar(
 
                     // Menu con: lọc tùy vào tab hiện tại
                     if (expandedFilter) {
+                        // Chuyển đổi Offset về DpOffset để dùng được trong DropdownMenu
+                        val dpOffset = with(density) {
+                            DpOffset(
+                                x = filterAnchorPosition.value.x.toDp() - 190.dp, // dịch sang trái một chút so với nút More
+                                y = filterAnchorPosition.value.y.toDp() + 500.dp // dịch xuống một chút so với nút More
+                            )
+                        }
                         DropdownMenu(
                             expanded = expandedFilter,
                             onDismissRequest = { expandedFilter = false },
-                            offset = filterMenuOffset
+                            offset = dpOffset
                         ) {
                             when (selectedTab) {
                                 "Sinh viên" -> {
