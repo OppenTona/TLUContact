@@ -91,7 +91,6 @@ class AuthRepository(private val context: Context) {
             val userData = mapOf(
                 "uid" to guest.uid, // UID của người dùng
                 "name" to guest.name, // Tên của người dùng
-                "email" to guest.email, // Email của người dùng
                 "phone" to guest.phone, // Số điện thoại của người dùng
                 "avatarURL" to guest.avatarURL, // URL ảnh đại diện của người dùng
                 "position" to guest.position,
