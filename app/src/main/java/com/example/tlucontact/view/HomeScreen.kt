@@ -246,23 +246,11 @@ fun HomeScreen(
 
             DepartmentDetailView(
                 department = department, // Giả sử selectedDepartment là Department
-                onBack = { /* Logic quay lại */ },
+                onBack = { navController.popBackStack() },
                 onEditClick = {
                     // Logic xử lý sự kiện click vào nút "Chỉnh sửa"
                     navController.navigate("update_detail_department") // Ví dụ: Điều hướng đến màn hình chỉnh sửa
                 }
-            )
-                }
-        composable("update_detail_department") {
-            val departmentViewModel: DepartmentViewModel = viewModel()
-            UpdateDetailDepartmentScreen(
-                department = departmentViewModel.selectedDepartment.value,
-                onBack = { navController.popBackStack() },
-                onSave = { updatedDepartment ->
-                    departmentViewModel.updateDepartmentInfo(updatedDepartment)
-                    navController.popBackStack()
-                },
-                viewModel = departmentViewModel
             )
         }
     }
@@ -429,15 +417,7 @@ fun Directoryscreen(
                     query = query,
                     navController = navController,
                     departmentViewModel = departmentViewModel,
-                    onDepartmentClick = { department ->
-                        val isAdmin = checkAdminPermission(context) // Sử dụng hàm đã import
-                        if (isAdmin) {
-                            departmentViewModel.setDepartmentById(department.id)
-                            navController.navigate("update_detail_department")
-                        } else {
-                            Toast.makeText(context, "Bạn không có quyền.", Toast.LENGTH_SHORT).show()
-                        }
-                    }
+                    onDepartmentClick = { department -> }
                 )
 
                 "Sinh viên" -> StudentList(

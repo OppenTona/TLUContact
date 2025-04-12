@@ -107,15 +107,6 @@ fun DepartmentDetailView(department: Department, onBack: () -> Unit, onEditClick
             DepartmentInfoField(label = "Số điện thoại", value = department.phone)
             DepartmentInfoField(label = "Địa chỉ", value = department.address)
             DepartmentInfoField(label = "Ghi chú", value = "-")
-
-            if (isAdmin) { // Chỉ hiển thị nút chỉnh sửa nếu là admin
-                Button(
-                    onClick = onEditClick,
-                    modifier = Modifier.align(Alignment.CenterHorizontally) // Sửa lỗi ở đây
-                ) {
-                    Text("Chỉnh sửa")
-                }
-            }
         }
     }
 }
