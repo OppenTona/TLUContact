@@ -448,12 +448,11 @@ fun StudentList(
     }
     // Sắp xếp danh sách sinh viên theo tên
     val sortedStudents = if (sortAscending) {
-        // Nếu đang sắp xếp tăng dần ừ A-Z
-        filteredStudents.sortedBy { it.fullNameStudent.lowercase() }
+        filteredStudents.sortedBy { extractLastNameForSort(it.fullNameStudent) }
     } else {
-        // Nếu đang sắp xếp giảm dần Z-A
-        filteredStudents.sortedByDescending { it.fullNameStudent.lowercase() }
+        filteredStudents.sortedByDescending { extractLastNameForSort(it.fullNameStudent) }
     }
+
 
     Column {
         // Kiểm tra nếu người dùng đang lọc theo lớp
@@ -493,13 +492,9 @@ fun StudentList(
         } else {
             // Nếu không lọc theo lớp thì hiển thị danh sách sinh viên theo chữ cái đầu tiên của tên
             val groupedStudents = sortedStudents.groupBy {
-                it.fullNameStudent
-                    .trim()
-                    .split(" ")
-                    .lastOrNull()
-                    ?.firstOrNull()
-                    ?.uppercaseChar() ?: '#'
+                extractFirstLetterOfLastName(it.fullNameStudent)
             }
+
 
             LazyColumn {
                 groupedStudents.forEach { (letter, studentList) ->
@@ -1160,6 +1155,23 @@ fun Bottomnavigationbar(
             onClick = { onTabSelected("Sinh viên") } // Chọn tab Sinh viên
         )
     }
+}
+
+// Hàm lấy chữ cái đầu của tên riêng
+fun extractFirstLetterOfLastName(fullName: String): Char {
+    return fullName.trim()
+        .split(" ")
+        .lastOrNull()
+        ?.firstOrNull()
+        ?.uppercaseChar() ?: '#'
+}
+
+// Hàm dùng để sắp xếp theo tên riêng
+fun extractLastNameForSort(fullName: String): String {
+    return fullName.trim()
+        .split(" ")
+        .lastOrNull()
+        ?.lowercase() ?: ""
 }
 
 
