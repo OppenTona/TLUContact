@@ -24,9 +24,11 @@ class StaffViewModel : ViewModel() { // Lớp ViewModel quản lý dữ liệu v
     private val _isUpdateSuccessful = MutableStateFlow(false) // Biến nội bộ lưu trạng thái cập nhật thành công hay không
     val isUpdateSuccessful: StateFlow<Boolean> = _isUpdateSuccessful // Biến public để UI quan sát trạng thái
 
-    private val _sortAscending = MutableStateFlow(true) // Biến nội bộ lưu trạng thái sắp xếp (true = A-Z)
-    val sortAscending: StateFlow<Boolean> = _sortAscending // Biến public để UI biết thứ tự sắp xếp hiện tại
-
+    private val _sortAscending = MutableStateFlow(true) // True: A-Z, False: Z-A
+    val sortAscending: StateFlow<Boolean> = _sortAscending
+    fun toggleSortOrder() {
+        _sortAscending.value = !_sortAscending.value
+    }
     init {
         fetchStaffs() // Gọi hàm fetchStaffs khi ViewModel được khởi tạo
     }
@@ -108,9 +110,7 @@ class StaffViewModel : ViewModel() { // Lớp ViewModel quản lý dữ liệu v
     fun setFilterMode(mode: String) {
         _filterMode.value = mode
     }
-    fun toggleSortOrder() { // Hàm đổi thứ tự sắp xếp danh sách (A-Z <-> Z-A)
-        _sortAscending.value = !_sortAscending.value
-    }
+
 
     fun uploadImageToStorage( // Hàm upload ảnh lên Firebase Storage
         uri: Uri?, // Uri của ảnh
