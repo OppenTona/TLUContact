@@ -420,7 +420,6 @@ fun Directoryscreen(
                     staffs = staffs,
                     query = query,
                     navController = navController,
-                    isFilterActive = isFilterActive,
                     selectedDepartment = selectedDepartment,
                     selectedPosition = selectedPosition,
                     staffViewModel = staffViewModel,
@@ -703,50 +702,53 @@ fun DepartmentItem(department: Department, navController: NavController, onClick
 
 @Composable
 fun Useravatar(navController: NavController, guestViewModel: GuestViewModel) {
-    val context = LocalContext.current
-    val userLoginEmail = SessionManager(context).getUserLoginEmail()
-    val guest by guestViewModel.selectedGuest.collectAsState()
+    val context = LocalContext.current                            // Lấy context hiện tại của Composable
+    val userLoginEmail = SessionManager(context).getUserLoginEmail() // Lấy email người dùng đã đăng nhập từ SessionManager
+    val guest by guestViewModel.selectedGuest.collectAsState()    // Lấy dữ liệu người dùng (Guest) từ ViewModel bằng State để UI tự động cập nhật khi có thay đổi
 
-    // Gọi hàm lấy thông tin guest nếu có email
+    // Gọi hàm lấy thông tin người dùng từ Firestore nếu có email
     LaunchedEffect(userLoginEmail) {
         userLoginEmail?.let { email ->
-            guestViewModel.fetchGuestByEmail(email)
+            guestViewModel.fetchGuestByEmail(email)              // Gọi hàm trong ViewModel để lấy thông tin người dùng theo email
         }
     }
 
-    val avatarUrl = guest?.avatarURL
+    val avatarUrl = guest?.avatarURL                             // Lưu đường dẫn ảnh avatar nếu có
 
-    // UI hiển thị avatar hoặc icon mặc định
+    // UI hiển thị avatar người dùng, hoặc icon mặc định nếu không có ảnh
     Box(
         modifier = Modifier
-            .size(35.dp)
-            .clip(CircleShape)
+            .size(35.dp)                                         // Kích thước khung avatar
+            .clip(CircleShape)                                   // Bo tròn khung thành hình tròn
             .clickable {
+                // Khi người dùng click vào avatar, điều hướng đến màn hình tương ứng
                 if (userLoginEmail?.endsWith("@e.tlu.edu.vn") == true) {
-                    navController.navigate("update_detail_student")
+                    navController.navigate("update_detail_student")   // Nếu là sinh viên
                 } else if (userLoginEmail?.endsWith("@tlu.edu.vn") == true || guest?.userType == "staff") {
-                    navController.navigate("update_detail")
+                    navController.navigate("update_detail")           // Nếu là cán bộ/giảng viên
                 } else {
-                    navController.navigate("update_detail_guest")
+                    navController.navigate("update_detail_guest")     // Nếu là khách
                 }
             }
     ) {
         if (!avatarUrl.isNullOrBlank()) {
+            // Nếu có avatarURL, hiển thị ảnh
             Image(
-                painter = rememberImagePainter(avatarUrl),
-                contentDescription = "Avatar",
-                contentScale = ContentScale.Crop,
+                painter = rememberImagePainter(avatarUrl),       // Dùng Coil để tải ảnh từ URL
+                contentDescription = "Avatar",                   // Mô tả cho accessibility
+                contentScale = ContentScale.Crop,                // Cắt ảnh để vừa khung tròn
                 modifier = Modifier
-                    .fillMaxSize()
-                    .border(1.dp, Color.Gray, CircleShape)
+                    .fillMaxSize()                               // Ảnh lấp đầy khung
+                    .border(1.dp, Color.Gray, CircleShape)       // Viền xám mỏng quanh avatar
             )
         } else {
+            // Nếu không có avatar, hiển thị icon mặc định
             Icon(
-                imageVector = Icons.Default.AccountCircle,
-                contentDescription = "Default Avatar",
+                imageVector = Icons.Default.AccountCircle,       // Icon tài khoản mặc định
+                contentDescription = "Default Avatar",           // Mô tả cho accessibility
                 modifier = Modifier
-                    .fillMaxSize()
-                    .border(1.dp, Color.Gray, CircleShape)
+                    .fillMaxSize()                               // Icon lấp đầy khung
+                    .border(1.dp, Color.Gray, CircleShape)       // Viền xám mỏng
             )
         }
     }
@@ -813,55 +815,55 @@ fun Staffitem(
 
 @Composable
 fun Stafflist(
-    staffs: List<Staff>,
-    query: String,
-    navController: NavController,
-    isFilterActive: Boolean,
-    selectedDepartment: String,
-    selectedPosition: String,
-    staffViewModel: StaffViewModel = viewModel(),
-    staffFilterMode: String = "All" // Thêm tham số chế độ lọc
+    staffs: List<Staff>,                          // Danh sách giảng viên truyền vào
+    query: String,                                // Từ khóa tìm kiếm (theo tên)
+    navController: NavController,                 // Điều hướng sang màn hình chi tiết
+    selectedDepartment: String,                   // Đơn vị được chọn để lọc
+    selectedPosition: String,                     // Chức vụ được chọn để lọc
+    staffViewModel: StaffViewModel = viewModel(),// ViewModel để lấy trạng thái sắp xếp
+    staffFilterMode: String = "All"               // Chế độ lọc: All, ByDepartment, ByPosition
 ) {
     val groupedByPosition = staffs
-
-        .groupBy { it.position ?: "Không rõ chức vụ" }
+        .groupBy { it.position ?: "Không rõ chức vụ" } // Nhóm giảng viên theo chức vụ
 
     val sortAscending by staffViewModel.sortAscending.collectAsState()
+    // Lấy trạng thái sắp xếp (tăng dần hay giảm dần) từ ViewModel
 
-    // Sắp xếp danh sách
+    // Sắp xếp danh sách giảng viên theo tên (tăng hoặc giảm dần)
     val sortedStaffs = if (sortAscending) {
         staffs.sortedBy { it.name.lowercase() }
     } else {
         staffs.sortedByDescending { it.name.lowercase() }
     }
 
-    // 💡 Lọc theo chế độ được chọn
+    // Lọc danh sách giảng viên theo: từ khóa tìm kiếm, đơn vị/chức vụ (tùy theo chế độ lọc)
     val filteredStaffs = sortedStaffs.filter { staff ->
         val matchQuery = staff.name.contains(query, ignoreCase = true)
-
         val matchDepartment = staff.department.contains(selectedDepartment, ignoreCase = true)
 
         val matchFilter = when (staffFilterMode) {
-            "ByDepartment" -> matchDepartment
-            "ByPosition" -> staff.position.contains(selectedPosition, ignoreCase = true)
-            else -> true // "All"
+            "ByDepartment" -> matchDepartment // Lọc theo đơn vị
+            "ByPosition" -> staff.position.contains(selectedPosition, ignoreCase = true) // Lọc theo chức vụ
+            else -> true // Không lọc
         }
 
-        matchQuery && matchFilter
+        matchQuery && matchFilter // Kết quả cuối cùng là phải thỏa cả hai điều kiện
     }
 
     val letterRange = if (sortAscending) 'A'..'Z' else 'Z' downTo 'A'
+    // Dải chữ cái để nhóm theo tên (tùy theo thứ tự sắp xếp)
 
-    // Nếu đang lọc theo đơn vị hoặc ByDepartment thì nhóm theo đơn vị
     val groupedStaffsByDepartment = filteredStaffs.groupBy { it.department }
+    // Nếu lọc theo đơn vị thì nhóm theo đơn vị
 
-    // Ngược lại thì nhóm theo chữ cái đầu tên
     val groupedStaffsByName = letterRange.associateWith { letter ->
         filteredStaffs.filter { it.name.firstOrNull()?.uppercaseChar() == letter }
     }
+    // Nếu không lọc theo đơn vị thì nhóm theo chữ cái đầu của tên
 
     LazyColumn {
-        if(staffFilterMode == "ByPosition"){
+        // Trường hợp lọc theo chức vụ
+        if (staffFilterMode == "ByPosition") {
             groupedByPosition.forEach { (positionName, staffList) ->
                 item {
                     Text(
@@ -878,8 +880,9 @@ fun Stafflist(
                         staff = staff,
                         isSelected = false,
                         onClick = {
+                            // Lưu staff vào SavedStateHandle để màn DetailContactScreen lấy ra
                             navController.currentBackStackEntry?.savedStateHandle?.set("staff", staff)
-                            navController.navigate("DetailContactScreen")
+                            navController.navigate("DetailContactScreen") // Điều hướng sang màn chi tiết
                         },
                         navController = navController
                     )
@@ -887,6 +890,7 @@ fun Stafflist(
             }
         }
 
+        // Trường hợp lọc theo đơn vị
         if (staffFilterMode == "ByDepartment") {
             groupedStaffsByDepartment.forEach { (department, staffList) ->
                 item {
@@ -914,6 +918,7 @@ fun Stafflist(
                 }
             }
         } else {
+            // Trường hợp không lọc (hoặc lọc theo tên) → nhóm theo chữ cái đầu của tên
             groupedStaffsByName.forEach { (letter, staffList) ->
                 if (staffList.isNotEmpty()) {
                     item {
@@ -949,23 +954,28 @@ fun Stafflist(
 
 @Composable
 fun Topbar(
-    title: String,
-    onLogoutClick: () -> Unit
+    title: String,                    // Tiêu đề sẽ hiển thị trên thanh topbar
+    onLogoutClick: () -> Unit        // Hàm callback được gọi khi nhấn nút đăng xuất
 ) {
-    Row(
-        Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    Row(                              // Dùng Row để sắp xếp title và nút logout trên cùng một hàng ngang
+        Modifier.fillMaxWidth(),      // Chiếm toàn bộ chiều ngang
+        horizontalArrangement = Arrangement.SpaceBetween, // Các phần tử được dàn đều hai bên
+        verticalAlignment = Alignment.CenterVertically     // Canh giữa theo chiều dọc
     ) {
-        Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        IconButton(onClick = onLogoutClick) {
+        Text(                         // Hiển thị tiêu đề
+            title,
+            fontSize = 20.sp,         // Cỡ chữ
+            fontWeight = FontWeight.Bold // In đậm
+        )
+        IconButton(onClick = onLogoutClick) { // Nút đăng xuất, gọi hàm onLogoutClick khi được nhấn
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.Logout,
-                contentDescription = "Đăng xuất"
+                imageVector = Icons.AutoMirrored.Filled.Logout, // Icon logout tự xoay theo chiều giao diện (LTR/RTL)
+                contentDescription = "Đăng xuất"                // Mô tả cho accessibility
             )
         }
     }
 }
+
 
 @SuppressLint("UnrememberedMutableState") // Bỏ cảnh báo mutableState không được remember đúng cách (dành cho biến fallback)
 @Composable
