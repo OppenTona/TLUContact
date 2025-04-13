@@ -1255,9 +1255,10 @@ fun PreviewScreen() {
     val navController = rememberNavController()
     val staffViewModel = StaffViewModel() // giả lập trong preview
     val studentViewModel = StudentViewModel() // giả lập trong preview
-        Directoryscreen(
-            navController = navController,
-            staffViewModel = staffViewModel,
-            studentViewModel = studentViewModel
-        )
-    }
+    Directoryscreen(
+        navController = navController,
+        staffViewModel = staffViewModel,
+        studentViewModel = studentViewModel
+    )
+
+}
