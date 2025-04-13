@@ -810,10 +810,8 @@ fun Stafflist(
     val sortAscending by staffViewModel.sortAscending.collectAsState()
     val filterMode by staffViewModel.filterMode.collectAsState() // Lấy chế độ lọc từ ViewModel
 
-
     val collator = Collator.getInstance(Locale("vi", "VN"))
     collator.strength = Collator.PRIMARY // Bỏ qua phân biệt hoa thường và dấu
-
 
     // Sắp xếp danh sách giảng viên theo tên (tăng/giảm dần)
     val sortedStaffs = if (sortAscending) {
@@ -822,36 +820,18 @@ fun Stafflist(
         staffs.sortedWith(compareByDescending(collator) { it.name })
     }
 
-
-    // Bước 1: lọc danh sách theo query và filterMode
-    val filteredStaffs = when (filterMode) {
-        "ByDepartment" -> {
-            sortedStaffs.filter {
-                it.name.contains(query, ignoreCase = true) &&
-                        it.department.contains(query, ignoreCase = true)
-            }
-        }
-        "ByPosition" -> {
-            sortedStaffs.filter {
-                it.name.contains(query, ignoreCase = true) &&
-                        it.position.contains(query, ignoreCase = true)
-            }
-        }
-        else -> {
-            sortedStaffs.filter {
-                it.name.contains(query, ignoreCase = true)
-            }
-        }
+    // Lọc danh sách giảng viên theo tên và filterMode
+    val filteredStaffs = sortedStaffs.filter {
+        it.name.contains(query, ignoreCase = true)
     }
 
-// Bước 2: nhóm danh sách theo từng chế độ lọc
+    // Nhóm danh sách theo chế độ lọc
     val groupedStaffs = when (filterMode) {
         "ByAll" -> filteredStaffs.groupBy { it.name.firstOrNull()?.uppercaseChar() }
         "ByDepartment" -> filteredStaffs.groupBy { it.department }
         "ByPosition" -> filteredStaffs.groupBy { it.position }
         else -> filteredStaffs.groupBy { it.name.firstOrNull()?.uppercaseChar() }
     }
-
 
     // Hiển thị danh sách dạng LazyColumn (cuộn được)
     LazyColumn {
@@ -877,7 +857,6 @@ fun Stafflist(
                         navController.currentBackStackEntry?.savedStateHandle?.set("staff", staff)
                         navController.navigate("DetailContactScreen")
                     },
-
                 )
             }
         }
