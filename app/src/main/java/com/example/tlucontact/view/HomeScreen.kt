@@ -568,46 +568,8 @@ fun DepartmentList(
     val filteredDepartments by departmentViewModel.filteredDepartmentList.collectAsState()
 
     Column {
-        if (filterMode != "Tất cả") {
-            val groupedByType = filteredDepartments.groupBy {
-                it.type
-            }
-
-            LazyColumn {
-                groupedByType.forEach { (type, departmentList) ->
-                    item {
-                        Text(
-                            text = type.ifEmpty { "Khác" },
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.Gray,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 6.dp, horizontal = 16.dp)
-                        )
-                    }
-
-                    items(departmentList) { department ->
-                        DepartmentItem(
-                            department = department,
-                            isSelected = false,
-                            onClick = {
-                                navController.navigate(
-                                    "department_detail/" +
-                                            "${Uri.encode(department.name)}/" +
-                                            "${Uri.encode(department.id)}/" +
-                                            "${Uri.encode(department.leader)}/" +
-                                            "${Uri.encode(department.email)}/" +
-                                            "${Uri.encode(department.phone)}/" +
-                                            "${Uri.encode(department.address)}?screenTitle=${Uri.encode(department.name)}"
-                                )
-                            },
-                            navController = navController
-                        )
-                    }
-                }
-            }
-        } else {
+        if (filterMode == "Tất cả") {
+            // Hiển thị theo bảng chữ cái
             val sortedDepartments = if (sortAscending) {
                 filteredDepartments.sortedBy { it.name.lowercase() }
             } else {
@@ -646,12 +608,47 @@ fun DepartmentList(
                                             "${Uri.encode(department.email)}/" +
                                             "${Uri.encode(department.phone)}/" +
                                             "${Uri.encode(department.address)}?screenTitle=${Uri.encode(department.name)}"
-                                ){
-                                    // Đảm bảo rằng nút back quay lại danh bạ đơn vị
-                                    popUpTo("directory") { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
+                                )
+                            },
+                            navController = navController
+                        )
+                    }
+                }
+            }
+        } else {
+            // Hiển thị theo loại đơn vị
+            val groupedByType = filteredDepartments.groupBy {
+                it.type
+            }
+
+            LazyColumn {
+                groupedByType.forEach { (type, departmentList) ->
+                    item {
+                        Text(
+                            text = type.ifEmpty { "Khác" },
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.Gray,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 6.dp, horizontal = 16.dp)
+                        )
+                    }
+
+                    items(departmentList) { department ->
+                        DepartmentItem(
+                            department = department,
+                            isSelected = false,
+                            onClick = {
+                                navController.navigate(
+                                    "department_detail/" +
+                                            "${Uri.encode(department.name)}/" +
+                                            "${Uri.encode(department.id)}/" +
+                                            "${Uri.encode(department.leader)}/" +
+                                            "${Uri.encode(department.email)}/" +
+                                            "${Uri.encode(department.phone)}/" +
+                                            "${Uri.encode(department.address)}?screenTitle=${Uri.encode(department.name)}"
+                                )
                             },
                             navController = navController
                         )
