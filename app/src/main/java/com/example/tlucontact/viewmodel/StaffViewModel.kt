@@ -116,7 +116,12 @@ class StaffViewModel : ViewModel() { // Lớp ViewModel quản lý dữ liệu v
         _updateMessage.value = null
         _isUpdateSuccessful.value = false
     }
+    private val _filterMode = MutableStateFlow("All")
+    val filterMode: StateFlow<String> = _filterMode
 
+    fun setFilterMode(mode: String) {
+        _filterMode.value = mode
+    }
     fun toggleSortOrder() { // Hàm đổi thứ tự sắp xếp danh sách (A-Z <-> Z-A)
         _sortAscending.value = !_sortAscending.value
     }

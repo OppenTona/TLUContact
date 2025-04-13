@@ -280,12 +280,14 @@ fun Directoryscreen(
     // Biến lưu nội dung tìm kiếm hiện tại trong ô tìm kiếm
     // Khi người dùng nhập text vào ô tìm kiếm, query sẽ thay đổi
     var query by remember { mutableStateOf("") }
-
+    var staffFilterMode by remember { mutableStateOf("All") } // Mặc định là "Tất cả"
     // Biến dùng để xác định xem bộ lọc có đang được bật hay không
     // true → đang bật lọc; false → không lọc
     var isFilterActive by remember { mutableStateOf(false) }
 
     var selectedDepartment by remember { mutableStateOf("") }
+    var selectedPosition by remember { mutableStateOf("") }
+
 
     val departmentRepository = DepartmentRepository()
     val departmentViewModel: DepartmentViewModel = viewModel(
@@ -375,6 +377,9 @@ fun Directoryscreen(
                 onDepartmentSortOrderChange = { newSortOrder ->
                     // (Nếu muốn) cập nhật trạng thái sắp xếp
                     // departmentViewModel.setSortAscending(newSortOrder)
+                },
+                onStaffFilterChange = { mode ->
+                    staffFilterMode = mode
                 }
             )
 
@@ -409,12 +414,16 @@ fun Directoryscreen(
             // Hiển thị danh sách tương ứng theo tab được chọn
             when (selectedTab) {
                 "Giảng viên" -> Stafflist(
-                    staffs = staffs, // Danh sách giảng viên
-                    query = query,   // Từ khóa tìm kiếm
+                    staffs = staffs,
+                    query = query,
                     navController = navController,
-                    isFilterActive = isFilterActive, // Có lọc không?
-                    selectedDepartment = selectedDepartment // Bộ lọc đơn vị (nếu có)
+                    isFilterActive = isFilterActive,
+                    selectedDepartment = selectedDepartment,
+                    selectedPosition = selectedPosition,
+                    staffViewModel = staffViewModel,
+                    staffFilterMode = staffFilterMode
                 )
+
 
                 "Đơn vị" -> DepartmentList(
                     departmentsFlow = departmentViewModel.filteredDepartments,
@@ -796,80 +805,112 @@ fun Staffitem(
 
 @Composable
 fun Stafflist(
-    staffs: List<Staff>, // Danh sách tất cả giảng viên
-    query: String, // Chuỗi tìm kiếm (tên giảng viên)
-    navController: NavController, // Dùng để điều hướng đến màn hình chi tiết
-    isFilterActive: Boolean, // Có đang bật lọc theo đơn vị không?
-    selectedDepartment: String, // Bộ môn được chọn (nếu có)
-    staffViewModel: StaffViewModel = viewModel() // ViewModel quản lý danh sách và trạng thái lọc/sắp xếp
+    staffs: List<Staff>,
+    query: String,
+    navController: NavController,
+    isFilterActive: Boolean,
+    selectedDepartment: String,
+    selectedPosition: String,
+    staffViewModel: StaffViewModel = viewModel(),
+    staffFilterMode: String = "All" // Thêm tham số chế độ lọc
 ) {
-    // Lấy trạng thái sắp xếp từ ViewModel (tăng hay giảm dần theo tên)
+    val groupedByPosition = staffs
+
+        .groupBy { it.position ?: "Không rõ chức vụ" }
+
     val sortAscending by staffViewModel.sortAscending.collectAsState()
 
-    // Sắp xếp danh sách theo tên (tăng/giảm dần)
+    // Sắp xếp danh sách
     val sortedStaffs = if (sortAscending) {
         staffs.sortedBy { it.name.lowercase() }
     } else {
         staffs.sortedByDescending { it.name.lowercase() }
     }
 
-    // Lọc danh sách nếu có bật lọc theo đơn vị và từ khóa
-    val filteredStaffs = if (isFilterActive) {
-        sortedStaffs.filter {
-            it.name.contains(query, ignoreCase = true) &&
-                    it.department.contains(selectedDepartment, ignoreCase = true)
+    // 💡 Lọc theo chế độ được chọn
+    val filteredStaffs = sortedStaffs.filter { staff ->
+        val matchQuery = staff.name.contains(query, ignoreCase = true)
+
+        val matchDepartment = staff.department.contains(selectedDepartment, ignoreCase = true)
+
+        val matchFilter = when (staffFilterMode) {
+            "ByDepartment" -> matchDepartment
+            "ByPosition" -> staff.position.contains(selectedPosition, ignoreCase = true)
+            else -> true // "All"
         }
-    } else {
-        sortedStaffs.filter { it.name.contains(query, ignoreCase = true) }
+
+        matchQuery && matchFilter
     }
 
-    // Tạo dải chữ cái A-Z hoặc Z-A để nhóm theo chữ cái đầu của tên
     val letterRange = if (sortAscending) 'A'..'Z' else 'Z' downTo 'A'
 
-    // Nhóm danh sách theo bộ môn (khi lọc) hoặc theo chữ cái đầu tên
+    // Nếu đang lọc theo đơn vị hoặc ByDepartment thì nhóm theo đơn vị
     val groupedStaffsByDepartment = filteredStaffs.groupBy { it.department }
+
+    // Ngược lại thì nhóm theo chữ cái đầu tên
     val groupedStaffsByName = letterRange.associateWith { letter ->
         filteredStaffs.filter { it.name.firstOrNull()?.uppercaseChar() == letter }
     }
 
-    // Hiển thị danh sách dạng LazyColumn (cuộn được)
     LazyColumn {
-        if (isFilterActive) {
-            // Nếu đang lọc theo bộ môn
+        if(staffFilterMode == "ByPosition"){
+            groupedByPosition.forEach { (positionName, staffList) ->
+                item {
+                    Text(
+                        text = positionName,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Gray,
+                        fontSize = 16.sp,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+
+                items(staffList) { staff ->
+                    Staffitem(
+                        staff = staff,
+                        isSelected = false,
+                        onClick = {
+                            navController.currentBackStackEntry?.savedStateHandle?.set("staff", staff)
+                            navController.navigate("DetailContactScreen")
+                        },
+                        navController = navController
+                    )
+                }
+            }
+        }
+
+        if (staffFilterMode == "ByDepartment") {
             groupedStaffsByDepartment.forEach { (department, staffList) ->
                 item {
                     Text(
-                        text = department, // Tên đơn vị
-                        fontSize = 14.sp,
+                        text = department,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color.Gray.copy(alpha = 1.0f),
+                        color = Color.Gray,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 12.dp, vertical = 4.dp)
                     )
                 }
 
-                // Hiển thị từng staff trong đơn vị đó
                 items(staffList) { staff ->
                     Staffitem(
                         staff = staff,
                         isSelected = false,
                         onClick = {
-                            // Khi bấm vào, lưu staff vào savedStateHandle để chuyển màn hình
                             navController.currentBackStackEntry?.savedStateHandle?.set("staff", staff)
-                            navController.navigate("DetailContactScreen") // Điều hướng đến màn hình chi tiết
+                            navController.navigate("DetailContactScreen")
                         },
                         navController = navController
                     )
                 }
             }
         } else {
-            // Không lọc thì nhóm theo chữ cái đầu tiên của tên
             groupedStaffsByName.forEach { (letter, staffList) ->
                 if (staffList.isNotEmpty()) {
                     item {
                         Text(
-                            text = letter.toString(), // Tên nhóm chữ cái
+                            text = letter.toString(),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color.Gray,
@@ -898,7 +939,6 @@ fun Stafflist(
 
 
 
-
 @Composable
 fun Topbar(
     title: String,
@@ -922,6 +962,7 @@ fun Topbar(
 @SuppressLint("UnrememberedMutableState") // Bỏ cảnh báo mutableState không được remember đúng cách (dành cho biến fallback)
 @Composable
 fun Searchbar(
+    onStaffFilterChange: (String) -> Unit = {}, // Callback khi người dùng chọn bộ lọc giảng viên
     query: String, // Chuỗi tìm kiếm nhập vào
     onQueryChange: (String) -> Unit, // Callback khi người dùng nhập thay đổi
     selectedTab: String, // Tab hiện tại ("Sinh viên", "Giảng viên", "Đơn vị")
@@ -1055,13 +1096,30 @@ fun Searchbar(
 
                                 "Giảng viên" -> {
                                     DropdownMenuItem(onClick = {
-                                        onFilterClick()
+                                        onStaffFilterChange("All")
+                                        expanded = false
+                                        expandedFilter = false
+                                    }) {
+                                        Text("Tất cả")
+                                    }
+
+                                    DropdownMenuItem(onClick = {
+                                        onStaffFilterChange("ByDepartment")
                                         expanded = false
                                         expandedFilter = false
                                     }) {
                                         Text("Theo Đơn vị")
                                     }
+
+                                    DropdownMenuItem(onClick = {
+                                        onStaffFilterChange("ByPosition")
+                                        expanded = false
+                                        expandedFilter = false
+                                    }) {
+                                        Text("Theo Chức vụ")
+                                    }
                                 }
+
 
                                 "Đơn vị" -> {
                                     if (departmentViewModel != null) {
