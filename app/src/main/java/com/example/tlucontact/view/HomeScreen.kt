@@ -865,7 +865,7 @@ fun Stafflist(
 
 
 @Composable
-fun Topbar(
+fun Topbar( // Thanh tiêu đề trên cùng
     title: String,                    // Tiêu đề sẽ hiển thị trên thanh topbar
     onLogoutClick: () -> Unit        // Hàm callback được gọi khi nhấn nút đăng xuất
 ) {
