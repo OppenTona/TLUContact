@@ -13,6 +13,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -36,6 +37,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -54,6 +56,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
+import coil.compose.rememberImagePainter
 import com.example.tlucontact.DepartmentItem
 import com.example.tlucontact.R
 import com.example.tlucontact.StudentItem
@@ -700,50 +703,55 @@ fun DepartmentItem(department: Department, navController: NavController, onClick
 
 @Composable
 fun Useravatar(navController: NavController, guestViewModel: GuestViewModel) {
-    // Lấy context hiện tại trong Compose (dùng cho các thao tác ngoài UI như lấy email)
-    val conText = LocalContext.current
-
-    // Lấy email người dùng đã đăng nhập từ SessionManager (thường được lưu trong SharedPreferences)
-    val userLoginEmail = SessionManager(conText).getUserLoginEmail()
-
-    // TODO: Bổ sung xử lý nếu userLoginEmail là null để tránh crash app
-
-    // Lấy thông tin người dùng kiểu khách (guest) từ ViewModel dưới dạng State để tự động cập nhật UI khi dữ liệu thay đổi
+    val context = LocalContext.current
+    val userLoginEmail = SessionManager(context).getUserLoginEmail()
     val guest by guestViewModel.selectedGuest.collectAsState()
 
-    // Khi userLoginEmail thay đổi, gọi hàm lấy thông tin guest tương ứng từ ViewModel
+    // Gọi hàm lấy thông tin guest nếu có email
     LaunchedEffect(userLoginEmail) {
         userLoginEmail?.let { email ->
             guestViewModel.fetchGuestByEmail(email)
         }
     }
 
-    // Hiển thị icon avatar người dùng (mặc định là hình tròn có người)
-    Icon(
-        imageVector = Icons.Default.AccountCircle, // Icon avatar mặc định
-        contentDescription = "Avatar",
+    val avatarUrl = guest?.avatarURL
+
+    // UI hiển thị avatar hoặc icon mặc định
+    Box(
         modifier = Modifier
-            .size(32.dp) // Kích thước icon
+            .size(35.dp)
+            .clip(CircleShape)
             .clickable {
-                // Khi người dùng bấm vào avatar, xác định sẽ điều hướng đến màn hình nào
-
-                // Nếu là sinh viên (email kết thúc bằng @e.tlu.edu.vn)
-                if (userLoginEmail.toString().endsWith("@e.tlu.edu.vn")) {
+                if (userLoginEmail?.endsWith("@e.tlu.edu.vn") == true) {
                     navController.navigate("update_detail_student")
-                }
-
-                // Nếu là giảng viên (email @tlu.edu.vn) hoặc khách nhưng có kiểu là "staff"
-                else if (userLoginEmail.toString().endsWith("@tlu.edu.vn") || guest?.userType == "staff") {
+                } else if (userLoginEmail?.endsWith("@tlu.edu.vn") == true || guest?.userType == "staff") {
                     navController.navigate("update_detail")
-                }
-
-                // Còn lại là khách
-                else {
+                } else {
                     navController.navigate("update_detail_guest")
                 }
             }
-    )
+    ) {
+        if (!avatarUrl.isNullOrBlank()) {
+            Image(
+                painter = rememberImagePainter(avatarUrl),
+                contentDescription = "Avatar",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .border(1.dp, Color.Gray, CircleShape)
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Default.AccountCircle,
+                contentDescription = "Default Avatar",
+                modifier = Modifier
+                    .fillMaxSize()
+                    .border(1.dp, Color.Gray, CircleShape)
+            )
+        }
+    }
 }
+
 
 @Composable
 fun Staffitem(
