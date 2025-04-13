@@ -1,16 +1,9 @@
 package com.example.tlucontact.view
 
 import android.annotation.SuppressLint
-import android.content.Context
-import android.content.Intent
 import android.net.Uri
-import com.example.tlucontact.DetailScreen
-import com.example.tlucontact.MainActivity
-import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -25,7 +18,6 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Search
@@ -33,14 +25,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -57,9 +46,7 @@ import androidx.navigation.navArgument
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
-import com.example.tlucontact.DepartmentItem
 import com.example.tlucontact.R
-import com.example.tlucontact.StudentItem
 import com.example.tlucontact.data.model.Department
 import com.example.tlucontact.data.model.Staff
 import com.example.tlucontact.data.model.Student
@@ -759,8 +746,7 @@ fun Useravatar(navController: NavController, guestViewModel: GuestViewModel) {
 fun Staffitem(
     staff: Staff, // Dữ liệu giảng viên cụ thể
     isSelected: Boolean, // Nếu được chọn, hiển thị thêm thông tin
-    onClick: () -> Unit, // Callback khi người dùng click vào item
-    navController: NavController // Dùng để điều hướng đến màn hình chi tiết
+    onClick: () -> Unit // Callback khi người dùng click vào item
 ) {
     Column(
         modifier = Modifier
@@ -883,8 +869,7 @@ fun Stafflist(
                             // Lưu staff vào SavedStateHandle để màn DetailContactScreen lấy ra
                             navController.currentBackStackEntry?.savedStateHandle?.set("staff", staff)
                             navController.navigate("DetailContactScreen") // Điều hướng sang màn chi tiết
-                        },
-                        navController = navController
+                        }
                     )
                 }
             }
@@ -912,8 +897,7 @@ fun Stafflist(
                         onClick = {
                             navController.currentBackStackEntry?.savedStateHandle?.set("staff", staff)
                             navController.navigate("DetailContactScreen")
-                        },
-                        navController = navController
+                        }
                     )
                 }
             }
@@ -940,8 +924,7 @@ fun Stafflist(
                             onClick = {
                                 navController.currentBackStackEntry?.savedStateHandle?.set("staff", staff)
                                 navController.navigate("DetailContactScreen")
-                            },
-                            navController = navController
+                            }
                         )
                     }
                 }
