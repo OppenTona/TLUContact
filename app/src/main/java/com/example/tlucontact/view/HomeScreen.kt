@@ -55,7 +55,7 @@ import com.example.tlucontact.data.repository.SessionManager
 import com.example.tlucontact.viewmodel.DepartmentViewModel
 import com.example.tlucontact.viewmodel.DepartmentViewModelFactory
 import com.example.tlucontact.viewmodel.GuestViewModel
-import com.example.tlucontact.viewmodel.LogoutViewModel
+import com.example.tlucontact.viewmodel.LogOutViewModel
 import com.example.tlucontact.viewmodel.StaffViewModel
 import com.example.tlucontact.viewmodel.StudentViewModel
 import kotlinx.coroutines.flow.StateFlow
@@ -80,16 +80,16 @@ fun HomeScreen(
     val staffViewModel: StaffViewModel = viewModel()    // Tạo hoặc lấy ViewModel có kiểu StaffViewModel, ViewModel này được dùng để quản lý dữ liệu và logic liên quan đến giảng viên, viewModel() sẽ tự động gán theo vòng đời của composable
     val studentViewModel: StudentViewModel = viewModel() // Tạo hoặc lấy ViewModel có kiểu StudentViewModel, ViewModel này được dùng để quản lý dữ liệu và logic liên quan đến sinh viên
     val guestViewModel: GuestViewModel = viewModel()
-    val logoutViewModel: LogoutViewModel = viewModel() // Sử dụng ViewModel
-    val logoutState by logoutViewModel.logoutState.collectAsState() // Theo dõi trạng thái đăng xuất
+    val logOutViewModel: LogOutViewModel = viewModel() // Sử dụng ViewModel
+    val logOutState by logOutViewModel.logoutState.collectAsState() // Theo dõi trạng thái đăng xuất
 
     val selectedStaff by staffViewModel.selectedStaff.collectAsState()
     val selectedStudent by studentViewModel.selectedStudent.collectAsState() // Lấy thông tin sinh viên đang được chọn từ ViewModel
     val selectedGuest by guestViewModel.selectedGuest.collectAsState()
     // LaunchedEffect sẽ chạy khối code bên trong khi giá trị logoutState thay đổi
-    LaunchedEffect(logoutState) {
+    LaunchedEffect(logOutState) {
         // Nếu logoutState.first == true → đăng xuất thành công
-        if (logoutState.first) {
+        if (logOutState.first) {
             // Điều hướng sang màn hình đăng nhập (login)
             navControllerLogout.navigate("login") {
                 // Xóa toàn bộ backstack (xóa hết các màn hình trước đó)
@@ -97,11 +97,11 @@ fun HomeScreen(
             }
         }
         // Nếu logoutState.second khác null → có lỗi xảy ra khi đăng xuất
-        else if (logoutState.second != null) {
+        else if (logOutState.second != null) {
             // Hiển thị thông báo lỗi bằng Toast
             Toast.makeText(
                 navController.context,
-                "Lỗi: ${logoutState.second}",
+                "Lỗi: ${logOutState.second}",
                 Toast.LENGTH_SHORT
             ).show()
         }
@@ -165,7 +165,7 @@ fun HomeScreen(
                 staffViewModel = staffViewModel,
                 studentViewModel = studentViewModel,
                 guestViewModel = guestViewModel,
-                logoutViewModel = logoutViewModel
+                logOutViewModel = logOutViewModel
             )
         }
 
@@ -258,7 +258,7 @@ fun Directoryscreen(
     staffViewModel: StaffViewModel,
     studentViewModel: StudentViewModel,
     guestViewModel: GuestViewModel = viewModel(),
-    logoutViewModel: LogoutViewModel = viewModel()
+    logOutViewModel: LogOutViewModel = viewModel()
 ) {
     // Lấy context hiện tại của ứng dụng (dùng để hiển thị Toast, gọi Intent,...)
     val context = LocalContext.current
@@ -349,7 +349,7 @@ fun Directoryscreen(
             // Topbar hiển thị tiêu đề và nút logout
             Topbar(
                 title = "Danh bạ $selectedTab", // Tiêu đề thay đổi theo tab
-                onLogoutClick = { logoutViewModel.logout() } // Gọi logout khi nhấn nút
+                onLogoutClick = { logOutViewModel.logout() } // Gọi logout khi nhấn nút
             )
 
             Spacer(Modifier.height(16.dp)) // Khoảng cách

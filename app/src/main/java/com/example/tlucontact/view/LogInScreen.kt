@@ -33,13 +33,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.tlucontact.R
-import com.example.tlucontact.viewmodel.LoginViewModel
+import com.example.tlucontact.viewmodel.LogInViewModel
 
 // Hàm giao diện chính LoginScreen, được gọi để hiển thị màn hình đăng nhập
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LogInScreen(navController: NavController) {
     val context = LocalContext.current // Lấy context hiện tại để sử dụng trong giao diện
-    val viewModel: LoginViewModel = viewModel() // Tạo hoặc lấy ViewModel để quản lý logic và trạng thái
+    val viewModel: LogInViewModel = viewModel() // Tạo hoặc lấy ViewModel để quản lý logic và trạng thái
     var passwordVisible by remember { mutableStateOf(false) } // Biến trạng thái để theo dõi việc hiển thị mật khẩu
 
     val loginState by viewModel.loginState.collectAsState() // Lấy trạng thái đăng nhập từ ViewModel
@@ -128,7 +128,7 @@ fun LoginScreen(navController: NavController) {
 // Hàm hiển thị form đăng nhập
 @Composable
 fun LoginForm(
-    viewModel: LoginViewModel, // ViewModel để quản lý dữ liệu và logic
+    viewModel: LogInViewModel, // ViewModel để quản lý dữ liệu và logic
     passwordVisible: Boolean, // Biến trạng thái hiển thị mật khẩu
     navController: NavController, // Đối tượng điều hướng
     onPasswordVisibilityChange: (Boolean) -> Unit // Hàm callback để thay đổi trạng thái hiển thị mật khẩu
@@ -283,7 +283,7 @@ fun DividerWithText(text: String) {
 // Hàm xem trước giao diện màn hình đăng nhập
 @Preview(showBackground = true, showSystemUi = false)
 @Composable
-fun LoginSreenPreview() {
+fun LogInSreenPreview() {
     val navController = rememberNavController() // Tạo NavController giả để xem trước
-    LoginScreen(navController) // Hiển thị màn hình đăng nhập
+    LogInScreen(navController) // Hiển thị màn hình đăng nhập
 }

@@ -1,16 +1,16 @@
-package com.example.tlucontact.viewmodel // Định nghĩa package chứa lớp LoginViewModel
+package com.example.tlucontact.viewmodel // Định nghĩa package chứa lớp LogInViewModel
 
 import android.app.Activity // Import lớp Activity từ Android SDK
 import android.app.Application // Import lớp Application từ Android SDK
 import androidx.lifecycle.AndroidViewModel // Import lớp AndroidViewModel từ thư viện Jetpack
 import androidx.lifecycle.viewModelScope // Import viewModelScope để quản lý coroutine
-import com.example.tlucontact.data.repository.AuthRepository // Import AuthRepository để sử dụng trong lớp
+import com.example.tlucontact.data.repository.LogInRepository
 import kotlinx.coroutines.flow.MutableStateFlow // Import MutableStateFlow để quản lý trạng thái
 import kotlinx.coroutines.flow.asStateFlow // Import asStateFlow để chỉ expose trạng thái không mutable
 import kotlinx.coroutines.launch // Import launch để chạy coroutine
 
-class LoginViewModel(application: Application) : AndroidViewModel(application) { // Định nghĩa lớp LoginViewModel kế thừa AndroidViewModel
-    private val repository = AuthRepository(application) // Tạo một instance của AuthRepository với tham số application
+class LogInViewModel(application: Application) : AndroidViewModel(application) { // Định nghĩa lớp LogInViewModel kế thừa AndroidViewModel
+    private val repository = LogInRepository(application) // Tạo một instance của AuthRepository với tham số application
 
     private val _loginState = MutableStateFlow<Pair<Boolean, String?>>(Pair(false, null)) // MutableStateFlow để lưu trạng thái đăng nhập
     val loginState = _loginState.asStateFlow() // Expose loginState như một StateFlow không mutable
@@ -20,9 +20,6 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _passwordError = MutableStateFlow(false) // Trạng thái lỗi password, mặc định là false
     val passwordError = _passwordError.asStateFlow() // Expose passwordError như một StateFlow không mutable
-
-    private val _resetState = MutableStateFlow<Pair<Boolean, String?>>(Pair(false, null)) // Trạng thái đặt lại mật khẩu
-    val resetState = _resetState.asStateFlow() // Expose resetState như một StateFlow không mutable
 
     var email = MutableStateFlow("") // Khởi tạo MutableStateFlow để lưu giá trị email
     var password = MutableStateFlow("") // Khởi tạo MutableStateFlow để lưu giá trị password
@@ -59,23 +56,6 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             _passwordError.value = false // Cập nhật trạng thái lỗi password về false
         }
         return null // Trả về null nếu không có lỗi
-    }
-
-    fun resetPassword(email: String) {
-        val emailValue = email.trim()
-        if (emailValue.isEmpty()) {
-            _emailError.value = true
-            _resetState.value = Pair(false, "Vui lòng nhập email")
-            return
-        } else {
-            _emailError.value = false
-        }
-
-        viewModelScope.launch {
-            repository.resetPassword(emailValue) { success, message ->
-                _resetState.value = Pair(success, message)
-            }
-        }
     }
 
 

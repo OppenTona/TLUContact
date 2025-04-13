@@ -1,6 +1,5 @@
 package com.example.tlucontact
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -12,9 +11,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.tlucontact.data.repository.SessionManager
 import com.example.tlucontact.view.ForgotPasswordScreen
 import com.example.tlucontact.view.HomeScreen
-import com.example.tlucontact.view.LoginScreen
-import com.example.tlucontact.view.SignupScreen
-import com.example.tlucontact.view.UpdateDetailScreen
+import com.example.tlucontact.view.LogInScreen
+import com.example.tlucontact.view.SignUpScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,15 +42,12 @@ class MainActivity : ComponentActivity() {
 //                )
 //            }
             composable("login") {
-                LoginScreen(navController)
+                LogInScreen(navController)
             }
             composable("signup") {
-                SignupScreen(navController)
+                SignUpScreen(navController)
             }
-            composable("home") {
-                val context = LocalContext.current
-                context.startActivity(Intent(context, home::class.java))
-            }
+
             composable("forgotPassword") {
                 ForgotPasswordScreen(navController)
             }

@@ -22,12 +22,12 @@ import androidx.compose.ui.unit.sp // Import để thiết lập kích thước 
 import androidx.lifecycle.viewmodel.compose.viewModel // Import để lấy ViewModel thông qua Compose
 import androidx.navigation.NavController // Import để điều hướng giữa các màn hình
 import com.example.tlucontact.R // Import tài nguyên từ tệp R (như hình ảnh, chuỗi, v.v.)
-import com.example.tlucontact.viewmodel.LoginViewModel // Import ViewModel để sử dụng logic liên quan đến đăng nhập
+import com.example.tlucontact.viewmodel.ForgotPasswordViewModel
 
 @Composable // Đánh dấu hàm là một thành phần giao diện trong Compose
 fun ForgotPasswordScreen(navController: NavController) { // Hàm hiển thị màn hình quên mật khẩu, nhận đối tượng điều hướng làm tham số
     val context = LocalContext.current // Lấy ngữ cảnh hiện tại để sử dụng cho Toast
-    val viewModel: LoginViewModel = viewModel() // Lấy LoginViewModel để quản lý trạng thái
+    val viewModel: ForgotPasswordViewModel = viewModel() // Lấy ForgotPasswordViewModel để quản lý trạng thái
     val email by viewModel.email.collectAsState() // Lấy trạng thái email từ ViewModel
     val emailError by viewModel.emailError.collectAsState()
     val resetState by viewModel.resetState.collectAsState() // Lấy trạng thái reset mật khẩu từ ViewModel
@@ -103,7 +103,7 @@ fun ForgotPasswordLogo() { // Hàm hiển thị logo và tiêu đề trên màn 
 }
 
 @Composable // Đánh dấu hàm là một thành phần giao diện trong Compose
-fun ForgotPasswordForm(navController: NavController, viewModel: LoginViewModel, email: String, emailError: Boolean) { // Hàm hiển thị form quên mật khẩu
+fun ForgotPasswordForm(navController: NavController, viewModel: ForgotPasswordViewModel, email: String, emailError: Boolean) { // Hàm hiển thị form quên mật khẩu
     Column(horizontalAlignment = Alignment.CenterHorizontally) { // Sử dụng bố cục cột, căn giữa nội dung
         TextField( // Trường nhập liệu email
             value = email, // Giá trị của trường nhập liệu

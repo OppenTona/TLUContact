@@ -3,14 +3,14 @@ package com.example.tlucontact.viewmodel // Định nghĩa package chứa ViewMo
 import android.app.Application // Import lớp Application từ Android
 import androidx.lifecycle.AndroidViewModel // Import lớp AndroidViewModel để tạo ViewModel có liên kết với Application
 import androidx.lifecycle.viewModelScope // Import phạm vi Coroutine liên quan đến vòng đời ViewModel
-import com.example.tlucontact.data.repository.AuthRepository // Import lớp AuthRepository để thực hiện các thao tác xác thực
+import com.example.tlucontact.data.repository.LogOutRepository
 import kotlinx.coroutines.flow.MutableStateFlow // Import MutableStateFlow để quản lý trạng thái có thể thay đổi
 import kotlinx.coroutines.flow.asStateFlow // Import hàm asStateFlow để chuyển MutableStateFlow thành StateFlow chỉ đọc
 import kotlinx.coroutines.launch // Import hàm launch cho Coroutine
 
-// Lớp LogoutViewModel quản lý logic liên quan đến việc đăng xuất người dùng
-class LogoutViewModel (application: Application) : AndroidViewModel(application) { // Kế thừa từ lớp AndroidViewModel
-    private val repository = AuthRepository(application) // Tạo một instance của AuthRepository để sử dụng các chức năng liên quan đến xác thực
+// Lớp LogOutViewModel quản lý logic liên quan đến việc đăng xuất người dùng
+class LogOutViewModel (application: Application) : AndroidViewModel(application) { // Kế thừa từ lớp AndroidViewModel
+    private val repository = LogOutRepository(application) // Tạo một instance của AuthRepository để sử dụng các chức năng liên quan đến xác thực
 
     // Trạng thái đăng xuất (true nếu thành công, false nếu thất bại)
     private val _logoutState = MutableStateFlow<Pair<Boolean, String?>>(Pair(false, null)) // Tạo MutableStateFlow để lưu trạng thái đăng xuất (Boolean và thông báo lỗi nếu có)

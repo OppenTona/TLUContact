@@ -28,11 +28,11 @@ import androidx.compose.ui.unit.sp // Import sp để sử dụng đơn vị kí
 import androidx.lifecycle.viewmodel.compose.viewModel // Import viewModel để sử dụng ViewModel trong Compose
 import androidx.navigation.NavController // Import NavController để điều khiển điều hướng
 import com.example.tlucontact.R // Import R để truy cập tài nguyên ứng dụng
-import com.example.tlucontact.viewmodel.SignupViewModel // Import SignupViewModel để quản lý dữ liệu cho màn hình đăng ký
+import com.example.tlucontact.viewmodel.SignUpViewModel // Import SignUpViewModel để quản lý dữ liệu cho màn hình đăng ký
 
 // Hàm Composable để hiển thị màn hình đăng ký
 @Composable
-fun SignupScreen(navController: NavController, viewModel: SignupViewModel = viewModel()) {
+fun SignUpScreen(navController: NavController, viewModel: SignUpViewModel = viewModel()) {
     val configuration = LocalConfiguration.current // Lấy thông tin cấu hình thiết bị
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE // Kiểm tra thiết bị đang ở chế độ ngang hay dọc
 
@@ -90,7 +90,7 @@ fun LogoSection() {
 
 // Hàm Composable để hiển thị form đăng ký
 @Composable
-fun SignupForm(navController: NavController, viewModel: SignupViewModel) {
+fun SignupForm(navController: NavController, viewModel: SignUpViewModel) {
     val context = LocalContext.current // Lấy ngữ cảnh hiện tại
     var passwordVisible by remember { mutableStateOf(false) } // Trạng thái hiển thị mật khẩu (ẩn/hiện)
     var confirmPasswordVisible by remember { mutableStateOf(false) } // Trạng thái hiển thị mật khẩu xác nhận

@@ -5,7 +5,7 @@ import android.widget.Toast // Import Toast để hiển thị thông báo nhanh
 import androidx.lifecycle.AndroidViewModel // Import lớp AndroidViewModel để tạo ViewModel có tham chiếu đến Application
 import androidx.lifecycle.SavedStateHandle // Import SavedStateHandle để lưu và khôi phục trạng thái
 import androidx.lifecycle.viewModelScope // Import viewModelScope để sử dụng Coroutine trong ViewModel
-import com.example.tlucontact.data.repository.AuthRepository // Import AuthRepository để xử lý logic xác thực
+import com.example.tlucontact.data.repository.SignUpRepository
 import kotlinx.coroutines.flow.MutableStateFlow // Import MutableStateFlow để lưu trữ và quan sát giá trị trạng thái
 import kotlinx.coroutines.flow.asStateFlow // Import hàm asStateFlow để tạo StateFlow từ MutableStateFlow
 import kotlinx.coroutines.launch // Import launch để khởi chạy Coroutine
@@ -14,9 +14,9 @@ import kotlin.text.endsWith // Import hàm endsWith để kiểm tra chuỗi k�
 import kotlin.text.isEmpty // Import hàm isEmpty để kiểm tra chuỗi trống
 import kotlin.text.startsWith // Import hàm startsWith để kiểm tra chuỗi bắt đầu
 
-// Định nghĩa lớp SignupViewModel kế thừa từ AndroidViewModel
-class SignupViewModel(application: Application, private val state: SavedStateHandle) : AndroidViewModel(application) {
-    private val repository = AuthRepository(application) // Khởi tạo repository để xử lý logic xác thực
+// Định nghĩa lớp SignUpViewModel kế thừa từ AndroidViewModel
+class SignUpViewModel(application: Application, private val state: SavedStateHandle) : AndroidViewModel(application) {
+    private val repository = SignUpRepository(application) // Khởi tạo repository để xử lý logic xác thực
 
     // Biến trạng thái lưu trữ trạng thái đăng ký và thông báo lỗi (nếu có)
     private val _signupState = MutableStateFlow<Pair<Boolean, String?>>(Pair(false, null))
