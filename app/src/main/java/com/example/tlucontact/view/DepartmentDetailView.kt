@@ -3,7 +3,6 @@ package com.example.tlucontact.view
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,9 +30,26 @@ import com.example.tlucontact.data.model.Department
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DepartmentDetailView(department: Department, onBack: () -> Unit, onEditClick: () -> Unit) {
+fun DepartmentDetailView(
+    name: String,
+    id: String,
+    leader: String,
+    email: String,
+    phone: String,
+    address: String,
+    onBack: () -> Unit
+) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
+
+    val department = Department(
+        name = name,
+        id = id,
+        leader = leader,
+        email = email,
+        phone = phone,
+        address = address
+    )
 
     Scaffold(
         topBar = {
