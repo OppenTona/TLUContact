@@ -8,58 +8,111 @@ import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.UUID
+import androidx.lifecycle.viewModelScope
+import com.google.firebase.firestore.Query
+import kotlinx.coroutines.launch
 
-class StaffViewModel : ViewModel() { // Lớp ViewModel quản lý dữ liệu và logic liên quan đến giảng viên
-    private val db = FirebaseFirestore.getInstance() // Tạo một instance Firestore để tương tác với cơ sở dữ liệu
 
-    private val _staffList = MutableStateFlow<List<Staff>>(emptyList()) // Biến nội bộ lưu danh sách giảng viên
-    val staffList: StateFlow<List<Staff>> = _staffList // Biến public để UI quan sát danh sách giảng viên
+class StaffViewModel : ViewModel() {
+    private val db = FirebaseFirestore.getInstance()
+    private val _staffList = MutableStateFlow<List<Staff>>(emptyList())
+    val staffList: StateFlow<List<Staff>> = _staffList
 
-    private val _selectedStaff = MutableStateFlow<Staff?>(null) // Biến nội bộ lưu giảng viên được chọn
-    val selectedStaff: StateFlow<Staff?> = _selectedStaff // Biến public để UI quan sát giảng viên đang được chọn
+    private val _selectedStaff = MutableStateFlow<Staff?>(null)
+    val selectedStaff: StateFlow<Staff?> = _selectedStaff
 
-    private val _updateMessage = MutableStateFlow<String?>(null) // Biến nội bộ chứa thông điệp cập nhật
-    val updateMessage: StateFlow<String?> = _updateMessage // Biến public để UI quan sát thông điệp
+    private val _updateMessage = MutableStateFlow<String?>(null)
+    val updateMessage: StateFlow<String?> = _updateMessage
 
-    private val _isUpdateSuccessful = MutableStateFlow(false) // Biến nội bộ lưu trạng thái cập nhật thành công hay không
-    val isUpdateSuccessful: StateFlow<Boolean> = _isUpdateSuccessful // Biến public để UI quan sát trạng thái
+    private val _isUpdateSuccessful = MutableStateFlow(false)
+    val isUpdateSuccessful: StateFlow<Boolean> = _isUpdateSuccessful
 
-    private val _sortAscending = MutableStateFlow(true) // True: A-Z, False: Z-A
+    private val _sortAscending = MutableStateFlow(true)
     val sortAscending: StateFlow<Boolean> = _sortAscending
+
+    private val _filterMode = MutableStateFlow("All") // ByAll, ByDepartment, ByPosition
+    val filterMode: StateFlow<String> = _filterMode
+
     fun toggleSortOrder() {
         _sortAscending.value = !_sortAscending.value
+        fetchStaffs(query = null) // Làm mới danh sách khi thay đổi sắp xếp
     }
+
     init {
-        fetchStaffs() // Gọi hàm fetchStaffs khi ViewModel được khởi tạo
+        fetchStaffs(query = null)
     }
 
-    private fun fetchStaffs() { // Hàm lấy toàn bộ danh sách giảng viên từ Firestore
-        db.collection("staffs").get() // Lấy toàn bộ document trong collection "staffs"
-            .addOnSuccessListener { result -> // Nếu thành công thì...
-                val staffItems = result.map { doc -> // Duyệt qua từng document và ánh xạ thành đối tượng Staff
-                    Staff(
-                        staffId = doc.getString("staffid") ?: "", // Lấy mã nhân viên (nếu null thì để trống)
-                        staffIdFB = doc.getString("staffid") ?: "", // Trùng với staffId
-                        name = doc.getString("fullName") ?: "Không có tên", // Lấy tên đầy đủ, fallback nếu null
-                        email = doc.id, // Email chính là document ID
-                        phone = doc.getString("phone") ?: "", // Lấy số điện thoại
-                        department = doc.getString("unit") ?: "", // Lấy đơn vị công tác
-                        position = doc.getString("position") ?: "", // Lấy chức vụ
-                        avatarURL = doc.getString("photoURL") ?: "" // Lấy URL ảnh đại diện
-                    )
+    fun setFilterMode(mode: String) {
+        _filterMode.value = mode
+        fetchStaffs(query = null) // Làm mới danh sách khi đổi filter
+    }
+
+    /**
+     * Truy vấn Firestore với các tham số lọc/sắp xếp
+     */
+    fun fetchStaffs(query: String?) {
+        viewModelScope.launch {
+            var ref: Query = db.collection("staffs")
+
+            // Sắp xếp theo tên
+            ref = if (_sortAscending.value) {
+                ref.orderBy("fullName")
+            } else {
+                ref.orderBy("fullName", Query.Direction.DESCENDING)
+            }
+
+            // Áp dụng lọc nếu có
+            when (_filterMode.value) {
+                "ByDepartment" -> {
+                    if (!query.isNullOrBlank()) {
+                        ref = ref.whereGreaterThanOrEqualTo("unit", query)
+                            .whereLessThanOrEqualTo("unit", query + '\uf8ff')
+                    }
                 }
-                _staffList.value = staffItems // Cập nhật danh sách giảng viên vào biến StateFlow
+                "ByPosition" -> {
+                    if (!query.isNullOrBlank()) {
+                        ref = ref.whereGreaterThanOrEqualTo("position", query)
+                            .whereLessThanOrEqualTo("position", query + '\uf8ff')
+                    }
+                }
+                "ByAll" -> {
+                    if (!query.isNullOrBlank()) {
+                        ref = ref.whereGreaterThanOrEqualTo("fullName", query)
+                            .whereLessThanOrEqualTo("fullName", query + '\uf8ff')
+                    }
+                }
             }
-            .addOnFailureListener { exception -> // Nếu thất bại thì in lỗi ra log
-                println("Lỗi lấy dữ liệu: ${exception.message}")
-            }
+
+            // Giới hạn kết quả (ví dụ: 100)
+            ref = ref.limit(100)
+
+            ref.get()
+                .addOnSuccessListener { result ->
+                    val staffItems = result.map { doc ->
+                        Staff(
+                            staffId = doc.getString("staffid") ?: "",
+                            staffIdFB = doc.getString("staffid") ?: "",
+                            name = doc.getString("fullName") ?: "Không có tên", // <- thêm dòng nàyname = doc.getString("fullName") ?: "Không có tên", // <- thêm dòng này
+                            email = doc.id,
+                            phone = doc.getString("phone") ?: "",
+                            department = doc.getString("unit") ?: "",
+                            position = doc.getString("position") ?: "",
+                            avatarURL = doc.getString("photoURL") ?: ""
+                        )
+                    }
+                    _staffList.value = staffItems
+                }
+                .addOnFailureListener { e ->
+                    Log.e("Firestore", "Lỗi lấy danh sách giảng viên: ${e.message}")
+                }
+        }
     }
 
-    fun setStaffByEmail(emailUser: String) { // Hàm lấy thông tin một giảng viên theo email
-        db.collection("staffs").document(emailUser).get() // Lấy document theo email
-            .addOnSuccessListener { doc -> // Nếu thành công
-                if (doc.exists()) { // Nếu document tồn tại
-                    _selectedStaff.value = Staff( // Tạo đối tượng Staff và gán vào selectedStaff
+    fun setStaffByEmail(emailUser: String) {
+        db.collection("staffs").document(emailUser).get()
+            .addOnSuccessListener { doc ->
+                if (doc.exists()) {
+                    _selectedStaff.value = Staff(
                         staffId = doc.id,
                         name = doc.getString("fullName") ?: "Không có tên",
                         staffIdFB = doc.getString("staffid") ?: "",
@@ -71,14 +124,14 @@ class StaffViewModel : ViewModel() { // Lớp ViewModel quản lý dữ liệu v
                     )
                 }
             }
-            .addOnFailureListener { exception -> // Nếu thất bại thì in lỗi
-                println("Lỗi lấy dữ liệu: ${exception.message}")
+            .addOnFailureListener { e ->
+                Log.e("Firestore", "Lỗi lấy giảng viên: ${e.message}")
             }
     }
 
-    fun updateStaffInfo(updatedStaff: Staff) { // Hàm cập nhật thông tin của một giảng viên
-        db.collection("staffs").document(updatedStaff.staffId) // Truy cập document theo ID
-            .set( // Ghi đè dữ liệu trong document bằng map dưới đây
+    fun updateStaffInfo(updatedStaff: Staff) {
+        db.collection("staffs").document(updatedStaff.staffId)
+            .set(
                 mapOf(
                     "fullName" to updatedStaff.name,
                     "phone" to updatedStaff.phone,
@@ -89,58 +142,42 @@ class StaffViewModel : ViewModel() { // Lớp ViewModel quản lý dữ liệu v
                     "photoURL" to updatedStaff.avatarURL
                 )
             )
-            .addOnSuccessListener { // Nếu cập nhật thành công
-                _selectedStaff.value = updatedStaff // Gán lại selectedStaff
-                _updateMessage.value = "Cập nhật thông tin thành công" // Thông điệp báo thành công
-                _isUpdateSuccessful.value = true // Đánh dấu là đã cập nhật thành công
+            .addOnSuccessListener {
+                _selectedStaff.value = updatedStaff
+                _updateMessage.value = "Cập nhật thông tin thành công"
+                _isUpdateSuccessful.value = true
             }
-            .addOnFailureListener { exception -> // Nếu cập nhật thất bại
-                _updateMessage.value = "Lỗi cập nhật: ${exception.message}" // Ghi thông điệp lỗi
-                _isUpdateSuccessful.value = false // Đánh dấu là thất bại
+            .addOnFailureListener { e ->
+                _updateMessage.value = "Lỗi cập nhật: ${e.message}"
+                _isUpdateSuccessful.value = false
             }
     }
 
-    fun clearUpdateMessage() { // Hàm xóa thông điệp cập nhật để tránh hiện thông báo cũ
+    fun clearUpdateMessage() {
         _updateMessage.value = null
         _isUpdateSuccessful.value = false
     }
-    private val _filterMode = MutableStateFlow("All")
-    val filterMode: StateFlow<String> = _filterMode
 
-    fun setFilterMode(mode: String) {
-        _filterMode.value = mode
-    }
-
-
-    fun uploadImageToStorage( // Hàm upload ảnh lên Firebase Storage
-        uri: Uri?, // Uri của ảnh
-        onSuccess: (String) -> Unit, // Callback khi thành công (trả về URL)
-        onFailure: (Exception) -> Unit // Callback khi thất bại
+    fun uploadImageToStorage(
+        uri: Uri?,
+        onSuccess: (String) -> Unit,
+        onFailure: (Exception) -> Unit
     ) {
-        if (uri == null) { // Nếu uri null thì trả lỗi luôn
+        if (uri == null) {
             onFailure(IllegalArgumentException("Uri ảnh không được null"))
             return
         }
 
-        val storageRef = FirebaseStorage.getInstance().reference // Tham chiếu đến Firebase Storage gốc
-        val imageRef = storageRef.child("avatars/${UUID.randomUUID()}.jpg") // Tạo tên file ngẫu nhiên trong thư mục "avatars"
+        val storageRef = FirebaseStorage.getInstance().reference
+        val imageRef = storageRef.child("avatars/${UUID.randomUUID()}.jpg")
 
-        Log.d("UploadImage", "Bắt đầu upload ảnh: $uri") // In log để theo dõi
-
-        imageRef.putFile(uri) // Upload file lên Storage
-            .addOnSuccessListener { // Nếu upload thành công
-                imageRef.downloadUrl.addOnSuccessListener { downloadUrl -> // Lấy URL của ảnh đã upload
-                    Log.d("UploadImage", "Upload thành công. URL: $downloadUrl")
-                    onSuccess(downloadUrl.toString()) // Gọi callback thành công và trả URL
-                }.addOnFailureListener { e -> // Nếu lấy URL thất bại
-                    Log.e("UploadImage", "Lấy URL thất bại: ${e.message}")
-                    onFailure(e)
-                }
+        imageRef.putFile(uri)
+            .addOnSuccessListener {
+                imageRef.downloadUrl.addOnSuccessListener { url ->
+                    onSuccess(url.toString())
+                }.addOnFailureListener { onFailure(it) }
             }
-            .addOnFailureListener { exception -> // Nếu upload ảnh thất bại
-                Log.e("UploadImage", "Upload ảnh thất bại: ${exception.message}")
-                onFailure(exception)
-            }
+            .addOnFailureListener { onFailure(it) }
     }
 }
 
