@@ -103,4 +103,9 @@ class DepartmentViewModel : ViewModel() {
         _filteredDepartmentList.value = filteredList
     }
 
+    // Hàm mới để cập nhật danh sách khi query thay đổi
+    fun setQuery(query: String) {
+        applyFilters(query)
+    }
+
 }

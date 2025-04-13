@@ -568,7 +568,7 @@ fun DepartmentList(
     val filteredDepartments by departmentViewModel.filteredDepartmentList.collectAsState()
 
     Column {
-        if (filterMode != "All") {
+        if (filterMode != "Tất cả") {
             val groupedByType = filteredDepartments.groupBy {
                 it.type
             }
@@ -999,7 +999,13 @@ fun Searchbar(
             // Ô nhập text tìm kiếm
             BasicTextField( // BasicTextField cho phép tùy biến nhiều hơn
                 value = query, // Nội dung ô tìm kiếm
-                onValueChange = onQueryChange, // Cập nhật nội dung khi người dùng nhập
+                onValueChange = {
+                    onQueryChange(it)
+                    if (selectedTab == "Đơn vị") {
+                        departmentViewModel?.setQuery(it) // Gọi hàm setQuery khi query thay đổi
+                    }
+                },
+                //onValueChange = onQueryChange, // Cập nhật nội dung khi người dùng nhập
                 modifier = Modifier.weight(1f), // Chiếm toàn bộ chiều rộng còn lại
                 singleLine = true // Chỉ cho phép nhập một dòng
             )
