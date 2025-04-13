@@ -377,15 +377,15 @@ fun Directoryscreen(
 
             // Hiển thị avatar người dùng và tên hồ sơ hiện tại (giảng viên, sinh viên, hoặc khách)
             Row(
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.CenterVertically, // canh giữa theo chiều dọc của phần tử cha
                 modifier = Modifier.padding(8.dp)
             ) {
                 Useravatar(navController, guestViewModel) // Hiển thị avatar
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                Column {
-                    Text("Hồ sơ của bạn", fontSize = 14.sp, color = Color.Gray)
+                Column { //Hiển thị theo cột
+                    Text("Hồ sơ của bạn", fontSize = 14.sp, color = Color.Gray) // văn bản Hồ sơ của bạn
 
                     // Hiển thị tên người dùng tương ứng với loại tài khoản (ưu tiên theo thứ tự)
                     Text(
@@ -403,12 +403,11 @@ fun Directoryscreen(
 
             // Hiển thị danh sách tương ứng theo tab được chọn
             when (selectedTab) {
-                "Giảng viên" -> Stafflist(
+                "Giảng viên" -> Stafflist( // nếu tab được chọn là giảng viên thì hiển thị màn hình tương ứng là Stafflist
                     staffs = staffs,
                     query = query,
                     navController = navController,
-
-                   // staffViewModel = staffViewModel,
+                    // staffViewModel = staffViewModel,
 
                 )
 
@@ -809,48 +808,55 @@ fun Stafflist(
     collator.strength = Collator.PRIMARY // Bỏ qua phân biệt hoa thường và dấu
 
     // Sắp xếp danh sách giảng viên theo tên (tăng/giảm dần)
-    val sortedStaffs = if (sortAscending) {
-        staffs.sortedWith(compareBy(collator) { it.name })
+    val sortedStaffs = if (sortAscending) { // sắp xếp theo collator để có chữ tiếng việt
+        staffs.sortedWith(compareBy(collator) { it.name }) //sx giảm đần
     } else {
-        staffs.sortedWith(compareByDescending(collator) { it.name })
+        staffs.sortedWith(compareByDescending(collator) { it.name }) // sắp xếp tăng dần
     }
 
     // Lọc danh sách giảng viên theo tên và filterMode
-    val filteredStaffs = sortedStaffs.filter {
-        it.name.contains(query, ignoreCase = true)
+    //Duyệt qua từng phần từ trong danh sách sortstaffs và chỉ giữ lại các phần tử thỏa mãn điều kiện
+    val filteredStaffs = sortedStaffs.filter { // khai báo biến chứa danh sashc đã lọc
+        // kiểm tra xem tên của staff có chứa chuỗi query không (không phân biệt chữ hoa và thường)
+        it.name.contains(query, ignoreCase = true) //
     }
 
     // Nhóm danh sách theo chế độ lọc
     val groupedStaffs = when (filterMode) {
+        // khai báo 1 biến và gán cho nó kết quả phân nhóm (groupBy) danh sách filteredStaffs theo tiêu chí được chọn trong filterMode
         "ByAll" -> filteredStaffs.groupBy { it.name.firstOrNull()?.uppercaseChar() }
         "ByDepartment" -> filteredStaffs.groupBy { it.department }
-        "ByPosition" -> filteredStaffs.groupBy { it.position }
-        else -> filteredStaffs.groupBy { it.name.firstOrNull()?.uppercaseChar() }
+        "ByPosition" -> filteredStaffs.groupBy { it.position } // it đại diện cho từng staff, name là tên của staff,
+        // firstOrNUll lấy kí tự đầu tiên trong tên, nếu rỗng trả về null, nếu có ký tự đầu tiên, thì chuyển nó thành chữ in hoa.
+
+        else -> filteredStaffs.groupBy { it.name.firstOrNull()?.uppercaseChar() } // Nếu key không khớp với key hiện có
     }
 
     // Hiển thị danh sách dạng LazyColumn (cuộn được)
     LazyColumn {
-        groupedStaffs.forEach { (key, staffList) ->
-            item {
+        groupedStaffs.forEach { (key, staffList) -> //Nhóm staff theo key là chức vụ hoặc đơn vị trong danh sách staff
+            item { // Đây là tên của group (ví dụ: Khoa công nghệ thông tin hay Giảng viên)
                 Text(
                     text = key.toString(), // Hiển thị tên nhóm (bộ môn hoặc chức vụ)
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.Gray,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                    fontSize = 16.sp, // cỡ chữ 16dp
+                    fontWeight = FontWeight.Medium, //độ đậm của chữ
+                    color = Color.Gray, // màu chữ xám
+                    modifier = Modifier //điều chỉnh
+                        .fillMaxWidth() // giãn hết cỡ
+                        .padding(horizontal = 12.dp, vertical = 4.dp) ///đệm theo chiều ngang 12dp, chiều dọc 4dp
                 )
             }
 
             // Hiển thị giảng viên thuộc nhóm đó
-            items(staffList) { staff ->
-                Staffitem(
-                    staff = staff,
-                    isSelected = false,
+            items(staffList) { staff -> // duyệt qua danh sách staff, với mỗi staff thì vẽ 1 Staffitem như dưới
+                Staffitem( // toàn một một item dạng staff trong danh sách
+                    staff = staff, // gán là đối tượng staff
+                    isSelected = false, //gán là chưa chọn
                     onClick = {
-                        navController.currentBackStackEntry?.savedStateHandle?.set("staff", staff)
-                        navController.navigate("DetailContactScreen")
+                        //currentBackStackEntry là Entry (màn hình) hiện tại đang ở trên top của back stack (ngăn xếp điều hướng).
+                        //savedStateHandle  Một nơi để lưu trữ tạm trạng thái hoặc dữ liệu liên quan đến entry đó, có thể chia sẻ giữa các màn hình
+                        navController.currentBackStackEntry?.savedStateHandle?.set("staff", staff) // lưu giữ liệu với key là staff value là đối tượng staff
+                        navController.navigate("DetailContactScreen") // điều hướng đến giao diện thông tin chi tiết
                     },
                 )
             }
@@ -903,6 +909,7 @@ fun Searchbar(
 
     // Trạng thái sắp xếp hiện tại theo từng ViewModel
     val studentSortAscending by studentViewModel.sortAscending.collectAsState()
+    // Khai báo một biến staffSortAscending có giá trị được lấy từ viewmodel
     val staffSortAscending by staffViewModel.sortAscending.collectAsState()
 
     // Trạng thái sắp xếp của department, có thể null -> fallback là true
@@ -917,45 +924,45 @@ fun Searchbar(
         else -> true
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(36.dp)
+    Box( // khung hình chữ nhật
+        modifier = Modifier // căn chỉnh
+            .fillMaxWidth() // giãn hết cỡ
+            .height(36.dp) // chiều cao 36dp
             .background(Color(0xFFF0F0F0), RoundedCornerShape(10.dp)) // Nền xám nhạt, bo góc
-            .padding(horizontal = 8.dp),
-        contentAlignment = Alignment.CenterStart
+            .padding(horizontal = 8.dp), // đệm bên trong theo trục hoành
+        contentAlignment = Alignment.CenterStart // Canh giữa theo chiều dọc, canh trái theo chiều ngang
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth(), // giãn hết cỡ
+            verticalAlignment = Alignment.CenterVertically // Căn giữa theo chiều dọc so với chiều cao của row
         ) {
             // Icon tìm kiếm
             Icon(
-                Icons.Default.Search,
-                contentDescription = null,
-                modifier = Modifier.size(30.dp).padding(start = 3.dp)
+                Icons.Default.Search, // icon tìm kiếm
+                contentDescription = null, // không có tiêu đề
+                modifier = Modifier.size(30.dp).padding(start = 3.dp) // chỉnh sửa cỡ 30dp và độn bên trong 3dp
             )
 
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(8.dp)) // Khoảng cách giữa icon và ô nhập text
 
             // Ô nhập text tìm kiếm
-            BasicTextField(
-                value = query,
-                onValueChange = onQueryChange,
+            BasicTextField( // BasicTextField cho phép tùy biến nhiều hơn
+                value = query, // Nội dung ô tìm kiếm
+                onValueChange = onQueryChange, // Cập nhật nội dung khi người dùng nhập
                 modifier = Modifier.weight(1f), // Chiếm toàn bộ chiều rộng còn lại
-                singleLine = true
+                singleLine = true // Chỉ cho phép nhập một dòng
             )
 
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(8.dp)) // khoảng cách giữa ô tìm kiếm và nút mở menu
 
             // Nút mở menu tuỳ chọn (ba chấm)
             Box {
                 // Vị trí của nút mở menu
                 IconButton(onClick = { expanded = true }) {
                     Icon(
-                        Icons.Default.MoreVert,
-                        contentDescription = "More Options",
-                        modifier = Modifier.size(30.dp)
+                        Icons.Default.MoreVert, // Icon ba chấm
+                        contentDescription = "More Options", // mô tả content
+                        modifier = Modifier.size(30.dp) // Chỉnh kích cỡ 30dp
                     )
                 }
 
@@ -969,31 +976,31 @@ fun Searchbar(
                     DropdownMenuItem(onClick = {
                         when (selectedTab) {
                             "Sinh viên" -> studentViewModel.toggleSortOrder()
-                            "Giảng viên" -> staffViewModel.toggleSortOrder()
+                            "Giảng viên" -> staffViewModel.toggleSortOrder() // Đảo thứ tự giảng viên
                             "Đơn vị" -> departmentViewModel?.toggleSortOrder()
                         }
-                        expanded = false
+                        expanded = false // Đóng menu sau khi chọn
                     }) {
-                        val label = when (selectedTab) {
-                            "Sinh viên" -> if (studentSortAscending) "Sắp xếp Z-A" else "Sắp xếp A-Z"
-                            "Giảng viên" -> if (staffSortAscending) "Sắp xếp Z-A" else "Sắp xếp A-Z"
-                            "Đơn vị" -> if (departmentSortAscending) "Sắp xếp Z-A" else "Sắp xếp A-Z"
-                            else -> "Sắp xếp"
+                        val label = when (selectedTab) { // Xác định nhãn cho nút sắp xếp
+                            "Sinh viên" -> if (studentSortAscending) "Sắp xếp Z-A" else "Sắp xếp A-Z" // Sắp xếp sinh viên
+                            "Giảng viên" -> if (staffSortAscending) "Sắp xếp Z-A" else "Sắp xếp A-Z"  // Sắp xếp giảng viên
+                            "Đơn vị" -> if (departmentSortAscending) "Sắp xếp Z-A" else "Sắp xếp A-Z" // Sắp xếp đơn vị
+                            else -> "Sắp xếp" // Giá trị mặc định nếu không có tab nào được chọn
                         }
-                        Text(text = label)
+                        Text(text = label) // Hiển thị chữ "Sắp xếp" với thứ tự tương ứng
                     }
 
                     // Nút mở menu lọc
                     DropdownMenuItem(onClick = { expandedFilter = true }) {
-                        Text("Lọc")
+                        Text("Lọc") // Hiển thị chữ "Lọc" trên menu
                     }
 
                     // Menu con: lọc tùy vào tab hiện tại
                     if (expandedFilter) {
                         DropdownMenu(
-                            expanded = expandedFilter,
-                            onDismissRequest = { expandedFilter = false },
-                            offset = filterMenuOffset
+                            expanded = expandedFilter, // Mở menu lọc
+                            onDismissRequest = { expandedFilter = false }, // Đóng menu khi nhấn ra ngoài
+                            offset = filterMenuOffset // Vị trí menu lọc
                         ) {
                             when (selectedTab) {
                                 "Sinh viên" -> {
@@ -1016,30 +1023,29 @@ fun Searchbar(
                                     }
                                 }
 
-                                "Giảng viên" -> {
+                                "Giảng viên" -> { // Lọc theo giảng viên
                                     DropdownMenuItem(onClick = {
                                         staffViewModel.setFilterMode("ByAll") // Lọc theo tất cả
                                         expanded = false
                                         expandedFilter = false
                                     }) {
-                                        Text("Tất cả")
+                                        Text("Tất cả") // Tiêu đề lọc theo all
                                     }
                                     DropdownMenuItem(onClick = {
                                         staffViewModel.setFilterMode("ByDepartment") // Lọc theo đơn vị
                                         expanded = false
                                         expandedFilter = false
                                     }) {
-                                        Text("Theo Đơn vị")
+                                        Text("Theo Đơn vị") // Tiêu đề lọc theo đơn vị
                                     }
-                                    DropdownMenuItem(onClick = {
+                                    DropdownMenuItem(onClick = { // Lọc theo chức vụ
                                         staffViewModel.setFilterMode("ByPosition") // Lọc theo chức vụ
-                                        expanded = false
-                                        expandedFilter = false
+                                        expanded = false // Đóng menu
+                                        expandedFilter = false // Đóng menu
                                     }) {
-                                        Text("Theo Chức vụ")
+                                        Text("Theo Chức vụ") // Tiêu đề lọc theo chức vụ
                                     }
                                 }
-
                                 "Đơn vị" -> {
                                     if (departmentViewModel != null) {
                                         DropdownMenuItem(onClick = {
@@ -1082,11 +1088,12 @@ fun Searchbar(
 }
 
 @Composable
+// Hàm Bottomnavigationbar để tạo thanh điều hướng dưới cùng
 fun Bottomnavigationbar(
     selectedTab: String, // Tên của tab hiện tại đang được chọn (ví dụ: "Giảng viên")
     onTabSelected: (String) -> Unit // Hàm callback để xử lý khi người dùng chọn tab khác
 ) {
-    BottomNavigation(
+    BottomNavigation( // Thanh điều hướng dưới cùng
         backgroundColor = Color.White, // Màu nền của thanh điều hướng
         contentColor = Color.Black // Màu mặc định cho nội dung (icon/text)
     ) {
@@ -1114,28 +1121,27 @@ fun Bottomnavigationbar(
         )
 
 
-        BottomNavigationItem(
+        BottomNavigationItem( // Tab giảng viên
             icon = {
-                Image(
+                Image( // Sử dụng Image để hiển thị icon
                     painter = painterResource(id = R.drawable.staff_icon), // Icon từ resource
                     contentDescription = "Giảng viên",
-                    modifier = Modifier.size(24.dp),
-                    colorFilter = ColorFilter.tint(
+                    modifier = Modifier.size(24.dp), // Kích thước icon là 24dp
+                    colorFilter = ColorFilter.tint( // Tô màu icon, ColorFilter.tint giúp tô màu icon theo màu đã chỉ định
                         if (selectedTab == "Giảng viên") Color(0xFF007BFE) else Color.Black, // Màu xanh khi được chọn
-                        BlendMode.SrcIn
+                        BlendMode.SrcIn // Tô màu icon, BlendMode.SrcIn giúp tô màu icon theo màu đã chỉ định
                     )
                 )
             },
-            label = {
+            label = { // Nhãn hiển thị bên dưới icon
                 Text(
-                    "Giảng viên",
-                    color = if (selectedTab == "Giảng viên") Color(0xFF007BFE) else Color.Black
+                    "Giảng viên", // Nhãn hiển thị bên dưới icon
+                    color = if (selectedTab == "Giảng viên") Color(0xFF007BFE) else Color.Black // Tô màu xanh nếu được chọn nếu không chọn thì là màu đen
                 )
             },
-            selected = selectedTab == "Giảng viên",
+            selected = selectedTab == "Giảng viên", // Kiểm tra xem tab này có đang được chọn không
             onClick = { onTabSelected("Giảng viên") } // Gọi callback khi tab được chọn
         )
-
 
         BottomNavigationItem(
             icon = {
@@ -1179,14 +1185,15 @@ fun extractLastNameForSort(fullName: String): String {
 @Preview(showBackground = true) // Annotation dùng để hiển thị giao diện này trong cửa sổ Preview của Android Studio.
 // showBackground = true giúp hiển thị nền trắng, làm cho preview dễ nhìn hơn.
 @Composable // Đây là một hàm composable – có thể sử dụng để dựng giao diện trong Jetpack Compose.
+// Đây là hàm Preview dùng để kiểm tra giao diện mà không cần chạy ứng dụng thực tế.
 fun PreviewScreen() {
-    val navController = rememberNavController()
+    val navController = rememberNavController() // Tạo một NavController giả lập để sử dụng trong preview
     val staffViewModel = StaffViewModel() // giả lập trong preview
     val studentViewModel = StudentViewModel() // giả lập trong preview
-    Directoryscreen(
-        navController = navController,
-        staffViewModel = staffViewModel,
-        studentViewModel = studentViewModel
+    Directoryscreen( // Gọi hàm Directoryscreen để hiển thị giao diện
+        navController = navController, // Truyền vào NavController
+        staffViewModel = staffViewModel, // Giả lập ViewModel giảng viên
+        studentViewModel = studentViewModel // Giả lập ViewModel sinh viên
     )
 
 }
