@@ -745,7 +745,8 @@ fun Useravatar(navController: NavController, guestViewModel: GuestViewModel) {
 fun Staffitem(
     staff: Staff, // Dữ liệu giảng viên cụ thể
     isSelected: Boolean, // Nếu được chọn, hiển thị thêm thông tin
-    onClick: () -> Unit // Callback khi người dùng click vào item
+    onClick: () -> Unit, // Callback khi người dùng click vào item
+
 ) {
     Column(
         modifier = Modifier
@@ -870,7 +871,7 @@ fun Stafflist(
                         navController.currentBackStackEntry?.savedStateHandle?.set("staff", staff)
                         navController.navigate("DetailContactScreen")
                     },
-                   // navController = navController
+
                 )
             }
         }
