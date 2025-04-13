@@ -408,7 +408,7 @@ fun Directoryscreen(
                     query = query,
                     navController = navController,
 
-                    //staffViewModel = staffViewModel,
+                   // staffViewModel = staffViewModel,
 
                 )
 
@@ -823,29 +823,35 @@ fun Stafflist(
     }
 
 
-    // Lọc danh sách theo tên và các tiêu chí lọc khác
+    // Bước 1: lọc danh sách theo query và filterMode
     val filteredStaffs = when (filterMode) {
         "ByDepartment" -> {
-            // Lọc theo bộ môn
-            sortedStaffs.filter { it.name.contains(query, ignoreCase = true) && it.department.contains(query, ignoreCase = true) }
+            sortedStaffs.filter {
+                it.name.contains(query, ignoreCase = true) &&
+                        it.department.contains(query, ignoreCase = true)
+            }
         }
         "ByPosition" -> {
-            // Lọc theo chức vụ
-            sortedStaffs.filter { it.name.contains(query, ignoreCase = true) && it.position.contains(query, ignoreCase = true) }
+            sortedStaffs.filter {
+                it.name.contains(query, ignoreCase = true) &&
+                        it.position.contains(query, ignoreCase = true)
+            }
         }
         else -> {
-            // Không lọc theo bộ môn hay chức vụ, chỉ lọc theo tên
-            sortedStaffs.filter { it.name.contains(query, ignoreCase = true) }
+            sortedStaffs.filter {
+                it.name.contains(query, ignoreCase = true)
+            }
         }
     }
 
-    // Nhóm danh sách theo chế độ lọc
+// Bước 2: nhóm danh sách theo từng chế độ lọc
     val groupedStaffs = when (filterMode) {
-        "ByAll" -> sortedStaffs.groupBy { it.name.firstOrNull()?.uppercaseChar() }
+        "ByAll" -> filteredStaffs.groupBy { it.name.firstOrNull()?.uppercaseChar() }
         "ByDepartment" -> filteredStaffs.groupBy { it.department }
         "ByPosition" -> filteredStaffs.groupBy { it.position }
-        else -> sortedStaffs.groupBy { it.name.firstOrNull()?.uppercaseChar() }
+        else -> filteredStaffs.groupBy { it.name.firstOrNull()?.uppercaseChar() }
     }
+
 
     // Hiển thị danh sách dạng LazyColumn (cuộn được)
     LazyColumn {
