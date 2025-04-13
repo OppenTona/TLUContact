@@ -90,7 +90,8 @@ class DepartmentViewModel : ViewModel() {
 
     fun applyFilters(query: String = "") {
         val filteredList = _departmentList.value.filter { department ->
-            val matchesQuery = department.name.contains(query, ignoreCase = true)
+            //Tim kiem theo ten va id
+            val matchesQuery = department.name.contains(query, ignoreCase = true) || department.id.contains(query, ignoreCase = true)
             val matchesFilter = when (_filterMode.value) {
                 "Khoa" -> department.type == "Khoa"
                 "Phòng" -> department.type == "Phòng"
