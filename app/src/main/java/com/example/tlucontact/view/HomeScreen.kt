@@ -53,7 +53,6 @@ import com.example.tlucontact.data.model.Student
 import com.example.tlucontact.data.repository.DepartmentRepository
 import com.example.tlucontact.data.repository.SessionManager
 import com.example.tlucontact.viewmodel.DepartmentViewModel
-import com.example.tlucontact.viewmodel.DepartmentViewModelFactory
 import com.example.tlucontact.viewmodel.GuestViewModel
 import com.example.tlucontact.viewmodel.LogOutViewModel
 import com.example.tlucontact.viewmodel.StaffViewModel
@@ -71,14 +70,9 @@ fun HomeScreen(
     // rememberNavController sẽ nhớ lại NavController khi giao diện được recomposed
     val navController = rememberNavController()
 
-    // Tạo instance của DepartmentRepository
-    val repository = DepartmentRepository() // Thay thế bằng cách tạo instance thực tế của repository
-
-    // Sử dụng DepartmentViewModelFactory để tạo DepartmentViewModel
-    val departmentViewModel: DepartmentViewModel = viewModel(factory = DepartmentViewModelFactory(repository))
-
     // ViewModel dùng chung
 
+    val departmentViewModel: DepartmentViewModel = viewModel() // Tạo hoặc lấy ViewModel có kiểu StudentViewModel, ViewModel này được dùng để quản lý dữ liệu và logic liên quan đến đơn vị
     val staffViewModel: StaffViewModel = viewModel()    // Tạo hoặc lấy ViewModel có kiểu StaffViewModel, ViewModel này được dùng để quản lý dữ liệu và logic liên quan đến giảng viên, viewModel() sẽ tự động gán theo vòng đời của composable
     val studentViewModel: StudentViewModel = viewModel() // Tạo hoặc lấy ViewModel có kiểu StudentViewModel, ViewModel này được dùng để quản lý dữ liệu và logic liên quan đến sinh viên
     val guestViewModel: GuestViewModel = viewModel()
@@ -231,22 +225,17 @@ fun HomeScreen(
                 navArgument("address") { type = NavType.StringType },
                 navArgument("screenTitle") { type = NavType.StringType }
             )
-
         ) { backStackEntry ->
             val args = backStackEntry.arguments!!
-            val department = Department(
+
+            DepartmentDetailView(
                 name = Uri.decode(args.getString("name") ?: ""),
                 id = Uri.decode(args.getString("id") ?: ""),
                 leader = Uri.decode(args.getString("leader") ?: ""),
                 email = Uri.decode(args.getString("email") ?: ""),
                 phone = Uri.decode(args.getString("phone") ?: ""),
-                address = Uri.decode(args.getString("address") ?: "")
-            )
-
-            DepartmentDetailView(
-                department = department,
-                onBack = { navController.popBackStack() },
-                onEditClick = {}
+                address = Uri.decode(args.getString("address") ?: ""),
+                onBack = { navController.popBackStack() }
             )
         }
     }
@@ -260,7 +249,8 @@ fun Directoryscreen(
     staffViewModel: StaffViewModel,
     studentViewModel: StudentViewModel,
     guestViewModel: GuestViewModel = viewModel(),
-    logOutViewModel: LogOutViewModel = viewModel()
+    logOutViewModel: LogOutViewModel = viewModel(),
+    departmentViewModel: DepartmentViewModel = viewModel()
 ) {
     // Lấy context hiện tại của ứng dụng (dùng để hiển thị Toast, gọi Intent,...)
     val context = LocalContext.current
@@ -280,14 +270,8 @@ fun Directoryscreen(
     var selectedDepartment by remember { mutableStateOf("") }
     var selectedPosition by remember { mutableStateOf("") }
 
-
-    val departmentRepository = DepartmentRepository()
-    val departmentViewModel: DepartmentViewModel = viewModel(
-        factory = DepartmentViewModelFactory(departmentRepository)
-    )
-    val filteredDepartments by departmentViewModel.filteredDepartments.collectAsState() // Lấy danh sách đã lọc
-
-    val departments by departmentViewModel.departmentList.collectAsState()
+    // Lấy dữ liệu từ các ViewModel
+    val department by departmentViewModel.departmentList.collectAsState()
 
     // Lấy email người dùng đã đăng nhập từ SessionManager (lưu trong SharedPreferences hoặc tương tự)
     val userLoginEmail = SessionManager(context).getUserLoginEmail()
@@ -366,15 +350,8 @@ fun Directoryscreen(
                 onQueryChange = { query = it }, // Cập nhật query khi người dùng nhập
                 selectedTab = selectedTab, // Biết đang ở tab nào để xử lý đúng
                 onFilterClick = { isFilterActive = true }, // Mở lọc khi nhấn icon lọc
-
-                // Chỉ truyền DepartmentViewModel nếu đang ở tab "Đơn vị"
+                //departmentViewModel = departmentViewModel, // Truyền ViewModel đơn vị
                 departmentViewModel = if (selectedTab == "Đơn vị") departmentViewModel else null,
-
-                onDepartmentSortOrderChange = { newSortOrder ->
-                    // (Nếu muốn) cập nhật trạng thái sắp xếp
-                    // departmentViewModel.setSortAscending(newSortOrder)
-                },
-
             )
 
             Spacer(Modifier.height(8.dp))
@@ -415,13 +392,10 @@ fun Directoryscreen(
 
                 )
 
-
                 "Đơn vị" -> DepartmentList(
-                    departmentsFlow = departmentViewModel.filteredDepartments,
                     query = query,
                     navController = navController,
                     departmentViewModel = departmentViewModel,
-                    onDepartmentClick = { department -> }
                 )
 
                 "Sinh viên" -> StudentList(
@@ -589,50 +563,100 @@ fun StudentItem(
 
 @Composable
 fun DepartmentList(
-    departmentsFlow: StateFlow<List<Department>>,
     query: String,
     navController: NavController,
-    departmentViewModel: DepartmentViewModel,
-    onDepartmentClick: (Department) -> Unit // Thêm lambda xử lý click
+    departmentViewModel: DepartmentViewModel = viewModel()
 ) {
-    val departments by departmentsFlow.collectAsState()
     val sortAscending by departmentViewModel.sortAscending.collectAsState()
+    val filterMode by departmentViewModel.filterMode.collectAsState()
+    val filteredDepartments by departmentViewModel.filteredDepartmentList.collectAsState()
 
-    val filteredDepartments = remember(departments, query) {
-        departments.filter { it.name.contains(query, ignoreCase = true) }
-    }
+    Column {
+        if (filterMode == "Tất cả") {
+            // Hiển thị theo bảng chữ cái
+            val sortedDepartments = if (sortAscending) {
+                filteredDepartments.sortedBy { it.name.lowercase() }
+            } else {
+                filteredDepartments.sortedByDescending { it.name.lowercase() }
+            }
 
-    val sortedDepartments = remember(filteredDepartments, sortAscending) {
-        if (sortAscending) {
-            filteredDepartments.sortedBy { it.name.lowercase() }
-        } else {
-            filteredDepartments.sortedByDescending { it.name.lowercase() }
-        }
-    }
+            val groupedDepartments = sortedDepartments.groupBy {
+                it.name.trim().firstOrNull()?.uppercaseChar() ?: '#'
+            }
 
-    val groupedDepartments = remember(sortedDepartments) {
-        sortedDepartments.groupBy { it.name.first().uppercaseChar() }
-    }
-
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        ('A'..'Z').forEach { letter ->
-            if (groupedDepartments.containsKey(letter)) {
-                item {
-                    Text(
-                        text = letter.toString(),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Gray.copy(alpha = 0.6f),
-                        modifier = Modifier.padding(3.dp)
-                    )
+            LazyColumn {
+                groupedDepartments.forEach { (letter, departmentList) ->
+                    if (letter != '#') {
+                        item {
+                            Text(
+                                text = letter.toString(),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.Gray,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 6.dp, horizontal = 16.dp)
+                            )
+                        }
+                    }
+                    items(departmentList) { department ->
+                        DepartmentItem(
+                            department = department,
+                            isSelected = false,
+                            onClick = {
+                                navController.navigate(
+                                    "department_detail/" +
+                                            "${Uri.encode(department.name)}/" +
+                                            "${Uri.encode(department.id)}/" +
+                                            "${Uri.encode(department.leader)}/" +
+                                            "${Uri.encode(department.email)}/" +
+                                            "${Uri.encode(department.phone)}/" +
+                                            "${Uri.encode(department.address)}?screenTitle=${Uri.encode(department.name)}"
+                                )
+                            },
+                            navController = navController
+                        )
+                    }
                 }
+            }
+        } else {
+            // Hiển thị theo loại đơn vị
+            val groupedByType = filteredDepartments.groupBy {
+                it.type
+            }
 
-                items(groupedDepartments[letter]!!) { department ->
-                    DepartmentItem(
-                        department = department,
-                        navController = navController,
-                        onClick = { onDepartmentClick(department) } // Gọi lambda khi click
-                    )
+            LazyColumn {
+                groupedByType.forEach { (type, departmentList) ->
+                    item {
+                        Text(
+                            text = type.ifEmpty { "Khác" },
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.Gray,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 6.dp, horizontal = 16.dp)
+                        )
+                    }
+
+                    items(departmentList) { department ->
+                        DepartmentItem(
+                            department = department,
+                            isSelected = false,
+                            onClick = {
+                                navController.navigate(
+                                    "department_detail/" +
+                                            "${Uri.encode(department.name)}/" +
+                                            "${Uri.encode(department.id)}/" +
+                                            "${Uri.encode(department.leader)}/" +
+                                            "${Uri.encode(department.email)}/" +
+                                            "${Uri.encode(department.phone)}/" +
+                                            "${Uri.encode(department.address)}?screenTitle=${Uri.encode(department.name)}"
+                                )
+                            },
+                            navController = navController
+                        )
+                    }
                 }
             }
         }
@@ -640,16 +664,16 @@ fun DepartmentList(
 }
 
 @Composable
-fun DepartmentItem(department: Department, navController: NavController, onClick: () -> Unit) {
-    Row(
+fun DepartmentItem(
+    department: Department,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    navController: NavController
+) {
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick) // Sử dụng onClick từ tham số
             .clickable {
-                Log.d(
-                    "Navigation",
-                    "Navigating to department_detail with: ${department.name}, ${department.id}, ${department.phone}"
-                )
                 navController.navigate(
                     "department_detail/" +
                             "${Uri.encode(department.name)}/" +
@@ -660,26 +684,49 @@ fun DepartmentItem(department: Department, navController: NavController, onClick
                             "${Uri.encode(department.address)}?screenTitle=${Uri.encode(department.name)}"
                 )
             }
-            .padding(6.dp),
-        verticalAlignment = Alignment.CenterVertically // Căn chỉnh theo chiều dọc
+            .padding(8.dp)
     ) {
-        Image(
-            painter = if (department.photoURL.isNullOrEmpty()) {
-                painterResource(id = R.drawable.thuyloi) // Ảnh mặc định nếu không có photoURL
-            } else {
-                rememberAsyncImagePainter(department.photoURL) // Tải ảnh từ URL
-            },
-            contentDescription = "Ảnh đại diện",
-            modifier = Modifier
-                .size(32.dp) // Kích thước ảnh
-                .clip(CircleShape) // Bo tròn ảnh
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically // Sắp xếp các thành phần bên trong theo chiều ngang, căn giữa theo chiều dọc
+        ) {
+            // Hiển thị ảnh đại diện của đơn vị
+            Image(
+                painter = if (department.photoURL.isNullOrEmpty()) {
+                    painterResource(id = R.drawable.thuyloi) // Ảnh mặc định nếu không có photoURL
+                } else {
+                    rememberAsyncImagePainter(department.photoURL) // Tải ảnh từ URL
+                },
+                contentDescription = "Ảnh đại diện",
+                modifier = Modifier
+                    .size(32.dp) // Kích thước ảnh
+                    .clip(CircleShape) // Bo tròn ảnh
+            )
 
-        Spacer(modifier = Modifier.width(12.dp)) // Khoảng cách giữa ảnh và text
+            Spacer(modifier = Modifier.width(8.dp))
 
-        Column {
-            Text(text = department.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-            Divider(color = Color.LightGray.copy(alpha = 0.5f))
+            Column {
+                // Hiển thị tên đơn vị
+                Text(text = department.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+
+                // Thêm khoảng cách 4dp giữa Text và Divider
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Kẻ đường gạch chân dưới tên đơn vị
+                Divider(
+                    color = Color.LightGray.copy(alpha = 0.5f),
+                    modifier = Modifier.wrapContentWidth(Alignment.Start) // Giới hạn chiều rộng theo nội dung và căn trái
+                )
+            }
+        }
+
+        if (isSelected) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Mã đơn vị: ${department.id}", fontSize = 14.sp)
+            Text("Trưởng đơn vị: ${department.leader}", fontSize = 14.sp)
+            Text("Email: ${department.email}", fontSize = 14.sp)
+            Text("Số điện thoại: ${department.phone}", fontSize = 14.sp)
+            Text("Địa chỉ: ${department.address}", fontSize = 14.sp)
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
@@ -897,6 +944,7 @@ fun Topbar( // Thanh tiêu đề trên cùng
 @SuppressLint("UnrememberedMutableState") // Bỏ cảnh báo mutableState không được remember đúng cách (dành cho biến fallback)
 @Composable
 fun Searchbar(
+    onStaffFilterChange: (String) -> Unit = {}, // Callback khi người dùng chọn bộ lọc giảng viên
     query: String, // Chuỗi tìm kiếm nhập vào
     onQueryChange: (String) -> Unit, // Callback khi người dùng nhập thay đổi
     selectedTab: String, // Tab hiện tại ("Sinh viên", "Giảng viên", "Đơn vị")
@@ -904,7 +952,7 @@ fun Searchbar(
     studentViewModel: StudentViewModel = viewModel(), // ViewModel sinh viên
     staffViewModel: StaffViewModel = viewModel(), // ViewModel giảng viên
     departmentViewModel: DepartmentViewModel? = null, // ViewModel đơn vị (có thể null)
-    onDepartmentSortOrderChange: (Boolean) -> Unit = {} // Callback khi đổi thứ tự sắp xếp đơn vị (dự phòng)
+    //onDepartmentSortOrderChange: (Boolean) -> Unit = {} // Callback khi đổi thứ tự sắp xếp đơn vị (dự phòng)
 ) {
     var expanded by remember { mutableStateOf(false) } // Có đang mở menu "More" không?
     var expandedFilter by remember { mutableStateOf(false) } // Có đang mở menu lọc không?
@@ -952,7 +1000,13 @@ fun Searchbar(
             // Ô nhập text tìm kiếm
             BasicTextField( // BasicTextField cho phép tùy biến nhiều hơn
                 value = query, // Nội dung ô tìm kiếm
-                onValueChange = onQueryChange, // Cập nhật nội dung khi người dùng nhập
+                onValueChange = {
+                    onQueryChange(it)
+                    if (selectedTab == "Đơn vị") {
+                        departmentViewModel?.setQuery(it) // Gọi hàm setQuery khi query thay đổi
+                    }
+                },
+                //onValueChange = onQueryChange, // Cập nhật nội dung khi người dùng nhập
                 modifier = Modifier.weight(1f), // Chiếm toàn bộ chiều rộng còn lại
                 singleLine = true // Chỉ cho phép nhập một dòng
             )
@@ -1051,35 +1105,54 @@ fun Searchbar(
                                     }
                                 }
                                 "Đơn vị" -> {
-                                    if (departmentViewModel != null) {
-                                        DropdownMenuItem(onClick = {
-                                            departmentViewModel.setFilterType("Khoa")
-                                            expandedFilter = false
-                                            expanded = false
-                                        }) {
-                                            Text("Khoa")
-                                        }
-                                        DropdownMenuItem(onClick = {
-                                            departmentViewModel.setFilterType("Phòng")
-                                            expandedFilter = false
-                                            expanded = false
-                                        }) {
-                                            Text("Phòng")
-                                        }
-                                        DropdownMenuItem(onClick = {
-                                            departmentViewModel.setFilterType("Trung tâm")
-                                            expandedFilter = false
-                                            expanded = false
-                                        }) {
-                                            Text("Trung tâm")
-                                        }
-                                        DropdownMenuItem(onClick = {
-                                            departmentViewModel.setFilterType("Viện")
-                                            expandedFilter = false
-                                            expanded = false
-                                        }) {
-                                            Text("Viện")
-                                        }
+                                    DropdownMenuItem(onClick = {
+                                        departmentViewModel?.setFilterMode("Tất cả")
+                                        departmentViewModel?.applyFilters() // Áp dụng bộ lọc
+                                        expandedFilter = false
+                                        expanded = false
+                                        onFilterClick()
+                                    }) {
+                                        Text("Tất cả")
+                                    }
+
+                                    DropdownMenuItem(onClick = {
+                                        departmentViewModel?.setFilterMode("Khoa")
+                                        departmentViewModel?.applyFilters() // Áp dụng bộ lọc
+                                        expandedFilter = false
+                                        expanded = false
+                                        onFilterClick()
+                                    }) {
+                                        Text("Khoa")
+                                    }
+
+                                    DropdownMenuItem(onClick = {
+                                        departmentViewModel?.setFilterMode("Phòng")
+                                        departmentViewModel?.applyFilters() // Áp dụng bộ lọc
+                                        expandedFilter = false
+                                        expanded = false
+                                        onFilterClick()
+                                    }) {
+                                        Text("Phòng")
+                                    }
+
+                                    DropdownMenuItem(onClick = {
+                                        departmentViewModel?.setFilterMode("Trung tâm")
+                                        departmentViewModel?.applyFilters() // Áp dụng bộ lọc
+                                        expandedFilter = false
+                                        expanded = false
+                                        onFilterClick()
+                                    }) {
+                                        Text("Trung tâm")
+                                    }
+
+                                    DropdownMenuItem(onClick = {
+                                        departmentViewModel?.setFilterMode("Viện")
+                                        departmentViewModel?.applyFilters() // Áp dụng bộ lọc
+                                        expandedFilter = false
+                                        expanded = false
+                                        onFilterClick()
+                                    }) {
+                                        Text("Viện")
                                     }
                                 }
                             }
