@@ -16,7 +16,7 @@ import kotlin.text.startsWith // Import hàm startsWith để kiểm tra chuỗi
 
 // Định nghĩa lớp SignUpViewModel kế thừa từ AndroidViewModel
 class SignUpViewModel(application: Application, private val state: SavedStateHandle) : AndroidViewModel(application) {
-    private val repository = SignUpRepository(application) // Khởi tạo repository để xử lý logic xác thực
+    private val repository = SignUpRepository() // Khởi tạo repository để xử lý logic xác thực
 
     // Biến trạng thái lưu trữ trạng thái đăng ký và thông báo lỗi (nếu có)
     private val _signupState = MutableStateFlow<Pair<Boolean, String?>>(Pair(false, null))

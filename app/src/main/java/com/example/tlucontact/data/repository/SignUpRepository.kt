@@ -1,11 +1,10 @@
 package com.example.tlucontact.data.repository
 
-import android.content.Context
 import com.example.tlucontact.data.model.Guest
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
-class SignUpRepository(private val context: Context) {
+class SignUpRepository() {
     private val auth = FirebaseAuth.getInstance() // Lấy instance của FirebaseAuth để sử dụng các chức năng xác thực
     private val firestore = FirebaseFirestore.getInstance() // Lấy instance của FirebaseFirestore để thao tác với database
 

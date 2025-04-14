@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel // Import lớp ViewModel từ Android Jetpa
 import androidx.lifecycle.viewModelScope // Import phạm vi Coroutine liên quan đến vòng đời ViewModel
 import com.example.tlucontact.data.model.Guest // Import lớp Guest từ package model
 import com.example.tlucontact.data.repository.GuestRepository // Import lớp GuestRepository để làm việc với dữ liệu khách
-import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow // Import MutableStateFlow để quản lý trạng thái có thể thay đổi
 import kotlinx.coroutines.flow.StateFlow // Import StateFlow để phát trạng thái không thể thay đổi
 import kotlinx.coroutines.launch // Import hàm launch cho Coroutine

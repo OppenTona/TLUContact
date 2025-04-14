@@ -36,25 +36,25 @@ class GuestRepository {
     }
 
     // Hàm cập nhật thông tin guest
-    suspend fun updateGuest(guest: Guest): Result<Unit> {
+    suspend fun updateGuest(guest: Guest): Result<Unit> { // Định nghĩa hàm cập nhật thông tin khách trả về Result
         return try {
             // Tạo một bản sao của đối tượng Guest mà không bao gồm email
-            val guestData = mapOf(
-                "userId" to guest.userId,
-                "name" to guest.name,
-                "phone" to guest.phone,
-                "avatarURL" to guest.avatarURL,
-                "position" to guest.position,
-                "department" to guest.department,
-                "address" to guest.address,
-                "userType" to guest.userType
+            val guestData = mapOf( // Tạo Map chứa dữ liệu của guest để lưu vào Firestore
+                "userId" to guest.userId, // Ánh xạ trường userId từ đối tượng guest
+                "name" to guest.name, // Ánh xạ trường name từ đối tượng guest
+                "phone" to guest.phone, // Ánh xạ trường phone từ đối tượng guest
+                "avatarURL" to guest.avatarURL, // Ánh xạ trường avatarURL từ đối tượng guest
+                "position" to guest.position, // Ánh xạ trường position từ đối tượng guest
+                "department" to guest.department, // Ánh xạ trường department từ đối tượng guest
+                "address" to guest.address, // Ánh xạ trường address từ đối tượng guest
+                "userType" to guest.userType // Ánh xạ trường userType từ đối tượng guest
             )
 
             // Lưu dữ liệu vào Firestore mà không bao gồm email
-            guestCollection.document(guest.email).set(guestData).await()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
+            guestCollection.document(guest.email).set(guestData).await() // Cập nhật dữ liệu vào document có id là email và đợi hoàn thành
+            Result.success(Unit) // Trả về kết quả thành công nếu không có lỗi
+        } catch (e: Exception) { // Bắt ngoại lệ nếu có lỗi xảy ra
+            Result.failure(e) // Trả về kết quả thất bại với thông tin lỗi
         }
     }
 }

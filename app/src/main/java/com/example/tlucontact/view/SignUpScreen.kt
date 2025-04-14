@@ -235,7 +235,7 @@ fun PasswordField(
     TextField(
         value = value, // Giá trị của trường
         onValueChange = onValueChange, // Hàm xử lý khi giá trị thay đổi
-        label = { Text(label) }, // Gắn nhãn cho trường
+        label = { Text(label, color = if (isError) Color.Red else Color.Gray) }, // Gắn nhãn cho trường
         trailingIcon = { // Biểu tượng ở cuối trường
             IconButton(onClick = { onVisibilityChange(!passwordVisible) }) { // Nút để thay đổi trạng thái hiển thị mật khẩu
                 Icon( // Hiển thị biểu tượng

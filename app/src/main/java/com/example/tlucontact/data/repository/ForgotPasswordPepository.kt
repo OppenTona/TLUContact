@@ -1,12 +1,9 @@
 package com.example.tlucontact.data.repository
 
-import android.content.Context
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 
-class ForgotPasswordPepository(private val context: Context) {
+class ForgotPasswordPepository() {
     private val auth = FirebaseAuth.getInstance() // Lấy instance của FirebaseAuth để sử dụng các chức năng xác thực
-    private val firestore = FirebaseFirestore.getInstance() // Lấy instance của FirebaseFirestore để thao tác với database
 
     // Hàm xử lý đặt lại mật khẩu
     fun resetPassword(email: String, onResult: (Boolean, String?) -> Unit) {
