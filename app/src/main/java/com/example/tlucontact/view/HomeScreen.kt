@@ -303,17 +303,21 @@ fun Directoryscreen(
     val selectedGuest by guestViewModel.selectedGuest.collectAsState()
 
     val students by studentViewModel.studentList.collectAsState()
+    val guest by guestViewModel.selectedGuest.collectAsState()
 
 
     LaunchedEffect(userLoginEmail) {
         if (!userLoginEmail.isNullOrBlank()) {
+            userLoginEmail?.let { email ->
+                guestViewModel.fetchGuestByEmail(email)              // Gọi hàm trong ViewModel để lấy thông tin người dùng theo email
+            }
             when {
                 userLoginEmail.endsWith("@e.tlu.edu.vn") -> {
                     Log.d("Navigation", "Navigating to update_detail_student")
                     studentViewModel.setStudentByEmail(userLoginEmail)
                     studentViewModel.fetchStudents(userLoginEmail)
                 }
-                userLoginEmail.endsWith("@tlu.edu.vn") -> {
+                userLoginEmail.endsWith("@tlu.edu.vn") || guest?.userType == "staff" -> {
                     Log.d("Navigation", "Navigating to update_detail_staff")
                     staffViewModel.setStaffByEmail(userLoginEmail)
                     studentViewModel.fetchStudents(userLoginEmail)

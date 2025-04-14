@@ -100,6 +100,7 @@ class LogInRepository(private val context: Context) {
                 if (tokenTask.isSuccessful) { // Nếu lấy token thành công
                     tokenTask.result?.token?.let { firebaseToken -> // Lấy token từ kết quả
                         SessionManager(context).saveUserToken(firebaseToken) // Lưu token vào SessionManager
+                        SessionManager(context).saveUserLoginEmail(userEmail) // Lưu email vào SessionManager
                         callback(Result.success(firebaseUser)) // Trả kết quả thành công với người dùng Firebase
                     } ?: callback(Result.failure(Exception("Token is null"))) // Trả kết quả thất bại nếu token null
                 } else {
