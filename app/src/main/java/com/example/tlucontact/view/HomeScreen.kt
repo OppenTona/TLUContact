@@ -52,6 +52,7 @@ import com.example.tlucontact.data.model.Staff
 import com.example.tlucontact.data.model.Student
 import com.example.tlucontact.data.repository.DepartmentRepository
 import com.example.tlucontact.data.repository.SessionManager
+import com.example.tlucontact.data.repository.TempImageStorage
 import com.example.tlucontact.viewmodel.DepartmentViewModel
 import com.example.tlucontact.viewmodel.GuestViewModel
 import com.example.tlucontact.viewmodel.LogOutViewModel
@@ -167,9 +168,7 @@ fun HomeScreen(
 
 
         composable(
-            // Định nghĩa đường dẫn (route) có chứa các tham số truyền vào
             route = "student_detail/{name}/{studentId}/{className}/{email}/{phone}/{address}",
-            // Định nghĩa đường dẫn (route) có chứa các tham số truyền vào
             arguments = listOf(
                 navArgument("name") { type = NavType.StringType },
                 navArgument("studentId") { type = NavType.StringType },
@@ -178,9 +177,8 @@ fun HomeScreen(
                 navArgument("phone") { type = NavType.StringType },
                 navArgument("address") { type = NavType.StringType }
             )
-        ) { backStackEntry -> // Khối xử lý khi route này được điều hướng đến
-            val args = backStackEntry.arguments!! // Lấy ra Bundle chứa các tham số đã truyền vào
-            // Gọi màn hình chi tiết sinh viên, truyền vào một đối tượng Student được tạo từ các tham số
+        ) { backStackEntry ->
+            val args = backStackEntry.arguments!!
             DetailStudentScreen(
                 student = Student(
                     fullNameStudent = args.getString("name") ?: "",
@@ -188,9 +186,10 @@ fun HomeScreen(
                     className = args.getString("className") ?: "",
                     email = args.getString("email") ?: "",
                     phone = args.getString("phone") ?: "",
-                    address = args.getString("address") ?: ""
+                    address = args.getString("address") ?: "",
+                    // Không lấy photoURL từ arguments nữa
+                    photoURL = ""  // Sẽ được ghi đè trong DetailStudentScreen
                 ),
-                // Hàm xử lý khi nhấn nút quay lại, sẽ pop khỏi backstack
                 onBack = { navController.popBackStack() }
             )
         }
@@ -512,7 +511,22 @@ fun StudentItem(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick) // Khi nhấn vào item, gọi hàm onClick
+            .clickable {
+                // Lưu URL vào bộ nhớ tạm trước khi điều hướng
+                TempImageStorage.setImageUrl(student.photoURL)
+
+                // Điều hướng như bình thường, không cần truyền photoURL
+                navController.navigate(
+                    "student_detail/" +
+                            "${Uri.encode(student.fullNameStudent)}/" +
+                            "${student.studentID}/" +
+                            "${Uri.encode(student.className)}/" +
+                            "${Uri.encode(student.email)}/" +
+                            "${Uri.encode(student.phone)}/" +
+                            "${Uri.encode(student.address)}"
+                )
+                onClick()
+            }
             .padding(8.dp) // Khoảng cách bên trong item
     ) {
         Row(

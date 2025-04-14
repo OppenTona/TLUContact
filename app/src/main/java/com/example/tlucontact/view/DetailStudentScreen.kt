@@ -3,6 +3,7 @@ package com.example.tlucontact.view
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -26,14 +27,22 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import com.example.tlucontact.data.model.Student
+import com.example.tlucontact.data.repository.TempImageStorage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetailStudentScreen(student: Student, onBack: () -> Unit) {
     // Hàm này nhận vào một đối tượng Student và một lambda function onBack để xử lý sự kiện quay lại.
     val scrollState = rememberScrollState() // Trạng thái cuộn áp dụng cho Column có thể cuộn dọc
+    // Lấy URL ảnh từ bộ nhớ tạm
+    val photoURL = TempImageStorage.getImageUrl()
+    Log.d("DetailStudentScreen", "Photo URL from temp storage: $photoURL")
+
+    // Tạo phiên bản Student mới với photoURL đã cập nhật
+    val updatedStudent = student.copy(photoURL = photoURL)
 
     Scaffold(
         topBar = {
@@ -60,16 +69,14 @@ fun DetailStudentScreen(student: Student, onBack: () -> Unit) {
                 .padding(16.dp), // Thêm padding 16dp xung quanh nội dung
             horizontalAlignment = Alignment.CenterHorizontally // Căn giữa các thành phần con theo chiều ngang
         ) {
-            Image(
-                // Hiển thị ảnh đại diện của sinh viên
-                // Sử dụng AsyncImagePainter để tải ảnh bất đồng bộ từ URL
-                // Nếu photoURL trống, sử dụng ảnh mặc định từ pravatar.cc dựa trên email
-                painter = rememberAsyncImagePainter(student.photoURL.ifEmpty { "https://i.pravatar.cc/150?u=${student.email}" }),
-                contentDescription = "Ảnh đại diện", // Mô tả nội dung của ảnh cho accessibility
+            // Hiển thị ảnh với URL đã lấy từ bộ nhớ tạm
+            AsyncImage(
+                model = if (photoURL.isNotEmpty()) photoURL else "https://i.pravatar.cc/150?u=${student.email}",
+                contentDescription = "Ảnh đại diện",
                 modifier = Modifier
-                    .size(100.dp) // Đặt kích thước ảnh là 100dp x 100dp
-                    .clip(CircleShape), // Cắt ảnh thành hình tròn
-                contentScale = ContentScale.Crop // Điều chỉnh tỷ lệ ảnh để lấp đầy không gian, có thể cắt bớt phần thừa
+                    .size(100.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
             )
 
             // Tạo khoảng trống 8dp theo chiều dọc giữa ảnh và tên
