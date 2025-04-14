@@ -75,7 +75,7 @@ class StaffViewModel : ViewModel() {
                 ref.orderBy("fullName") // Sắp xếp theo tên giảng viên
             } else {  // Nếu đang sắp xếp giảm dần
                 ref.orderBy("fullName", Query.Direction.DESCENDING) // Sắp xếp theo tên giảng viên giảm dần
-            }
+            }  //SD ORDERBY()
 
             // Áp dụng điều kiện lọc theo chế độ
             when (_filterMode.value) { // Kiểu lọc: All/ByDepartment/ByPosition
@@ -104,7 +104,7 @@ class StaffViewModel : ViewModel() {
             ref = ref.limit(100) // Giới hạn số lượng kết quả trả về tối đa là 100
 
             // Lấy dữ liệu từ Firestore
-            ref.get() // Trả về một Task chứa kết quả
+            ref.get() // Trả về một Task chứa kết quả SD GET
                 .addOnSuccessListener { result -> // Khi lấy dữ liệu thành công
                     // Chuyển dữ liệu từ Firestore thành danh sách Staff
                     val staffItems = result.map { doc -> // Chuyển đổi từng document thành Staff

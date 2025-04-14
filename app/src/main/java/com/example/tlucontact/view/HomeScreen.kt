@@ -54,6 +54,7 @@ import com.example.tlucontact.data.repository.DepartmentRepository
 import com.example.tlucontact.data.repository.SessionManager
 import com.example.tlucontact.data.repository.TempImageStorage
 import com.example.tlucontact.viewmodel.DepartmentViewModel
+import com.example.tlucontact.viewmodel.DirectoryViewModel
 import com.example.tlucontact.viewmodel.GuestViewModel
 import com.example.tlucontact.viewmodel.LogOutViewModel
 import com.example.tlucontact.viewmodel.StaffViewModel
@@ -83,6 +84,7 @@ fun HomeScreen(
     val selectedStaff by staffViewModel.selectedStaff.collectAsState()
     val selectedStudent by studentViewModel.selectedStudent.collectAsState() // Lấy thông tin sinh viên đang được chọn từ ViewModel
     val selectedGuest by guestViewModel.selectedGuest.collectAsState()
+    val directoryViewModel:DirectoryViewModel = viewModel()
     // LaunchedEffect sẽ chạy khối code bên trong khi giá trị logoutState thay đổi
     LaunchedEffect(logOutState) {
         // Nếu logoutState.first == true → đăng xuất thành công
@@ -162,7 +164,8 @@ fun HomeScreen(
                 staffViewModel = staffViewModel,
                 studentViewModel = studentViewModel,
                 guestViewModel = guestViewModel,
-                logOutViewModel = logOutViewModel
+                logOutViewModel = logOutViewModel,
+                directoryViewModel = directoryViewModel
             )
         }
 
@@ -249,14 +252,15 @@ fun Directoryscreen(
     studentViewModel: StudentViewModel,
     guestViewModel: GuestViewModel = viewModel(),
     logOutViewModel: LogOutViewModel = viewModel(),
-    departmentViewModel: DepartmentViewModel = viewModel()
+    departmentViewModel: DepartmentViewModel = viewModel(),
+    directoryViewModel: DirectoryViewModel = viewModel()
 ) {
     // Lấy context hiện tại của ứng dụng (dùng để hiển thị Toast, gọi Intent,...)
     val context = LocalContext.current
 
     // Biến lưu trạng thái tab đang được chọn, mặc định là "Giảng viên"
     // Dùng để hiển thị nội dung phù hợp theo tab (ví dụ: "Giảng viên", "Sinh viên", v.v.)
-    var selectedTab by remember { mutableStateOf("Giảng viên") }
+    val selectedTab by directoryViewModel.selectedTab
 
     // Biến lưu nội dung tìm kiếm hiện tại trong ô tìm kiếm
     // Khi người dùng nhập text vào ô tìm kiếm, query sẽ thay đổi
@@ -319,7 +323,7 @@ fun Directoryscreen(
         bottomBar = {
             Bottomnavigationbar(selectedTab) { newTab ->
                 // Khi người dùng chọn tab mới → cập nhật selectedTab
-                selectedTab = newTab
+                directoryViewModel.setSelectTab(newTab)
             }
         }
     ) { padding ->
