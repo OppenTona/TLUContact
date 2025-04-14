@@ -12,51 +12,58 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class StudentViewModel : ViewModel() {
+    // Khởi tạo đối tượng Firestore để thao tác với cơ sở dữ liệu Firebase
     private val db = FirebaseFirestore.getInstance()
 
+    // MutableStateFlow lưu trữ danh sách sinh viên, ban đầu rỗng
     private val _studentList = MutableStateFlow<List<Student>>(emptyList())
+    // StateFlow bất biến để UI quan sát (observe) danh sách sinh viên
     val studentList: StateFlow<List<Student>> = _studentList
 
+    // MutableStateFlow lưu trữ sinh viên đang được chọn, ban đầu là null
     private val _selectedStudent = MutableStateFlow<Student?>(null)
+    // StateFlow bất biến để UI quan sát sinh viên đang được chọn
     val selectedStudent: StateFlow<Student?> = _selectedStudent
-    private val _filterMode = MutableStateFlow("ByName")  // "ByName" hoặc "ByClass"
-    val filterMode: StateFlow<String> = _filterMode
-    // Thêm trạng thái sắp xếp
-    private val _sortAscending = MutableStateFlow(true)
-    val sortAscending: StateFlow<Boolean> = _sortAscending
-    private val _snackbarMessage = MutableStateFlow<String?>(null)
-    val snackbarMessage: StateFlow<String?> = _snackbarMessage
 
-//    init {
-//        try {
-//            fetchStudents() // Lấy tất cả sinh viên ban đầu
-//        }
-//        catch (
-//            e: Exception) {
-//            println("Lỗi lấy dữ liệu sinh viên: ${e.message}")
-//        }
-//
-//    }
-    // Thêm hàm để thay đổi trạng thái sắp xếp
+    // MutableStateFlow lưu trữ chế độ lọc ("ByName" hoặc "ByClass")
+    private val _filterMode = MutableStateFlow("ByName")
+    // StateFlow bất biến để UI quan sát chế độ lọc hiện tại
+    val filterMode: StateFlow<String> = _filterMode
+
+    // MutableStateFlow lưu trữ trạng thái sắp xếp (true: tăng dần, false: giảm dần)
+    private val _sortAscending = MutableStateFlow(true)
+    // StateFlow bất biến để UI quan sát trạng thái sắp xếp
+    val sortAscending: StateFlow<Boolean> = _sortAscending
+
+    // MutableStateFlow lưu trữ thông báo cho Snackbar, ban đầu null (không có thông báo)
+    private val _snackbarMessage = MutableStateFlow<String?>(null)
+
+    // Hàm đảo ngược trạng thái sắp xếp (từ tăng dần sang giảm dần hoặc ngược lại)
     fun toggleSortOrder() {
         _sortAscending.value = !_sortAscending.value
     }
-    // Cập nhật chế độ lọc (ByName hoặc ByClass)
+
+    // Hàm cập nhật chế độ lọc (ByName hoặc ByClass)
     fun setFilterMode(mode: String) {
         _filterMode.value = mode
         // Không cần lấy lại dữ liệu, chỉ thay đổi cách hiển thị trên UI
     }
+
+    // Hàm lấy danh sách sinh viên từ Firebase dựa trên email của người dùng hiện tại
     public fun fetchStudents(currentUserEmail: String) {
         if (currentUserEmail.endsWith("@e.tlu.edu.vn")) {
             // Nếu là sinh viên → truy xuất className trước từ chính bản thân
             db.collection("student").document(currentUserEmail).get()
                 .addOnSuccessListener { doc ->
+                    // Lấy tên lớp của sinh viên hiện tại
                     val className = doc.getString("className") ?: ""
                     if (className.isNotEmpty()) {
+                        // Nếu có tên lớp, truy vấn tất cả sinh viên cùng lớp
                         db.collection("student")
                             .whereEqualTo("className", className)
                             .get()
                             .addOnSuccessListener { result ->
+                                // Chuyển đổi các document thành đối tượng Student
                                 val studentItems = result.map { studentDoc ->
                                     Student(
                                         studentID = studentDoc.getString("studentID") ?: "",
@@ -69,22 +76,27 @@ class StudentViewModel : ViewModel() {
                                         userID = studentDoc.getString("userID") ?: ""
                                     )
                                 }
+                                // Cập nhật danh sách sinh viên
                                 _studentList.value = studentItems
                             }
                             .addOnFailureListener { e ->
+                                // Xử lý lỗi khi truy vấn danh sách sinh viên
                                 println("Lỗi lấy danh sách theo lớp: ${e.message}")
                             }
                     } else {
+                        // Xử lý trường hợp không tìm thấy tên lớp
                         println("Không tìm thấy className của sinh viên $currentUserEmail")
                     }
                 }
                 .addOnFailureListener { e ->
+                    // Xử lý lỗi khi lấy thông tin sinh viên hiện tại
                     println("Lỗi lấy thông tin sinh viên hiện tại: ${e.message}")
                 }
         } else {
             // Nếu là staff → lấy toàn bộ sinh viên
             db.collection("student").get()
                 .addOnSuccessListener { result ->
+                    // Chuyển đổi tất cả document thành đối tượng Student
                     val studentItems = result.map { doc ->
                         Student(
                             studentID = doc.getString("studentID") ?: "",
@@ -97,23 +109,30 @@ class StudentViewModel : ViewModel() {
                             userID = doc.getString("userID") ?: ""
                         )
                     }
+                    // Cập nhật danh sách sinh viên
                     _studentList.value = studentItems
                 }
                 .addOnFailureListener { e ->
+                    // Xử lý lỗi khi lấy toàn bộ sinh viên
                     println("Lỗi lấy toàn bộ sinh viên: ${e.message}")
                 }
         }
     }
 
-
+    // Hàm lấy thông tin chi tiết của sinh viên theo email
     fun setStudentByEmail(emailUser: String) {
+        // Ghi log để debug
         Log.d("setStudentByEmail", "Bat dau vao ham: $emailUser")
+        // Truy vấn document của sinh viên theo email
         db.collection("student").document(emailUser).get()
             .addOnSuccessListener { doc ->
+                // Ghi log khi lấy dữ liệu thành công
                 Log.d("setStudentByEmail", "lay xong du lieu: $emailUser")
                 if (doc.exists()) {
+                    // Ghi log khi document tồn tại
                     Log.d("setStudentByEmail", "Du lieu tôn tai: $emailUser")
                     try {
+                        // Tạo đối tượng Student từ document
                         _selectedStudent.value = Student(
                             studentID = doc.getString("studentID") ?: "",
                             fullNameStudent = doc.getString("fullNameStudent") ?: "Không có tên",
@@ -125,20 +144,28 @@ class StudentViewModel : ViewModel() {
                             userID = doc.getString("userID") ?: ""
                         )
                     } catch (e: Exception) {
+                        // Xử lý lỗi khi tạo đối tượng Student
                         println("Lỗi khi tạo đối tượng Student: ${e.message}")
                     }
                 } else {
+                    // Ghi log khi document không tồn tại
                     Log.d("setStudentByEmail", "Du lieu khong ton tai: $emailUser")
-                    _selectedStudent.value = null // Nếu không tồn tại, đặt giá trị nullS
+                    // Đặt giá trị null cho sinh viên được chọn
+                    _selectedStudent.value = null
                 }
             }
             .addOnFailureListener { exception ->
+                // Xử lý lỗi khi lấy dữ liệu
                 println("Lỗi lấy dữ liệu setStudentByEmail: ${exception.message}")
             }
     }
+
+    // Hàm cập nhật thông tin sinh viên trong Firebase
     fun updateStudentInfo(updatedStudent: Student) {
+        // Cập nhật document sinh viên theo email
         db.collection("student").document(updatedStudent.email)
             .set(
+                // Tạo map chứa các thông tin cần cập nhật
                 mapOf(
                     "fullNameStudent" to updatedStudent.fullNameStudent,
                     "phone" to updatedStudent.phone,
@@ -151,11 +178,15 @@ class StudentViewModel : ViewModel() {
                 )
             )
             .addOnSuccessListener {
+                // Cập nhật đối tượng sinh viên đã chọn
                 _selectedStudent.value = updatedStudent
+                // Hiển thị thông báo thành công
                 _snackbarMessage.value = "Cập nhật thông tin thành công"
             }
             .addOnFailureListener { exception ->
+                // Hiển thị thông báo lỗi
                 _snackbarMessage.value = "Lỗi cập nhật: ${exception.message}"
             }
     }
+
 }
