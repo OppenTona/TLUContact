@@ -1,4 +1,4 @@
-# TLUContact
+# TLUContact [English caption below]
 
 Dự án bài tập lớn TLUContact của các sinh viên trường đại học Thủy lợi.
 
@@ -64,4 +64,82 @@ TLUContact/
 │   │       └── (các file kiểm thử)
 │   └── build.gradle
 ├── build.gradle
-└── settings.gradle
+└── settings.gradle```
+
+
+# TLUContact – English Version
+
+A major coursework project developed by students from Thuyloi University.
+
+##Team Members
+
+Nguyễn Thế Toàn (OppenTona)
+
+Nguyễn Thị Thanh Vân (ThanhVan2024)
+
+Lưu Hiểu Khánh (HieuKhanh04)
+
+Lê Hà Phương (LeHaPhuong2004)
+
+##Project Introduction
+- **Current Situation**
+
+Contact information at Thuyloi University is mainly managed using paper documents or Word files.
+
+This approach causes several challenges such as difficult searching, slow updates, and a high risk of data loss or leakage.
+
+- **Problem Statement**
+
+There is no centralized contact system that allows direct communication between students and lecturers.
+
+Information exchange often requires intermediaries (e.g., homeroom teachers or youth union representatives), leading to delays and reduced communication efficiency.
+
+- **Solution**
+
+The project "TLUContact – Electronic Contact Directory for Thuyloi University" was created to solve these issues.
+
+The application runs on Android, developed in Kotlin, and uses Firebase Cloud Firestore (NoSQL) for flexible storage, fast data retrieval, and real-time synchronization.
+
+It also integrates Firebase Authentication to support user registration, verification, and role-based access control, ensuring security and privacy.
+
+- **Objectives**
+
+Become an effective communication bridge between all university members.
+
+Improve productivity in studying and working.
+
+Support the digital transformation process in education.
+
+- **User Interface**
+
+https://www.figma.com/design/ezrsY5J8DKXXSKSgMs3o6s/Untitled?node-id=0-1&p=f&t=62QHq8iLZ3Ec66an-0
+
+## Key Features
+
+Add, edit, and delete contacts
+
+Search and filter contacts by name or phone number
+
+Import and export contacts from common formats
+
+Synchronize contacts with cloud services
+
+Send messages or make calls directly within the application
+
+Technologies Used
+
+Programming language: Kotlin
+
+Framework: Android SDK
+
+Database: SQLite
+
+Development tool: Android Studio
+
+Framework: Android SDK
+
+Database: SQLite
+
+Development tool: Android Studio
+
+Project Structure
