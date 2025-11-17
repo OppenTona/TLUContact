@@ -72,7 +72,7 @@ TLUContact/
 
 A major coursework project developed by students from Thuyloi University.
 
-##Team Members
+## Team Members
 
 Nguyễn Thế Toàn (OppenTona)
 
@@ -82,7 +82,7 @@ Lưu Hiểu Khánh (HieuKhanh04)
 
 Lê Hà Phương (LeHaPhuong2004)
 
-##Project Introduction
+## Project Introduction
 - **Current Situation**
 
 Contact information at Thuyloi University is mainly managed using paper documents or Word files.
@@ -127,20 +127,32 @@ Synchronize contacts with cloud services
 
 Send messages or make calls directly within the application
 
-Technologies Used
+## Technologies Used
 
-Programming language: Kotlin
-
-Framework: Android SDK
-
-Database: SQLite
-
-Development tool: Android Studio
-
-Framework: Android SDK
-
-Database: SQLite
-
-Development tool: Android Studio
-
-Project Structure
+- Programming language: Kotlin
+- Framework: Android SDK
+- Database: SQLite
+- Development tool: Android Studio
+- Framework: Android SDK
+- Database: SQLite
+- Development tool: Android Studio
+- Project Structure
+```plaintext
+TLUContact/
+├── app/
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/
+│   │   │   │   └── com/
+│   │   │   │       └── oppentona/
+│   │   │   │           └── tlucontact/
+│   │   │   │               └── (các file mã nguồn Kotlin)
+│   │   │   ├── res/
+│   │   │   │   └── (các file tài nguyên giao diện người dùng)
+│   │   │   ├── AndroidManifest.xml
+│   │   └── test/
+│   │       └── (các file kiểm thử)
+│   └── build.gradle
+├── build.gradle
+└── settings.gradle
+```
