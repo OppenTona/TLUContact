@@ -4,10 +4,10 @@ Dự án bài tập lớn TLUContact của các sinh viên trường đại họ
 
 ## Thành viên nhóm:
 
-- Nguyễn Thế Toàn (OppenTona)
-- Nguyễn Thị Thanh Vân (ThanhVan2024)
-- Lưu Hiểu Khánh (HieuKhanh04)
-- Lê Hà Phương (LeHaPhuong2004)
+- Trưởng nhóm: Nguyễn Thế Toàn (OppenTona)
+- Thành viên: Nguyễn Thị Thanh Vân (ThanhVan2024)
+- Thành viên: Lưu Hiểu Khánh (HieuKhanh04)
+- Thành viên: Lê Hà Phương (LeHaPhuong2004)
 
 ## Giới thiệu về đề tài
 
@@ -120,10 +120,10 @@ A major coursework project developed by students from Thuyloi University.
 
 ## Team Members
 
-- Nguyễn Thế Toàn (OppenTona)
-- Nguyễn Thị Thanh Vân (ThanhVan2024)
-- Lưu Hiểu Khánh (HieuKhanh04)
-- Lê Hà Phương (LeHaPhuong2004)
+- Team Leader: Nguyễn Thế Toàn (OppenTona)
+- Member: Nguyễn Thị Thanh Vân (ThanhVan2024)
+- Member: Lưu Hiểu Khánh (HieuKhanh04)
+- Member: Lê Hà Phương (LeHaPhuong2004)
 
 ## Project Introduction
 
